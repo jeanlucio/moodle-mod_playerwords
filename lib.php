@@ -134,7 +134,7 @@ function playerwords_supports(string $feature): mixed {
         case FEATURE_GRADE_HAS_GRADE:
             return true;
         case FEATURE_MOD_PURPOSE:
-            return MOD_PURPOSE_ASSESSMENT;
+            return MOD_PURPOSE_INTERACTIVECONTENT;
         case FEATURE_BACKUP_MOODLE2:
             return true;
         case FEATURE_COMPLETION_HAS_RULES:
