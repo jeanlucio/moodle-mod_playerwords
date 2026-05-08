@@ -76,6 +76,8 @@ function playerwords_add_instance(stdClass $data): int {
     }
     unset($data->completionattemptsenabled);
 
+    $data->gradepass = isset($data->gradepass) ? (float)$data->gradepass : 0.0;
+
     $data->sources = playerwords_build_sources($data);
     unset($data->source_manual, $data->source_glossary, $data->source_ai);
     $data->timecreated  = time();
@@ -96,6 +98,8 @@ function playerwords_update_instance(stdClass $data): bool {
         $data->completionattempts = 0;
     }
     unset($data->completionattemptsenabled);
+
+    $data->gradepass = isset($data->gradepass) ? (float)$data->gradepass : 0.0;
 
     $data->sources = playerwords_build_sources($data);
     unset($data->source_manual, $data->source_glossary, $data->source_ai);
