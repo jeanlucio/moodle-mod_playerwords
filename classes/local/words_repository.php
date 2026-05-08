@@ -85,8 +85,11 @@ class words_repository {
         $wordmode = (int)($instance->wordmode ?? PLAYERWORDS_WORDMODE_RANDOM);
 
         if ($wordmode === PLAYERWORDS_WORDMODE_SHARED) {
-            usort($candidates, fn($a, $b) => $a->id <=> $b->id);
-            $index = ($completedround + (int)$instance->id) % count($candidates);
+            $instanceseed = (int)$instance->id;
+            usort($candidates, function ($a, $b) use ($instanceseed) {
+                return crc32($instanceseed . '_' . $a->id) <=> crc32($instanceseed . '_' . $b->id);
+            });
+            $index = $completedround % count($candidates);
             return $candidates[$index];
         }
 
