@@ -122,6 +122,7 @@ class view_page_service {
         if (!isset($SESSION->mod_playerwords[$sessionkey])) {
             $SESSION->mod_playerwords[$sessionkey] = [
                 'wordid' => 0,
+                'wordtext' => '',
                 'attemptsused' => 0,
                 'starttime' => 0,
                 'hint' => '',
@@ -198,6 +199,7 @@ class view_page_service {
                 $targetword = word_normalizer::normalize($pickedword->word, !empty($instance->ignore_accents));
                 $roundwordid = (int)$pickedword->id;
                 $state['wordid'] = $roundwordid;
+                $state['wordtext'] = $pickedword->word;
                 $state['attemptsused'] = 0;
                 $state['starttime'] = time();
                 $state['hint'] = $pickedword->hint ?? '';
@@ -342,6 +344,12 @@ class view_page_service {
             'canmanagewords' => $canmanagewords,
             'managewordsbutton' => get_string('managewordsbutton', 'mod_playerwords'),
             'managewordsurl' => (new moodle_url('/mod/playerwords/managewords.php', ['id' => $cm->id]))->out(false),
+            'showreveal' => !empty($state['finished']) && !empty($state['wordtext']),
+            'revealword' => $state['wordtext'] ?? '',
+            'revealwordlabel' => get_string('revealwordlabel', 'mod_playerwords'),
+            'showdefinition' => !empty($state['finished']) && !empty($state['hint']),
+            'revealdefinition' => $state['hint'] ?? '',
+            'revealdefinitionlabel' => get_string('revealdefinitionlabel', 'mod_playerwords'),
         ];
     }
 

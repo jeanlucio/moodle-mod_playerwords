@@ -113,6 +113,14 @@
         {{/roundfinished}}
 
         {{#roundfinished}}
+            {{#showreveal}}
+                <div class="mod-playerwords-reveal alert alert-secondary mt-3">
+                    <strong>{{revealwordlabel}}</strong> {{revealword}}
+                    {{#showdefinition}}
+                        <p class="mb-0 mt-2">{{revealdefinition}}</p>
+                    {{/showdefinition}}
+                </div>
+            {{/showreveal}}
             <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php">
                 <input type="hidden" name="id" value="{{cmid}}">
                 <input type="hidden" name="newround" value="1">

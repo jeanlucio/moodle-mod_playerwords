@@ -190,15 +190,18 @@ class submit_guess extends external_api {
 
         $SESSION->mod_playerwords[$sessionkey] = $state;
 
+        $roundfinished = !empty($state['finished']);
         return [
-            'feedback'         => $feedbackresult,
-            'attemptsused'     => (int)$state['attemptsused'],
-            'finished'         => !empty($state['finished']),
-            'won'              => $iscompleted,
-            'score'            => $score,
-            'timeleft'         => self::compute_timeleft($instance, $state),
-            'notification'     => $notification,
-            'notificationtype' => $notificationtype,
+            'feedback'             => $feedbackresult,
+            'attemptsused'         => (int)$state['attemptsused'],
+            'finished'             => $roundfinished,
+            'won'                  => $iscompleted,
+            'score'                => $score,
+            'timeleft'             => self::compute_timeleft($instance, $state),
+            'notification'         => $notification,
+            'notificationtype'     => $notificationtype,
+            'revealword'           => $roundfinished ? ($wordrecord->word ?? '') : '',
+            'revealdefinition'     => $roundfinished ? ($wordrecord->hint ?? '') : '',
         ];
     }
 
@@ -221,10 +224,17 @@ class submit_guess extends external_api {
             'won'              => new external_value(PARAM_BOOL, 'Whether the player guessed correctly'),
             'score'            => new external_value(PARAM_FLOAT, 'Score for this round'),
             'timeleft'         => new external_value(PARAM_INT, 'Seconds remaining, 0 if timer is disabled'),
-            'notification'     => new external_value(PARAM_TEXT, 'User-facing feedback message'),
-            'notificationtype' => new external_value(
+            'notification'         => new external_value(PARAM_TEXT, 'User-facing feedback message'),
+            'notificationtype'     => new external_value(
                 PARAM_ALPHA,
                 'Notification type: success or warning',
+                VALUE_DEFAULT,
+                ''
+            ),
+            'revealword'       => new external_value(PARAM_TEXT, 'Correct word, set when round finishes'),
+            'revealdefinition' => new external_value(
+                PARAM_RAW,
+                'Word definition or hint, set when round finishes',
                 VALUE_DEFAULT,
                 ''
             ),

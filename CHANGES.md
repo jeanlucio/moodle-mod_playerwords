@@ -1,5 +1,10 @@
 # CHANGES
 
+## v0.6.0 (2026050806)
+
+- Show correct word and definition after every round (win or lose)
+- Definition uses the hint field; glossary definitions will populate this field automatically when glossary integration is implemented
+
 ## v0.5.0 (2026050805)
 
 - Add `wordmode` setting: teacher can choose between random word per round (default) or shared sequence mode, where all students receive the same words in the same order — round 1 is always word A for everyone, round 2 is word B, cycling back to the start when the list is exhausted
