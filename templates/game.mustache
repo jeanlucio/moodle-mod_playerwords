@@ -1,3 +1,66 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_playerwords/game
+
+    Game interface for a PlayerWords round.
+
+    Example context (json):
+    {
+        "cmid": 1,
+        "sesskey": "abc123",
+        "canmanagewords": true,
+        "managewordsbutton": "Manage words",
+        "managewordsurl": "https://example.com/mod/playerwords/managewords.php?id=1",
+        "hastargetword": true,
+        "nogamewords": "No approved words are available for this activity yet.",
+        "attemptslabel": "Attempts",
+        "attemptsused": 1,
+        "maxattempts": 6,
+        "timerenabled": true,
+        "timerlabel": "Time left (s):",
+        "timeleft": 55,
+        "showhint": true,
+        "hintlabel": "Hint",
+        "hintvalue": "A body of water",
+        "rows": [
+            {
+                "letters": [
+                    {"letter": "O", "state": "correct"},
+                    {"letter": "C", "state": "absent"},
+                    {"letter": "E", "state": "present"},
+                    {"letter": "A", "state": "absent"},
+                    {"letter": "N", "state": "correct"}
+                ]
+            },
+            {"letters": [{"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}]},
+            {"letters": [{"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}]},
+            {"letters": [{"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}]},
+            {"letters": [{"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}]},
+            {"letters": [{"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}, {"letter": "", "state": "empty"}]}
+        ],
+        "roundfinished": false,
+        "guesslabel": "Your guess",
+        "guessplaceholder": "Type a word",
+        "guessmaxlength": 5,
+        "submitguess": "Submit guess",
+        "newroundlabel": "Start a new round"
+    }
+}}
 <div class="mod-playerwords-game">
     {{#canmanagewords}}
         <p>
