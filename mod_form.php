@@ -132,27 +132,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setType('show_ranking', PARAM_INT);
         $mform->setDefault('show_ranking', 1);
 
-        $mform->addElement('header', 'completionheader', get_string('completionheader', 'mod_playerwords'));
-
-        $mform->addElement(
-            'select',
-            'completiontype',
-            get_string('completiontype', 'mod_playerwords'),
-            [
-                0 => get_string('completiontype_view', 'mod_playerwords'),
-                1 => get_string('completiontype_grade', 'mod_playerwords'),
-                2 => get_string('completiontype_attempts', 'mod_playerwords'),
-            ]
-        );
-        $mform->setType('completiontype', PARAM_INT);
-        $mform->setDefault('completiontype', 0);
-
-        $mform->addElement('text', 'completionattempts', get_string('completionattempts', 'mod_playerwords'));
-        $mform->setType('completionattempts', PARAM_INT);
-        $mform->setDefault('completionattempts', 0);
-        $mform->addRule('completionattempts', null, 'numeric', null, 'client');
-        $mform->hideIf('completionattempts', 'completiontype', 'neq', 2);
-
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
     }
@@ -198,11 +177,77 @@ class mod_playerwords_mod_form extends moodleform_mod {
             $errors['timer_seconds'] = get_string('error_timerseconds', 'mod_playerwords');
         }
 
-        if ((int)$data['completiontype'] === 2 && (int)$data['completionattempts'] < 1) {
-            $errors['completionattempts'] = get_string('error_completionattempts', 'mod_playerwords');
+        if (
+            !empty($data['completionattemptsenabled']) &&
+            ((int)$data['completionattempts'] < 1)
+        ) {
+            $errors['completionattemptsgroup'] = get_string('error_completionattempts', 'mod_playerwords');
+        }
+
+        if (!empty($data['completionmingradeenabled'])) {
+            if ((float)$data['completionmingrade'] <= 0) {
+                $errors['completionmingradegroup'] = get_string('error_completionmingrade', 'mod_playerwords');
+            } else if ((float)$data['completionmingrade'] > (float)$data['grade']) {
+                $errors['completionmingradegroup'] = get_string('error_completionmingrade_max', 'mod_playerwords');
+            }
         }
 
         return $errors;
+    }
+
+    /**
+     * Adds custom completion rules to Moodle completion section.
+     *
+     * @return array
+     */
+    public function add_completion_rules(): array {
+        $mform = $this->_form;
+
+        $group = [];
+        $group[] = $mform->createElement('checkbox', 'completionattemptsenabled', '', '');
+        $group[] = $mform->createElement('text', 'completionattempts', '', ['size' => 3]);
+        $mform->addGroup(
+            $group,
+            'completionattemptsgroup',
+            get_string('completionattemptsgroup', 'mod_playerwords'),
+            [' '],
+            false
+        );
+
+        $mform->setType('completionattempts', PARAM_INT);
+        $mform->setDefault('completionattempts', 1);
+        $mform->disabledIf('completionattempts', 'completionattemptsenabled', 'notchecked');
+
+        $group = [];
+        $group[] = $mform->createElement('checkbox', 'completionmingradeenabled', '', '');
+        $group[] = $mform->createElement('text', 'completionmingrade', '', ['size' => 5]);
+        $mform->addGroup(
+            $group,
+            'completionmingradegroup',
+            get_string('completionmingradegroup', 'mod_playerwords'),
+            [' '],
+            false
+        );
+
+        $mform->setType('completionmingrade', PARAM_FLOAT);
+        $mform->setDefault('completionmingrade', 0);
+        $mform->disabledIf('completionmingrade', 'completionmingradeenabled', 'notchecked');
+
+        return ['completionattemptsgroup', 'completionmingradegroup'];
+    }
+
+    /**
+     * Returns whether at least one completion rule is enabled.
+     *
+     * @param array $data Form data.
+     * @return bool
+     */
+    public function completion_rule_enabled($data): bool {
+        if (!empty($data['completionattemptsenabled']) && (int)$data['completionattempts'] > 0) {
+            return true;
+        }
+
+        return !empty($data['completionmingradeenabled']) && (float)$data['completionmingrade'] > 0;
     }
 
     /**
@@ -218,6 +263,15 @@ class mod_playerwords_mod_form extends moodleform_mod {
             $defaultvalues['source_manual'] = (int)(($defaultvalues['sources'] & self::SOURCE_MANUAL) !== 0);
             $defaultvalues['source_glossary'] = (int)(($defaultvalues['sources'] & self::SOURCE_GLOSSARY) !== 0);
             $defaultvalues['source_ai'] = (int)(($defaultvalues['sources'] & self::SOURCE_AI) !== 0);
+        }
+
+        if (!empty($defaultvalues['completionattempts'])) {
+            $defaultvalues['completionattemptsenabled'] = 1;
+        }
+
+        if (!empty($defaultvalues['gradepass'])) {
+            $defaultvalues['completionmingradeenabled'] = 1;
+            $defaultvalues['completionmingrade'] = $defaultvalues['gradepass'];
         }
     }
 }

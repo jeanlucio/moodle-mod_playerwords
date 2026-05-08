@@ -27,10 +27,8 @@
             COMMENT="Whether accent-insensitive matching is enabled"/>
         <FIELD NAME="show_ranking" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
             COMMENT="Whether ranking is shown to students"/>
-        <FIELD NAME="completiontype" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
-            COMMENT="Completion mode: 0 view, 1 grade, 2 attempts"/>
         <FIELD NAME="completionattempts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
-            COMMENT="Required attempts when completion mode uses attempts"/>
+            COMMENT="Required attempts for custom completion rule"/>
         <FIELD NAME="grade" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="100.00000" SEQUENCE="false"
             DECIMALS="5" COMMENT="Maximum grade value"/>
         <FIELD NAME="gradepass" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="0.00000" SEQUENCE="false"

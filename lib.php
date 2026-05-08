@@ -67,6 +67,17 @@ function playerwords_build_sources(stdClass $data): int {
  */
 function playerwords_add_instance(stdClass $data): int {
     global $DB;
+
+    if (empty($data->completionattemptsenabled)) {
+        $data->completionattempts = 0;
+    }
+    if (!empty($data->completionmingradeenabled) && !empty($data->completionmingrade)) {
+        $data->gradepass = (float)$data->completionmingrade;
+    } else {
+        $data->gradepass = 0;
+    }
+    unset($data->completionattemptsenabled, $data->completionmingradeenabled, $data->completionmingrade);
+
     $data->sources = playerwords_build_sources($data);
     unset($data->source_manual, $data->source_glossary, $data->source_ai);
     $data->timecreated  = time();
@@ -82,6 +93,17 @@ function playerwords_add_instance(stdClass $data): int {
  */
 function playerwords_update_instance(stdClass $data): bool {
     global $DB;
+
+    if (empty($data->completionattemptsenabled)) {
+        $data->completionattempts = 0;
+    }
+    if (!empty($data->completionmingradeenabled) && !empty($data->completionmingrade)) {
+        $data->gradepass = (float)$data->completionmingrade;
+    } else {
+        $data->gradepass = 0;
+    }
+    unset($data->completionattemptsenabled, $data->completionmingradeenabled, $data->completionmingrade);
+
     $data->sources = playerwords_build_sources($data);
     unset($data->source_manual, $data->source_glossary, $data->source_ai);
     $data->id           = $data->instance;
@@ -115,7 +137,87 @@ function playerwords_supports(string $feature): mixed {
             return true;
         case FEATURE_BACKUP_MOODLE2:
             return true;
+        case FEATURE_COMPLETION_HAS_RULES:
+            return true;
+        case FEATURE_COMPLETION_TRACKS_VIEWS:
+            return true;
         default:
             return null;
     }
+}
+
+/**
+ * Checks if user completes the activity according to custom rules.
+ *
+ * @param stdClass $course Course data.
+ * @param stdClass $cm Course-module data.
+ * @param int $userid User id.
+ * @param bool $type Type of aggregation for completion requirements.
+ * @return bool
+ */
+function playerwords_get_completion_state(
+    stdClass $course,
+    stdClass $cm,
+    int $userid,
+    bool $type
+): bool {
+    global $DB;
+
+    $playerwords = $DB->get_record(
+        'playerwords',
+        ['id' => $cm->instance],
+        'id, completionattempts, gradepass',
+        MUST_EXIST
+    );
+
+    if ((int)$playerwords->completionattempts === 0) {
+        $attemptsok = null;
+    } else {
+        $attemptscount = $DB->count_records(
+            'playerwords_attempts',
+            [
+                'playerwordsid' => $playerwords->id,
+                'userid' => $userid,
+            ]
+        );
+
+        $attemptsok = $attemptscount >= (int)$playerwords->completionattempts;
+    }
+
+    $gradeok = null;
+    if ((float)$playerwords->gradepass > 0) {
+        $maxscore = $DB->get_field_sql(
+            "SELECT MAX(a.score)
+               FROM {playerwords_attempts} a
+              WHERE a.playerwordsid = :playerwordsid
+                AND a.userid = :userid",
+            [
+                'playerwordsid' => $playerwords->id,
+                'userid' => $userid,
+            ]
+        );
+        $gradeok = ((float)$maxscore) >= (float)$playerwords->gradepass;
+    }
+
+    $activeconditions = [];
+    if ($attemptsok !== null) {
+        $activeconditions[] = $attemptsok;
+    }
+    if ($gradeok !== null) {
+        $activeconditions[] = $gradeok;
+    }
+
+    if ($activeconditions === []) {
+        return $type;
+    }
+
+    if ($type) {
+        return !in_array(false, $activeconditions, true);
+    }
+
+    return in_array(
+        true,
+        $activeconditions,
+        true
+    );
 }

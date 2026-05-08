@@ -28,9 +28,13 @@ $id = required_param('id', PARAM_INT);
 $cm = get_coursemodule_from_id('playerwords', $id, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 $instance = $DB->get_record('playerwords', ['id' => $cm->instance], '*', MUST_EXIST);
+$context = context_module::instance($cm->id);
 
 require_login($course, true, $cm);
-require_capability('mod/playerwords:view', context_module::instance($cm->id));
+require_capability('mod/playerwords:view', $context);
+
+$completion = new completion_info($course);
+$completion->set_module_viewed($cm);
 
 $PAGE->set_url('/mod/playerwords/view.php', ['id' => $cm->id]);
 $PAGE->set_title($instance->name);
