@@ -299,6 +299,10 @@ class mod_playerwords_mod_form extends moodleform_mod {
     public function data_preprocessing(&$defaultvalues): void {
         parent::data_preprocessing($defaultvalues);
 
+        if (isset($defaultvalues['grade']) && (float)$defaultvalues['grade'] > 0) {
+            $defaultvalues['grade'] = (int)round((float)$defaultvalues['grade']);
+        }
+
         if (!empty($defaultvalues['sources'])) {
             $defaultvalues['source_manual'] = (int)(($defaultvalues['sources'] & self::SOURCE_MANUAL) !== 0);
             $defaultvalues['source_glossary'] = (int)(($defaultvalues['sources'] & self::SOURCE_GLOSSARY) !== 0);
