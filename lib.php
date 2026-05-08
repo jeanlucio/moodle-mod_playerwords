@@ -22,20 +22,14 @@
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/**
- * Source type bit flag for manual words.
- */
-const PLAYERWORDS_SOURCE_MANUAL = 1;
+/** Source type bit flag for manual words. */
+define('PLAYERWORDS_SOURCE_MANUAL', 1);
 
-/**
- * Source type bit flag for glossary words.
- */
-const PLAYERWORDS_SOURCE_GLOSSARY = 2;
+/** Source type bit flag for glossary words. */
+define('PLAYERWORDS_SOURCE_GLOSSARY', 2);
 
-/**
- * Source type bit flag for AI generated words.
- */
-const PLAYERWORDS_SOURCE_AI = 4;
+/** Source type bit flag for AI generated words. */
+define('PLAYERWORDS_SOURCE_AI', 4);
 
 /**
  * Builds the source bitmask from form data.

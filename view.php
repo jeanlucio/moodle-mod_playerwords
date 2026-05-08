@@ -26,10 +26,6 @@ require(__DIR__ . '/../../config.php');
 
 use mod_playerwords\local\view_page_service;
 
-if (!class_exists('\mod_playerwords\local\view_page_service')) {
-    require_once(__DIR__ . '/classes/local/view_page_service.php');
-}
-
 $id = required_param('id', PARAM_INT);
 $cm = get_coursemodule_from_id('playerwords', $id, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);

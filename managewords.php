@@ -26,10 +26,6 @@ require(__DIR__ . '/../../config.php');
 
 use mod_playerwords\local\words_repository;
 
-if (!class_exists('\mod_playerwords\local\words_repository')) {
-    require_once(__DIR__ . '/classes/local/words_repository.php');
-}
-
 $id = required_param('id', PARAM_INT);
 $cm = get_coursemodule_from_id('playerwords', $id, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
@@ -81,9 +77,9 @@ foreach ($recentwords as $recentword) {
         get_string('pendingstatus', 'mod_playerwords');
 
     $templaterows[] = [
-        'word' => s($recentword->word),
-        'source' => s($sourcelabel),
-        'approved' => s($statuslabel),
+        'word' => $recentword->word,
+        'source' => $sourcelabel,
+        'approved' => $statuslabel,
     ];
 }
 

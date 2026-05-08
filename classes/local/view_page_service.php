@@ -307,7 +307,7 @@ class view_page_service {
             'timerlabel' => get_string('timerlabel', 'mod_playerwords'),
             'timeleft' => $timeleft,
             'hintlabel' => get_string('hintlabel', 'mod_playerwords'),
-            'hintvalue' => s($state['hint'] ?? ''),
+            'hintvalue' => $state['hint'] ?? '',
             'showhint' => !empty($state['hint']),
             'rows' => $rows,
             'roundfinished' => !empty($state['finished']),
