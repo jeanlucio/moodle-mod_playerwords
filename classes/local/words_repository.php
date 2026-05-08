@@ -63,15 +63,27 @@ class words_repository {
     }
 
     /**
-     * Picks one random approved word.
+     * Picks one word for a new round according to the configured word mode.
      *
      * @param \stdClass $instance Activity instance.
      * @return \stdClass|null
      */
     public static function pick_round_word(\stdClass $instance): ?\stdClass {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
         $candidates = self::get_candidate_words($instance);
         if ($candidates === []) {
             return null;
+        }
+
+        $wordmode = (int)($instance->wordmode ?? PLAYERWORDS_WORDMODE_RANDOM);
+
+        if ($wordmode === PLAYERWORDS_WORDMODE_DAILY) {
+            usort($candidates, fn($a, $b) => $a->id <=> $b->id);
+            $daynumber = (int)date('Ymd');
+            $index = ($daynumber + (int)$instance->id) % count($candidates);
+            return $candidates[$index];
         }
 
         $index = random_int(0, count($candidates) - 1);

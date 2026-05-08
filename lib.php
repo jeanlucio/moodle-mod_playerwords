@@ -43,6 +43,12 @@ define('PLAYERWORDS_GRADE_FIRST', 3);
 /** Grade aggregation: score from the last round. */
 define('PLAYERWORDS_GRADE_LAST', 4);
 
+/** Word selection mode: a random word is picked each round. */
+define('PLAYERWORDS_WORDMODE_RANDOM', 1);
+
+/** Word selection mode: the same word is used for all students on a given day. */
+define('PLAYERWORDS_WORDMODE_DAILY', 2);
+
 /**
  * Builds the source bitmask from form data.
  *

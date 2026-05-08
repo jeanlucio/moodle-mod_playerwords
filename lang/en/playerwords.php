@@ -102,3 +102,6 @@ $string['submitguess'] = 'Submit guess';
 $string['timer_seconds'] = 'Timer in seconds (0 to disable)';
 $string['timerlabel'] = 'Time left (s):';
 $string['wordcolumnlabel'] = 'Word';
+$string['wordmode'] = 'Word selection mode';
+$string['wordmode_daily'] = 'Word of the day (same word for all students each day)';
+$string['wordmode_random'] = 'Random word per round';

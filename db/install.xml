@@ -27,6 +27,8 @@
             COMMENT="Whether accent-insensitive matching is enabled"/>
         <FIELD NAME="show_ranking" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
             COMMENT="Whether ranking is shown to students"/>
+        <FIELD NAME="wordmode" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
+            COMMENT="Word selection mode: 1=random per round, 2=word of the day"/>
         <FIELD NAME="max_rounds" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
             COMMENT="Maximum rounds per user, 0 means unlimited"/>
         <FIELD NAME="cooldown_seconds" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="86400" SEQUENCE="false"

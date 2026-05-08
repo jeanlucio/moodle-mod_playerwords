@@ -1,5 +1,9 @@
 # CHANGES
 
+## v0.5.0 (2026050805)
+
+- Add `wordmode` setting: teacher can choose between random word per round (default) or word of the day (same word for all students each day, changes daily)
+
 ## v0.4.0 (2026050804)
 
 - Add `grademethod` setting: highest grade, average grade, first attempt or last attempt

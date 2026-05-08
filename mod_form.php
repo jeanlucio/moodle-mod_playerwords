@@ -110,6 +110,18 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         $mform->addElement('header', 'gameplayheader', get_string('gameplayheader', 'mod_playerwords'));
 
+        $mform->addElement(
+            'select',
+            'wordmode',
+            get_string('wordmode', 'mod_playerwords'),
+            [
+                PLAYERWORDS_WORDMODE_RANDOM => get_string('wordmode_random', 'mod_playerwords'),
+                PLAYERWORDS_WORDMODE_DAILY  => get_string('wordmode_daily', 'mod_playerwords'),
+            ]
+        );
+        $mform->setType('wordmode', PARAM_INT);
+        $mform->setDefault('wordmode', PLAYERWORDS_WORDMODE_RANDOM);
+
         $mform->addElement('text', 'max_attempts', get_string('max_attempts', 'mod_playerwords'));
         $mform->setType('max_attempts', PARAM_INT);
         $mform->setDefault('max_attempts', 6);
