@@ -208,6 +208,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
     /**
      * Normalises form data before saving.
      *
+     * @param array $defaultvalues Default form values.
      * @return void
      */
     public function data_preprocessing(&$defaultvalues): void {

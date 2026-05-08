@@ -48,10 +48,11 @@ $string['min_length'] = 'Minimum word length';
 $string['mod/playerwords:addinstance'] = 'Add a new PlayerWords activity';
 $string['mod/playerwords:view'] = 'View PlayerWords activity';
 $string['modulename'] = 'PlayerWords';
-$string['modulename_help'] =
-    'PlayerWords is a Wordle-style activity that challenges students to guess key terms from the course content.';
+$string['modulename_help'] = 'PlayerWords is a Wordle-style activity that challenges students to guess key terms from the course content.';
 $string['modulenameplural'] = 'PlayerWords';
 $string['playersourcesheader'] = 'Word sources';
+$string['playerwords:addinstance'] = 'Add a new PlayerWords activity';
+$string['playerwords:view'] = 'View PlayerWords activity';
 $string['pluginadministration'] = 'PlayerWords administration';
 $string['pluginname'] = 'PlayerWords';
 $string['show_ranking'] = 'Show ranking at the end of rounds';
