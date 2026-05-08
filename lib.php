@@ -161,7 +161,7 @@ function playerwords_update_grades(stdClass $instance, int $userid = 0): void {
     global $CFG, $DB;
     require_once($CFG->libdir . '/gradelib.php');
 
-    $sql = "SELECT a.userid, a.score, a.timecreated
+    $sql = "SELECT a.id, a.userid, a.score, a.timecreated
               FROM {playerwords_attempts} a
              WHERE a.playerwordsid = :instanceid";
     $params = ['instanceid' => $instance->id];
