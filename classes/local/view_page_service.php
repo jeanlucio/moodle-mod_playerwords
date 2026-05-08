@@ -61,6 +61,20 @@ class view_page_service {
             redirect(new moodle_url('/mod/playerwords/view.php', ['id' => $cm->id]));
         }
 
+        if ((int)$state['wordid'] === 0 || !empty($state['finished'])) {
+            $restrictionnotice = self::get_round_restriction_notice($instance, $userid);
+            if ($restrictionnotice !== null) {
+                self::save_state((int)$cm->id, $userid, $state);
+                $templatectx = self::build_template_context($cm, $instance, $state, '', $canmanagewords);
+                $templatectx['nogamewords'] = $restrictionnotice;
+                return [
+                    'notification'     => null,
+                    'notificationtype' => null,
+                    'templatecontext'  => $templatectx,
+                ];
+            }
+        }
+
         [$state, $targetword, $roundwordid] = self::ensure_round_state($state, $instance);
 
         if (optional_param('submitguess', 0, PARAM_BOOL)) {
@@ -320,6 +334,43 @@ class view_page_service {
             'managewordsbutton' => get_string('managewordsbutton', 'mod_playerwords'),
             'managewordsurl' => (new moodle_url('/mod/playerwords/managewords.php', ['id' => $cm->id]))->out(false),
         ];
+    }
+
+    /**
+     * Returns a restriction message if the user cannot start a new round, null otherwise.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @param int $userid User id.
+     * @return string|null
+     */
+    private static function get_round_restriction_notice(\stdClass $instance, int $userid): ?string {
+        global $DB;
+
+        if ((int)$instance->max_rounds > 0) {
+            $roundsplayed = $DB->count_records('playerwords_attempts', [
+                'playerwordsid' => $instance->id,
+                'userid'        => $userid,
+            ]);
+            if ($roundsplayed >= (int)$instance->max_rounds) {
+                return get_string('roundlimitreached', 'mod_playerwords', $instance->max_rounds);
+            }
+        }
+
+        if ((int)$instance->cooldown_seconds > 0) {
+            $lastattempttime = $DB->get_field_sql(
+                "SELECT MAX(timecreated) FROM {playerwords_attempts}"
+                . " WHERE playerwordsid = :pid AND userid = :uid",
+                ['pid' => $instance->id, 'uid' => $userid]
+            );
+            if (!empty($lastattempttime)) {
+                $remaining = (int)$instance->cooldown_seconds - (time() - (int)$lastattempttime);
+                if ($remaining > 0) {
+                    return get_string('cooldownactive', 'mod_playerwords', format_time($remaining));
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

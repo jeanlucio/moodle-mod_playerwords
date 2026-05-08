@@ -72,6 +72,50 @@ class start_new_round extends external_api {
         $userid = (int)$USER->id;
         $sessionkey = gameplay_service::build_session_key($cmid, $userid);
 
+        if ((int)$instance->max_rounds > 0) {
+            $roundsplayed = $DB->count_records('playerwords_attempts', [
+                'playerwordsid' => $instance->id,
+                'userid'        => $userid,
+            ]);
+            if ($roundsplayed >= (int)$instance->max_rounds) {
+                return [
+                    'wordlength'       => 0,
+                    'hint'             => '',
+                    'hastargetword'    => false,
+                    'notification'     => get_string(
+                        'roundlimitreached',
+                        'mod_playerwords',
+                        $instance->max_rounds
+                    ),
+                    'notificationtype' => 'warning',
+                ];
+            }
+        }
+
+        if ((int)$instance->cooldown_seconds > 0) {
+            $lastattempttime = $DB->get_field_sql(
+                "SELECT MAX(timecreated) FROM {playerwords_attempts}"
+                . " WHERE playerwordsid = :pid AND userid = :uid",
+                ['pid' => $instance->id, 'uid' => $userid]
+            );
+            if (!empty($lastattempttime)) {
+                $remaining = (int)$instance->cooldown_seconds - (time() - (int)$lastattempttime);
+                if ($remaining > 0) {
+                    return [
+                        'wordlength'       => 0,
+                        'hint'             => '',
+                        'hastargetword'    => false,
+                        'notification'     => get_string(
+                            'cooldownactive',
+                            'mod_playerwords',
+                            format_time($remaining)
+                        ),
+                        'notificationtype' => 'info',
+                    ];
+                }
+            }
+        }
+
         if (!isset($SESSION->mod_playerwords)) {
             $SESSION->mod_playerwords = [];
         }
@@ -87,9 +131,11 @@ class start_new_round extends external_api {
                 'finished'     => false,
             ];
             return [
-                'wordlength'    => 0,
-                'hint'          => '',
-                'hastargetword' => false,
+                'wordlength'       => 0,
+                'hint'             => '',
+                'hastargetword'    => false,
+                'notification'     => '',
+                'notificationtype' => '',
             ];
         }
 
@@ -111,9 +157,11 @@ class start_new_round extends external_api {
         $event->trigger();
 
         return [
-            'wordlength'    => core_text::strlen($targetword),
-            'hint'          => $pickedword->hint ?? '',
-            'hastargetword' => true,
+            'wordlength'       => core_text::strlen($targetword),
+            'hint'             => $pickedword->hint ?? '',
+            'hastargetword'    => true,
+            'notification'     => '',
+            'notificationtype' => '',
         ];
     }
 
@@ -124,12 +172,24 @@ class start_new_round extends external_api {
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'wordlength'    => new external_value(
+            'wordlength'       => new external_value(
                 PARAM_INT,
                 'Number of letters in the new word, 0 if unavailable'
             ),
-            'hint'          => new external_value(PARAM_TEXT, 'Optional hint text for the new word'),
-            'hastargetword' => new external_value(PARAM_BOOL, 'Whether a word is available for the round'),
+            'hint'             => new external_value(PARAM_TEXT, 'Optional hint text for the new word'),
+            'hastargetword'    => new external_value(PARAM_BOOL, 'Whether a word is available for the round'),
+            'notification'     => new external_value(
+                PARAM_TEXT,
+                'Notification message when round cannot start',
+                VALUE_DEFAULT,
+                ''
+            ),
+            'notificationtype' => new external_value(
+                PARAM_ALPHA,
+                'Notification type: info, warning or empty',
+                VALUE_DEFAULT,
+                ''
+            ),
         ]);
     }
 }

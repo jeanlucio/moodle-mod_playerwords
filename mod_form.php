@@ -145,6 +145,38 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setType('show_ranking', PARAM_INT);
         $mform->setDefault('show_ranking', 1);
 
+        $maxroundsoptions = [0 => get_string('max_rounds_unlimited', 'mod_playerwords')];
+        for ($i = 1; $i <= 10; $i++) {
+            $maxroundsoptions[$i] = $i;
+        }
+        $mform->addElement('select', 'max_rounds', get_string('max_rounds', 'mod_playerwords'), $maxroundsoptions);
+        $mform->setType('max_rounds', PARAM_INT);
+        $mform->setDefault('max_rounds', 0);
+
+        $cooldowngroup = [];
+        $cooldowngroup[] = $mform->createElement('text', 'cooldown_amount', '', ['size' => 5]);
+        $cooldowngroup[] = $mform->createElement(
+            'select',
+            'cooldown_unit',
+            '',
+            [
+                'minutes' => get_string('cooldown_unit_minutes', 'mod_playerwords'),
+                'hours'   => get_string('cooldown_unit_hours', 'mod_playerwords'),
+                'days'    => get_string('cooldown_unit_days', 'mod_playerwords'),
+            ]
+        );
+        $mform->addGroup(
+            $cooldowngroup,
+            'cooldowngroup',
+            get_string('cooldown_label', 'mod_playerwords'),
+            [' '],
+            false
+        );
+        $mform->setType('cooldown_amount', PARAM_INT);
+        $mform->setType('cooldown_unit', PARAM_ALPHA);
+        $mform->setDefault('cooldown_amount', 1);
+        $mform->setDefault('cooldown_unit', 'days');
+
         $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
@@ -189,6 +221,10 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         if ((int)$data['timer_seconds'] < 0) {
             $errors['timer_seconds'] = get_string('error_timerseconds', 'mod_playerwords');
+        }
+
+        if ((int)$data['cooldown_amount'] < 0) {
+            $errors['cooldowngroup'] = get_string('error_cooldown', 'mod_playerwords');
         }
 
         if (
@@ -254,6 +290,23 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         if (!empty($defaultvalues['completionattempts'])) {
             $defaultvalues['completionattemptsenabled'] = 1;
+        }
+
+        if (isset($defaultvalues['cooldown_seconds'])) {
+            $seconds = (int)$defaultvalues['cooldown_seconds'];
+            if ($seconds === 0) {
+                $defaultvalues['cooldown_amount'] = 0;
+                $defaultvalues['cooldown_unit']   = 'minutes';
+            } else if ($seconds % 86400 === 0) {
+                $defaultvalues['cooldown_amount'] = $seconds / 86400;
+                $defaultvalues['cooldown_unit']   = 'days';
+            } else if ($seconds % 3600 === 0) {
+                $defaultvalues['cooldown_amount'] = $seconds / 3600;
+                $defaultvalues['cooldown_unit']   = 'hours';
+            } else {
+                $defaultvalues['cooldown_amount'] = max(1, (int) round($seconds / 60));
+                $defaultvalues['cooldown_unit']   = 'minutes';
+            }
         }
     }
 }

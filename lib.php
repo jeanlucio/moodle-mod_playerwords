@@ -80,6 +80,11 @@ function playerwords_add_instance(stdClass $data): int {
 
     $data->sources = playerwords_build_sources($data);
     unset($data->source_manual, $data->source_glossary, $data->source_ai);
+    $multipliers = ['minutes' => 60, 'hours' => 3600, 'days' => 86400];
+    $unit        = $data->cooldown_unit ?? 'days';
+    $amount      = (int)($data->cooldown_amount ?? 0);
+    $data->cooldown_seconds = $amount * ($multipliers[$unit] ?? 86400);
+    unset($data->cooldown_amount, $data->cooldown_unit);
     $data->timecreated  = time();
     $data->timemodified = time();
     return $DB->insert_record('playerwords', $data);
@@ -103,6 +108,11 @@ function playerwords_update_instance(stdClass $data): bool {
 
     $data->sources = playerwords_build_sources($data);
     unset($data->source_manual, $data->source_glossary, $data->source_ai);
+    $multipliers = ['minutes' => 60, 'hours' => 3600, 'days' => 86400];
+    $unit        = $data->cooldown_unit ?? 'days';
+    $amount      = (int)($data->cooldown_amount ?? 0);
+    $data->cooldown_seconds = $amount * ($multipliers[$unit] ?? 86400);
+    unset($data->cooldown_amount, $data->cooldown_unit);
     $data->id           = $data->instance;
     $data->timemodified = time();
     return $DB->update_record('playerwords', $data);

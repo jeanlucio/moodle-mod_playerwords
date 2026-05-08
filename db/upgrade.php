@@ -64,5 +64,39 @@ function xmldb_playerwords_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026050801, 'playerwords');
     }
 
+    if ($oldversion < 2026050803) {
+        $table = new xmldb_table('playerwords');
+
+        $maxrounds = new xmldb_field(
+            'max_rounds',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'show_ranking'
+        );
+        if (!$dbman->field_exists($table, $maxrounds)) {
+            $dbman->add_field($table, $maxrounds);
+        }
+
+        $cooldownseconds = new xmldb_field(
+            'cooldown_seconds',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '86400',
+            'max_rounds'
+        );
+        if (!$dbman->field_exists($table, $cooldownseconds)) {
+            $dbman->add_field($table, $cooldownseconds);
+        }
+
+        upgrade_mod_savepoint(true, 2026050803, 'playerwords');
+    }
+
     return true;
 }

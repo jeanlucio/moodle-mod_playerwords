@@ -27,6 +27,10 @@
             COMMENT="Whether accent-insensitive matching is enabled"/>
         <FIELD NAME="show_ranking" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
             COMMENT="Whether ranking is shown to students"/>
+        <FIELD NAME="max_rounds" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+            COMMENT="Maximum rounds per user, 0 means unlimited"/>
+        <FIELD NAME="cooldown_seconds" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="86400" SEQUENCE="false"
+            COMMENT="Cooldown between rounds in seconds, 0 means disabled"/>
         <FIELD NAME="completionattempts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
             COMMENT="Required attempts for custom completion rule"/>
         <FIELD NAME="grade" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="100.00000" SEQUENCE="false"
