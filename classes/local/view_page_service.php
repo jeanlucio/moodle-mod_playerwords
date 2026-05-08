@@ -75,7 +75,7 @@ class view_page_service {
             }
         }
 
-        [$state, $targetword, $roundwordid] = self::ensure_round_state($state, $instance);
+        [$state, $targetword, $roundwordid] = self::ensure_round_state($state, $instance, $userid);
 
         if (optional_param('submitguess', 0, PARAM_BOOL)) {
             require_sesskey();
@@ -170,9 +170,12 @@ class view_page_service {
      *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
+     * @param int $userid User id.
      * @return array
      */
-    private static function ensure_round_state(array $state, \stdClass $instance): array {
+    private static function ensure_round_state(array $state, \stdClass $instance, int $userid): array {
+        global $DB;
+
         $targetword = '';
         $roundwordid = 0;
 
@@ -186,7 +189,11 @@ class view_page_service {
         }
 
         if ($targetword === '' || !empty($state['finished'])) {
-            $pickedword = words_repository::pick_round_word($instance);
+            $completedround = $DB->count_records('playerwords_attempts', [
+                'playerwordsid' => $instance->id,
+                'userid' => $userid,
+            ]);
+            $pickedword = words_repository::pick_round_word($instance, $completedround);
             if ($pickedword) {
                 $targetword = word_normalizer::normalize($pickedword->word, !empty($instance->ignore_accents));
                 $roundwordid = (int)$pickedword->id;

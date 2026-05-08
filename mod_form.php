@@ -115,8 +115,8 @@ class mod_playerwords_mod_form extends moodleform_mod {
             'wordmode',
             get_string('wordmode', 'mod_playerwords'),
             [
-                PLAYERWORDS_WORDMODE_RANDOM => get_string('wordmode_random', 'mod_playerwords'),
-                PLAYERWORDS_WORDMODE_DAILY  => get_string('wordmode_daily', 'mod_playerwords'),
+                PLAYERWORDS_WORDMODE_RANDOM  => get_string('wordmode_random', 'mod_playerwords'),
+                PLAYERWORDS_WORDMODE_SHARED => get_string('wordmode_shared', 'mod_playerwords'),
             ]
         );
         $mform->setType('wordmode', PARAM_INT);

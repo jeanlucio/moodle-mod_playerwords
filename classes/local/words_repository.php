@@ -65,10 +65,15 @@ class words_repository {
     /**
      * Picks one word for a new round according to the configured word mode.
      *
+     * In WORDMODE_SHARED mode all students receive the same word for each round
+     * number: round N uses index (completedround + instanceid) % total, cycling
+     * silently when the word list is exhausted.
+     *
      * @param \stdClass $instance Activity instance.
+     * @param int $completedround Number of rounds the student has already completed.
      * @return \stdClass|null
      */
-    public static function pick_round_word(\stdClass $instance): ?\stdClass {
+    public static function pick_round_word(\stdClass $instance, int $completedround = 0): ?\stdClass {
         global $CFG;
         require_once($CFG->dirroot . '/mod/playerwords/lib.php');
 
@@ -79,10 +84,9 @@ class words_repository {
 
         $wordmode = (int)($instance->wordmode ?? PLAYERWORDS_WORDMODE_RANDOM);
 
-        if ($wordmode === PLAYERWORDS_WORDMODE_DAILY) {
+        if ($wordmode === PLAYERWORDS_WORDMODE_SHARED) {
             usort($candidates, fn($a, $b) => $a->id <=> $b->id);
-            $daynumber = (int)date('Ymd');
-            $index = ($daynumber + (int)$instance->id) % count($candidates);
+            $index = ($completedround + (int)$instance->id) % count($candidates);
             return $candidates[$index];
         }
 

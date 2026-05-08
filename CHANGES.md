@@ -2,7 +2,7 @@
 
 ## v0.5.0 (2026050805)
 
-- Add `wordmode` setting: teacher can choose between random word per round (default) or word of the day (same word for all students each day, changes daily)
+- Add `wordmode` setting: teacher can choose between random word per round (default) or shared sequence mode, where all students receive the same words in the same order — round 1 is always word A for everyone, round 2 is word B, cycling back to the start when the list is exhausted
 
 ## v0.4.0 (2026050804)
 

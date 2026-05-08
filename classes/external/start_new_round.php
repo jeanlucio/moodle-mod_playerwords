@@ -72,24 +72,23 @@ class start_new_round extends external_api {
         $userid = (int)$USER->id;
         $sessionkey = gameplay_service::build_session_key($cmid, $userid);
 
-        if ((int)$instance->max_rounds > 0) {
-            $roundsplayed = $DB->count_records('playerwords_attempts', [
-                'playerwordsid' => $instance->id,
-                'userid'        => $userid,
-            ]);
-            if ($roundsplayed >= (int)$instance->max_rounds) {
-                return [
-                    'wordlength'       => 0,
-                    'hint'             => '',
-                    'hastargetword'    => false,
-                    'notification'     => get_string(
-                        'roundlimitreached',
-                        'mod_playerwords',
-                        $instance->max_rounds
-                    ),
-                    'notificationtype' => 'warning',
-                ];
-            }
+        $roundsplayed = $DB->count_records('playerwords_attempts', [
+            'playerwordsid' => $instance->id,
+            'userid'        => $userid,
+        ]);
+
+        if ((int)$instance->max_rounds > 0 && $roundsplayed >= (int)$instance->max_rounds) {
+            return [
+                'wordlength'       => 0,
+                'hint'             => '',
+                'hastargetword'    => false,
+                'notification'     => get_string(
+                    'roundlimitreached',
+                    'mod_playerwords',
+                    $instance->max_rounds
+                ),
+                'notificationtype' => 'warning',
+            ];
         }
 
         if ((int)$instance->cooldown_seconds > 0) {
@@ -120,7 +119,7 @@ class start_new_round extends external_api {
             $SESSION->mod_playerwords = [];
         }
 
-        $pickedword = words_repository::pick_round_word($instance);
+        $pickedword = words_repository::pick_round_word($instance, $roundsplayed);
         if (!$pickedword) {
             $SESSION->mod_playerwords[$sessionkey] = [
                 'wordid'       => 0,

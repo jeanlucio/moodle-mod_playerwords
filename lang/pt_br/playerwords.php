@@ -103,5 +103,5 @@ $string['timer_seconds'] = 'Temporizador em segundos (0 para desativar)';
 $string['timerlabel'] = 'Tempo restante (s):';
 $string['wordcolumnlabel'] = 'Palavra';
 $string['wordmode'] = 'Modo de seleção de palavras';
-$string['wordmode_daily'] = 'Palavra do dia (mesma palavra para todos os estudantes a cada dia)';
 $string['wordmode_random'] = 'Palavra aleatória por rodada';
+$string['wordmode_shared'] = 'Sequência compartilhada (todos os estudantes recebem as mesmas palavras na mesma ordem)';
