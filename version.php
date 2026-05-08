@@ -18,7 +18,7 @@
  * Version details.
  *
  * @package mod_playerwords
- * @copyright 2026 Jean Lúcio
+ * @copyright  2026 Jean Lúcio
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

@@ -18,7 +18,7 @@
  * Manage manual words for one PlayerWords activity.
  *
  * @package mod_playerwords
- * @copyright 2026 Jean Lúcio
+ * @copyright  2026 Jean Lúcio
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -104,7 +104,7 @@ $templatecontext = [
 ];
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(format_string($instance->name));
+echo $OUTPUT->heading(format_string($instance->name, true, ['context' => $context]));
 
 if (!empty($notification)) {
     echo $OUTPUT->notification($notification, $notificationtype);
