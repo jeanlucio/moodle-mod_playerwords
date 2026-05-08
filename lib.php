@@ -54,6 +54,15 @@ function playerwords_build_sources(stdClass $data): int {
 }
 
 /**
+ * Tells Moodle this plugin uses a branded icon (disables purpose recolour filter).
+ *
+ * @return bool
+ */
+function mod_playerwords_is_branded(): bool {
+    return true;
+}
+
+/**
  * Add a new playerwords instance.
  *
  * @param stdClass $data Form data.
