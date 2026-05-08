@@ -103,6 +103,13 @@ class start_new_round extends external_api {
             'finished'     => false,
         ];
 
+        $event = \mod_playerwords\event\round_started::create([
+            'objectid' => (int)$pickedword->id,
+            'context'  => $context,
+            'other'    => ['wordlength' => core_text::strlen($targetword)],
+        ]);
+        $event->trigger();
+
         return [
             'wordlength'    => core_text::strlen($targetword),
             'hint'          => $pickedword->hint ?? '',

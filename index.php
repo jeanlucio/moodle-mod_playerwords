@@ -29,6 +29,13 @@ $course = $DB->get_record('course', ['id' => $id], '*', MUST_EXIST);
 
 require_course_login($course);
 
+$context = context_course::instance($course->id);
+$event = \mod_playerwords\event\course_module_instance_list_viewed::create([
+    'context' => $context,
+]);
+$event->add_record_snapshot('course', $course);
+$event->trigger();
+
 $PAGE->set_url('/mod/playerwords/index.php', ['id' => $id]);
 $PAGE->set_title(get_string('modulenameplural', 'mod_playerwords'));
 $PAGE->set_heading($course->fullname);

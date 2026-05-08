@@ -158,7 +158,7 @@ class submit_guess extends external_api {
                 $timeused,
                 $iscompleted
             );
-            $DB->insert_record('playerwords_attempts', (object)[
+            $attemptid = $DB->insert_record('playerwords_attempts', (object)[
                 'playerwordsid' => $instance->id,
                 'userid'        => $userid,
                 'wordid'        => (int)$state['wordid'],
@@ -168,6 +168,18 @@ class submit_guess extends external_api {
                 'score'         => $score,
                 'timecreated'   => time(),
             ]);
+            $event = \mod_playerwords\event\round_completed::create([
+                'objectid' => $attemptid,
+                'context'  => $context,
+                'other'    => [
+                    'completed'    => $iscompleted,
+                    'score'        => $score,
+                    'attemptsused' => (int)$state['attemptsused'],
+                    'timeused'     => $timeused,
+                    'wordid'       => (int)$state['wordid'],
+                ],
+            ]);
+            $event->trigger();
             $notification = $iscompleted
                 ? get_string('roundwon', 'mod_playerwords')
                 : get_string('roundlost', 'mod_playerwords');

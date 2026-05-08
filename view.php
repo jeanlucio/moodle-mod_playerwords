@@ -35,6 +35,15 @@ $context = context_module::instance($cm->id);
 require_login($course, true, $cm);
 require_capability('mod/playerwords:view', $context);
 
+$event = \mod_playerwords\event\course_module_viewed::create([
+    'objectid' => $instance->id,
+    'context'  => $context,
+]);
+$event->add_record_snapshot('course_modules', $cm);
+$event->add_record_snapshot('course', $course);
+$event->add_record_snapshot('playerwords', $instance);
+$event->trigger();
+
 $completion = new completion_info($course);
 $completion->set_module_viewed($cm);
 
