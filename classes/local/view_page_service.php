@@ -219,7 +219,8 @@ class view_page_service {
         int $roundwordid,
         string $targetword
     ): array {
-        global $DB;
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
 
         if ($targetword === '') {
             return [$state, get_string('nogamewords', 'mod_playerwords'), 'warning'];
@@ -278,6 +279,7 @@ class view_page_service {
             'timecreated' => time(),
         ];
         $DB->insert_record('playerwords_attempts', $attempt);
+        playerwords_update_grades($instance, $userid);
 
         if ($iscompleted) {
             return [$state, get_string('roundwon', 'mod_playerwords'), 'success'];

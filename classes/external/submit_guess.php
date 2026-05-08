@@ -59,7 +59,8 @@ class submit_guess extends external_api {
      * @return array
      */
     public static function execute(int $cmid, string $guess): array {
-        global $DB, $SESSION, $USER;
+        global $CFG, $DB, $SESSION, $USER;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
 
         [
             'cmid'  => $cmid,
@@ -180,6 +181,7 @@ class submit_guess extends external_api {
                 ],
             ]);
             $event->trigger();
+            playerwords_update_grades($instance, $userid);
             $notification = $iscompleted
                 ? get_string('roundwon', 'mod_playerwords')
                 : get_string('roundlost', 'mod_playerwords');

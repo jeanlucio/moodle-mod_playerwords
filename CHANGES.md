@@ -1,5 +1,12 @@
 # CHANGES
 
+## v0.4.0 (2026050804)
+
+- Add `grademethod` setting: highest grade, average grade, first attempt or last attempt
+- Integrate with Moodle gradebook: grades are now written on every round completion
+- Simplify round score: guessing the word awards full grade; failing awards 0
+- Grade item created/updated on add/update instance; deleted on delete instance
+
 ## v0.3.0 (2026050803)
 
 - Add `max_rounds` setting: teacher can limit students to 1–10 rounds or leave unlimited (default)

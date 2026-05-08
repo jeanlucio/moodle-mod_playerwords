@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . '/../../course/moodleform_mod.php');
+require_once(__DIR__ . '/lib.php');
 
 /**
  * Activity settings form for PlayerWords.
@@ -178,6 +179,22 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setDefault('cooldown_unit', 'days');
 
         $this->standard_grading_coursemodule_elements();
+
+        $mform->addElement(
+            'select',
+            'grademethod',
+            get_string('grademethod', 'mod_playerwords'),
+            [
+                PLAYERWORDS_GRADE_HIGHEST => get_string('grademethod_highest', 'mod_playerwords'),
+                PLAYERWORDS_GRADE_AVERAGE => get_string('grademethod_average', 'mod_playerwords'),
+                PLAYERWORDS_GRADE_FIRST   => get_string('grademethod_first', 'mod_playerwords'),
+                PLAYERWORDS_GRADE_LAST    => get_string('grademethod_last', 'mod_playerwords'),
+            ]
+        );
+        $mform->setType('grademethod', PARAM_INT);
+        $mform->setDefault('grademethod', PLAYERWORDS_GRADE_HIGHEST);
+        $mform->hideIf('grademethod', 'grade[modgrade_type]', 'eq', 'none');
+
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
     }

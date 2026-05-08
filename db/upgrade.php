@@ -98,5 +98,25 @@ function xmldb_playerwords_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026050803, 'playerwords');
     }
 
+    if ($oldversion < 2026050804) {
+        $table = new xmldb_table('playerwords');
+
+        $grademethod = new xmldb_field(
+            'grademethod',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'gradepass'
+        );
+        if (!$dbman->field_exists($table, $grademethod)) {
+            $dbman->add_field($table, $grademethod);
+        }
+
+        upgrade_mod_savepoint(true, 2026050804, 'playerwords');
+    }
+
     return true;
 }

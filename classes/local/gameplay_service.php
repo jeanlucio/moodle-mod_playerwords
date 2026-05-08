@@ -95,19 +95,6 @@ class gameplay_service {
         int $timeused,
         bool $completed
     ): float {
-        if (!$completed) {
-            return 0.0;
-        }
-
-        $maxattempts = max(1, (int)$instance->max_attempts);
-        $attemptfactor = max(0.0, ($maxattempts - ($attemptsused - 1)) / $maxattempts);
-
-        $timefactor = 1.0;
-        if ((int)$instance->timer_seconds > 0) {
-            $timefactor = max(0.0, ((int)$instance->timer_seconds - $timeused) / (int)$instance->timer_seconds);
-        }
-
-        $score = (($attemptfactor * 0.7) + ($timefactor * 0.3)) * (float)$instance->grade;
-        return round(max(0.0, min((float)$instance->grade, $score)), 5);
+        return $completed ? (float)$instance->grade : 0.0;
     }
 }
