@@ -137,10 +137,13 @@ class submit_guess extends external_api {
 
         $state['rows'][] = ['word' => $normalizedguess, 'feedback' => $feedback];
 
-        $iscompleted   = ($normalizedguess === $targetword);
+        $iscompleted = ($normalizedguess === $targetword);
         $outofattempts = ((int)$state['attemptsused'] >= (int)$instance->max_attempts);
-        $outoftime     = (int)$instance->timer_seconds > 0
-            && (time() - (int)$state['starttime']) >= (int)$instance->timer_seconds;
+        $outoftime = false;
+        if ((int)$instance->timer_seconds > 0) {
+            $elapsed = time() - (int)$state['starttime'];
+            $outoftime = $elapsed >= (int)$instance->timer_seconds;
+        }
 
         $score = 0.0;
         $notification = '';
