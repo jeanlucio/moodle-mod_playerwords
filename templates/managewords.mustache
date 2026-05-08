@@ -1,0 +1,66 @@
+<p>
+    <a href="{{{backtogameurl}}}" class="btn btn-link mb-3">{{backtogamebutton}}</a>
+</p>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h3 class="h5">{{managewordslabel}}</h3>
+        <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/managewords.php">
+            <input type="hidden" name="id" value="{{cmid}}">
+            <input type="hidden" name="addword" value="1">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+
+            <label for="playerwords-manualword" class="form-label">{{manualwordlabel}}</label>
+            <input
+                type="text"
+                id="playerwords-manualword"
+                name="manualword"
+                class="form-control"
+                placeholder="{{manualwordplaceholder}}"
+                required
+            >
+
+            <label for="playerwords-manualhint" class="form-label mt-2">{{manualhintlabel}}</label>
+            <input
+                type="text"
+                id="playerwords-manualhint"
+                name="manualhint"
+                class="form-control"
+                placeholder="{{manualhintplaceholder}}"
+            >
+
+            <button type="submit" class="btn btn-secondary mt-2">{{addwordbutton}}</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h3 class="h6">{{recentwordslabel}}</h3>
+        {{#hasrecentwords}}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th scope="col">{{wordcolumnlabel}}</th>
+                            <th scope="col">{{sourcecolumnlabel}}</th>
+                            <th scope="col">{{statuscolumnlabel}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#recentwords}}
+                            <tr>
+                                <td>{{word}}</td>
+                                <td>{{source}}</td>
+                                <td>{{approved}}</td>
+                            </tr>
+                        {{/recentwords}}
+                    </tbody>
+                </table>
+            </div>
+        {{/hasrecentwords}}
+        {{^hasrecentwords}}
+            <p class="mb-0">{{nowordsyet}}</p>
+        {{/hasrecentwords}}
+    </div>
+</div>

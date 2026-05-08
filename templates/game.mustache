@@ -1,0 +1,61 @@
+<div class="mod-playerwords-game">
+    {{#canmanagewords}}
+        <p>
+            <a href="{{{managewordsurl}}}" class="btn btn-secondary">{{managewordsbutton}}</a>
+        </p>
+    {{/canmanagewords}}
+
+    {{^hastargetword}}
+        <div class="alert alert-warning">{{nogamewords}}</div>
+    {{/hastargetword}}
+
+    {{#hastargetword}}
+        <div class="mod-playerwords-status mb-3">
+            <span><strong>{{attemptslabel}}</strong> {{attemptsused}} / {{maxattempts}}</span>
+            {{#timerenabled}}
+                <span class="ms-3"><strong>{{timerlabel}}</strong> {{timeleft}}</span>
+            {{/timerenabled}}
+        </div>
+        {{#showhint}}
+            <div class="alert alert-info"><strong>{{hintlabel}}</strong> {{hintvalue}}</div>
+        {{/showhint}}
+
+        <div class="mod-playerwords-grid mb-3" role="img" aria-label="{{attemptslabel}}">
+            {{#rows}}
+                <div class="mod-playerwords-row">
+                    {{#letters}}
+                        <span class="mod-playerwords-cell is-{{state}}">{{letter}}</span>
+                    {{/letters}}
+                </div>
+            {{/rows}}
+        </div>
+
+        {{^roundfinished}}
+            <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php" class="mod-playerwords-form">
+                <input type="hidden" name="id" value="{{cmid}}">
+                <input type="hidden" name="submitguess" value="1">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <label for="playerwords-guess" class="form-label">{{guesslabel}}</label>
+                <input
+                    type="text"
+                    id="playerwords-guess"
+                    name="guess"
+                    maxlength="{{guessmaxlength}}"
+                    class="form-control"
+                    placeholder="{{guessplaceholder}}"
+                    required
+                >
+                <button type="submit" class="btn btn-primary mt-2">{{submitguess}}</button>
+            </form>
+        {{/roundfinished}}
+
+        {{#roundfinished}}
+            <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php">
+                <input type="hidden" name="id" value="{{cmid}}">
+                <input type="hidden" name="newround" value="1">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <button type="submit" class="btn btn-secondary">{{newroundlabel}}</button>
+            </form>
+        {{/roundfinished}}
+    {{/hastargetword}}
+</div>

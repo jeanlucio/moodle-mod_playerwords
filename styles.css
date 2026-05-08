@@ -1,0 +1,45 @@
+.mod-playerwords-game .mod-playerwords-grid {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mod-playerwords-game .mod-playerwords-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.mod-playerwords-game .mod-playerwords-cell {
+    width: 2.25rem;
+    height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-radius: 0.375rem;
+    border: 1px solid var(--gray-400, #ced4da);
+    background-color: var(--body-bg, #fff);
+}
+
+.mod-playerwords-game .mod-playerwords-cell.is-empty {
+    background-color: var(--gray-100, #f8f9fa);
+}
+
+.mod-playerwords-game .mod-playerwords-cell.is-absent {
+    color: var(--white, #fff);
+    background-color: var(--gray-600, #6c757d);
+}
+
+.mod-playerwords-game .mod-playerwords-cell.is-present {
+    color: var(--black, #000);
+    background-color: var(--warning, #ffc107);
+}
+
+.mod-playerwords-game .mod-playerwords-cell.is-correct {
+    color: var(--white, #fff);
+    background-color: var(--primary, #0f6cbf);
+}
+
+.mod-playerwords-game .mod-playerwords-form {
+    max-width: 20rem;
+}

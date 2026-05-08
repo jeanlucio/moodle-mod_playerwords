@@ -24,6 +24,12 @@
 
 require(__DIR__ . '/../../config.php');
 
+use mod_playerwords\local\view_page_service;
+
+if (!class_exists('\mod_playerwords\local\view_page_service')) {
+    require_once(__DIR__ . '/classes/local/view_page_service.php');
+}
+
 $id = required_param('id', PARAM_INT);
 $cm = get_coursemodule_from_id('playerwords', $id, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
@@ -40,8 +46,14 @@ $PAGE->set_url('/mod/playerwords/view.php', ['id' => $cm->id]);
 $PAGE->set_title($instance->name);
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagelayout('incourse');
+$PAGE->requires->css('/mod/playerwords/styles.css');
+
+$pagedata = view_page_service::build_page_data($cm, $instance, $context, (int)$USER->id);
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading($instance->name);
-echo $OUTPUT->notification(get_string('pluginname', 'mod_playerwords') . ' — em desenvolvimento.', 'info');
+echo $OUTPUT->heading(format_string($instance->name, true, ['context' => $context]));
+if (!empty($pagedata['notification'])) {
+    echo $OUTPUT->notification($pagedata['notification'], $pagedata['notificationtype']);
+}
+echo $OUTPUT->render_from_template('mod_playerwords/game', $pagedata['templatecontext']);
 echo $OUTPUT->footer();
