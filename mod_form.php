@@ -145,6 +145,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setType('show_ranking', PARAM_INT);
         $mform->setDefault('show_ranking', 1);
 
+        $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
     }
