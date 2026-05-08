@@ -197,14 +197,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
             $errors['completionattemptsgroup'] = get_string('error_completionattempts', 'mod_playerwords');
         }
 
-        if (!empty($data['completionmingradeenabled'])) {
-            if ((float)$data['completionmingrade'] <= 0) {
-                $errors['completionmingradegroup'] = get_string('error_completionmingrade', 'mod_playerwords');
-            } else if ((float)$data['completionmingrade'] > (float)$data['grade']) {
-                $errors['completionmingradegroup'] = get_string('error_completionmingrade_max', 'mod_playerwords');
-            }
-        }
-
         return $errors;
     }
 
@@ -231,22 +223,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setDefault('completionattempts', 1);
         $mform->disabledIf('completionattempts', 'completionattemptsenabled', 'notchecked');
 
-        $group = [];
-        $group[] = $mform->createElement('checkbox', 'completionmingradeenabled', '', '');
-        $group[] = $mform->createElement('text', 'completionmingrade', '', ['size' => 5]);
-        $mform->addGroup(
-            $group,
-            'completionmingradegroup',
-            get_string('completionmingradegroup', 'mod_playerwords'),
-            [' '],
-            false
-        );
-
-        $mform->setType('completionmingrade', PARAM_FLOAT);
-        $mform->setDefault('completionmingrade', 0);
-        $mform->disabledIf('completionmingrade', 'completionmingradeenabled', 'notchecked');
-
-        return ['completionattemptsgroup', 'completionmingradegroup'];
+        return ['completionattemptsgroup'];
     }
 
     /**
@@ -256,11 +233,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
      * @return bool
      */
     public function completion_rule_enabled($data): bool {
-        if (!empty($data['completionattemptsenabled']) && (int)$data['completionattempts'] > 0) {
-            return true;
-        }
-
-        return !empty($data['completionmingradeenabled']) && (float)$data['completionmingrade'] > 0;
+        return !empty($data['completionattemptsenabled']) && (int)$data['completionattempts'] > 0;
     }
 
     /**
@@ -280,11 +253,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         if (!empty($defaultvalues['completionattempts'])) {
             $defaultvalues['completionattemptsenabled'] = 1;
-        }
-
-        if (!empty($defaultvalues['gradepass'])) {
-            $defaultvalues['completionmingradeenabled'] = 1;
-            $defaultvalues['completionmingrade'] = $defaultvalues['gradepass'];
         }
     }
 }

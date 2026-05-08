@@ -74,12 +74,7 @@ function playerwords_add_instance(stdClass $data): int {
     if (empty($data->completionattemptsenabled)) {
         $data->completionattempts = 0;
     }
-    if (!empty($data->completionmingradeenabled) && !empty($data->completionmingrade)) {
-        $data->gradepass = (float)$data->completionmingrade;
-    } else {
-        $data->gradepass = 0;
-    }
-    unset($data->completionattemptsenabled, $data->completionmingradeenabled, $data->completionmingrade);
+    unset($data->completionattemptsenabled);
 
     $data->sources = playerwords_build_sources($data);
     unset($data->source_manual, $data->source_glossary, $data->source_ai);
@@ -100,12 +95,7 @@ function playerwords_update_instance(stdClass $data): bool {
     if (empty($data->completionattemptsenabled)) {
         $data->completionattempts = 0;
     }
-    if (!empty($data->completionmingradeenabled) && !empty($data->completionmingrade)) {
-        $data->gradepass = (float)$data->completionmingrade;
-    } else {
-        $data->gradepass = 0;
-    }
-    unset($data->completionattemptsenabled, $data->completionmingradeenabled, $data->completionmingrade);
+    unset($data->completionattemptsenabled);
 
     $data->sources = playerwords_build_sources($data);
     unset($data->source_manual, $data->source_glossary, $data->source_ai);
@@ -175,7 +165,7 @@ function playerwords_get_completion_state(
     $playerwords = $DB->get_record(
         'playerwords',
         ['id' => $cm->instance],
-        'id, completionattempts, gradepass',
+        'id, completionattempts',
         MUST_EXIST
     );
 
@@ -193,27 +183,9 @@ function playerwords_get_completion_state(
         $attemptsok = $attemptscount >= (int)$playerwords->completionattempts;
     }
 
-    $gradeok = null;
-    if ((float)$playerwords->gradepass > 0) {
-        $maxscore = $DB->get_field_sql(
-            "SELECT MAX(a.score)
-               FROM {playerwords_attempts} a
-              WHERE a.playerwordsid = :playerwordsid
-                AND a.userid = :userid",
-            [
-                'playerwordsid' => $playerwords->id,
-                'userid' => $userid,
-            ]
-        );
-        $gradeok = ((float)$maxscore) >= (float)$playerwords->gradepass;
-    }
-
     $activeconditions = [];
     if ($attemptsok !== null) {
         $activeconditions[] = $attemptsok;
-    }
-    if ($gradeok !== null) {
-        $activeconditions[] = $gradeok;
     }
 
     if ($activeconditions === []) {
