@@ -1,5 +1,12 @@
 # CHANGES
 
+## v0.14.0 (2026050903)
+
+- Word pool table on the Manage words page now supports column sorting (Word, Source, Status) — click a column header to sort ascending; click again to reverse
+- Checkbox per row and a "select all" header checkbox allow multi-select; a "Delete selected" button with confirmation modal bulk-deletes checked words in one request
+- Individual "Delete" buttons now use the same bulk mechanism with a pre-selected checkbox, removing the old nested-form approach
+- New "Edit" button per row opens an inline edit card above the table; saving updates word text and hint without leaving the page
+
 ## v0.13.0 (2026050902)
 
 - Add "Delete" button per word on the Manage words page; teacher must confirm before the word is permanently removed

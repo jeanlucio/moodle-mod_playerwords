@@ -272,6 +272,73 @@ class words_repository {
     }
 
     /**
+     * Gets one word by id and activity, regardless of approval status.
+     *
+     * @param int $wordid Word id.
+     * @param int $instanceid Activity instance id.
+     * @return \stdClass|null
+     */
+    public static function get_word_by_id(int $wordid, int $instanceid): ?\stdClass {
+        global $DB;
+        $word = $DB->get_record_sql(
+            "SELECT id, word, hint, source, approved
+               FROM {playerwords_words}
+              WHERE id = :id AND playerwordsid = :iid",
+            ['id' => $wordid, 'iid' => $instanceid],
+            IGNORE_MISSING
+        );
+        return $word ?: null;
+    }
+
+    /**
+     * Updates word text and hint for an entry that belongs to the given activity.
+     *
+     * @param int $wordid Word id.
+     * @param int $instanceid Activity instance id.
+     * @param string $word New word text.
+     * @param string $hint New hint text.
+     * @return bool True if the record was found and updated.
+     */
+    public static function update_word(int $wordid, int $instanceid, string $word, string $hint): bool {
+        global $DB;
+        $existing = $DB->get_record_sql(
+            "SELECT id FROM {playerwords_words} WHERE id = :id AND playerwordsid = :iid",
+            ['id' => $wordid, 'iid' => $instanceid],
+            IGNORE_MISSING
+        );
+        if (!$existing) {
+            return false;
+        }
+        return $DB->update_record('playerwords_words', (object)[
+            'id'      => $wordid,
+            'word'    => trim($word),
+            'concept' => trim($word),
+            'hint'    => trim($hint),
+        ]);
+    }
+
+    /**
+     * Bulk-deletes words that belong to the given activity instance.
+     *
+     * @param int[] $wordids Word ids to delete.
+     * @param int $instanceid Activity instance id.
+     * @return void
+     */
+    public static function delete_words_bulk(array $wordids, int $instanceid): void {
+        global $DB;
+        if (empty($wordids)) {
+            return;
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($wordids, SQL_PARAMS_NAMED, 'wid');
+        $inparams['instanceid'] = $instanceid;
+        $DB->delete_records_select(
+            'playerwords_words',
+            "id $insql AND playerwordsid = :instanceid",
+            $inparams
+        );
+    }
+
+    /**
      * Deletes one word from a given activity instance.
      *
      * @param int $wordid Word id.
@@ -284,19 +351,28 @@ class words_repository {
     }
 
     /**
-     * Returns latest words for teacher preview.
+     * Returns words for the teacher word pool, ordered by the given column.
+     *
+     * Both $sort and $dir must be validated by the caller against an allow-list
+     * before being passed here.
      *
      * @param int $instanceid Activity instance id.
-     * @param int $limit Number of records.
+     * @param int $limit Maximum number of records (0 = unlimited).
+     * @param string $sort Column name to sort by.
+     * @param string $dir Sort direction: 'ASC' or 'DESC'.
      * @return array
      */
-    public static function get_recent_words(int $instanceid, int $limit = 0): array {
+    public static function get_recent_words(
+        int $instanceid,
+        int $limit = 0,
+        string $sort = 'id',
+        string $dir = 'DESC'
+    ): array {
         global $DB;
-
         return $DB->get_records(
             'playerwords_words',
             ['playerwordsid' => $instanceid],
-            'id DESC',
+            "$sort $dir",
             'id, word, source, approved',
             0,
             $limit

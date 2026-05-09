@@ -36,6 +36,20 @@ $context = context_module::instance($cm->id);
 require_login($course, true, $cm);
 require_capability('mod/playerwords:addinstance', $context);
 
+$sort = optional_param('sort', 'id', PARAM_ALPHA);
+$dir  = optional_param('dir', 'DESC', PARAM_ALPHA);
+
+$allowedsorts = ['id', 'word', 'source', 'approved'];
+if (!in_array($sort, $allowedsorts, true)) {
+    $sort = 'id';
+}
+$dir = strtoupper($dir);
+if (!in_array($dir, ['ASC', 'DESC'], true)) {
+    $dir = 'DESC';
+}
+
+$editwordid = optional_param('editwordid', 0, PARAM_INT);
+
 $notification = null;
 $notificationtype = null;
 
@@ -70,6 +84,33 @@ if (optional_param('addword', 0, PARAM_BOOL)) {
     }
 }
 
+if (optional_param('saveword', 0, PARAM_BOOL)) {
+    require_sesskey();
+
+    $wordid    = required_param('wordid', PARAM_INT);
+    $manualword = trim(required_param('manualword', PARAM_TEXT));
+    $manualhint = trim(optional_param('manualhint', '', PARAM_TEXT));
+    $wordlength = core_text::strlen($manualword);
+
+    if ($manualword === '') {
+        $notification = get_string('error_manualwordrequired', 'mod_playerwords');
+        $notificationtype = 'warning';
+        $editwordid = $wordid;
+    } else if ($wordlength < (int)$instance->min_length || $wordlength > (int)$instance->max_length) {
+        $notification = get_string(
+            'error_manualwordlength',
+            'mod_playerwords',
+            ['min' => (int)$instance->min_length, 'max' => (int)$instance->max_length]
+        );
+        $notificationtype = 'warning';
+        $editwordid = $wordid;
+    } else {
+        words_repository::update_word($wordid, (int)$instance->id, $manualword, $manualhint);
+        $notification = get_string('wordupdated', 'mod_playerwords');
+        $notificationtype = 'success';
+    }
+}
+
 if (optional_param('deleteword', 0, PARAM_BOOL)) {
     require_sesskey();
     $wordid = required_param('wordid', PARAM_INT);
@@ -78,13 +119,44 @@ if (optional_param('deleteword', 0, PARAM_BOOL)) {
     $notificationtype = 'success';
 }
 
-$recentwords = words_repository::get_recent_words((int)$instance->id);
+if (optional_param('bulkdelete', 0, PARAM_BOOL)) {
+    require_sesskey();
+    $wordids = optional_param_array('bulk_ids', [], PARAM_INT);
+    $wordids = array_values(array_filter(array_map('intval', $wordids)));
+    words_repository::delete_words_bulk($wordids, (int)$instance->id);
+    $notification = get_string('bulkdeleted', 'mod_playerwords');
+    $notificationtype = 'success';
+}
 
-$PAGE->set_url('/mod/playerwords/managewords.php', ['id' => $cm->id]);
-$PAGE->set_title(get_string('managewordslabel', 'mod_playerwords'));
-$PAGE->set_heading($course->fullname);
-$PAGE->set_pagelayout('incourse');
-$PAGE->requires->js_call_amd('mod_playerwords/managewords', 'init');
+$recentwords = words_repository::get_recent_words((int)$instance->id, 0, $sort, $dir);
+
+$editworddata = null;
+if ($editwordid > 0) {
+    $editworddata = words_repository::get_word_by_id($editwordid, (int)$instance->id);
+    if (!$editworddata) {
+        $editwordid = 0;
+    }
+}
+
+$basepageurl = new moodle_url('/mod/playerwords/managewords.php', ['id' => $cm->id]);
+
+$sortcols = ['word', 'source', 'approved'];
+$sorticons = [];
+$sorturls  = [];
+foreach ($sortcols as $col) {
+    if ($sort === $col) {
+        $newdir = ($dir === 'ASC') ? 'DESC' : 'ASC';
+        $icon   = ($dir === 'ASC') ? 'fa-sort-up' : 'fa-sort-down';
+    } else {
+        $newdir = 'ASC';
+        $icon   = 'fa-sort';
+    }
+    $sorticons[$col] = $icon;
+    $colurl = clone $basepageurl;
+    $colurl->param('sort', $col);
+    $colurl->param('dir', $newdir);
+    $sorturls[$col] = $colurl->out(false);
+}
 
 $templaterows = [];
 foreach ($recentwords as $recentword) {
@@ -93,21 +165,39 @@ foreach ($recentwords as $recentword) {
         get_string('approvedstatus', 'mod_playerwords') :
         get_string('pendingstatus', 'mod_playerwords');
 
+    $editurl = clone $basepageurl;
+    $editurl->param('sort', $sort);
+    $editurl->param('dir', $dir);
+    $editurl->param('editwordid', $recentword->id);
+
     $templaterows[] = [
-        'id'       => (int)$recentword->id,
-        'word'     => $recentword->word,
-        'source'   => $sourcelabel,
-        'approved' => $statuslabel,
+        'id'          => (int)$recentword->id,
+        'word'        => $recentword->word,
+        'source'      => $sourcelabel,
+        'approved'    => $statuslabel,
+        'editwordurl' => $editurl->out(false),
     ];
 }
 
+$cancelediteurl = clone $basepageurl;
+$cancelediteurl->param('sort', $sort);
+$cancelediteurl->param('dir', $dir);
+
 $cansyncglossary = ((int)$instance->sources & PLAYERWORDS_SOURCE_GLOSSARY) !== 0;
+
+$PAGE->set_url('/mod/playerwords/managewords.php', ['id' => $cm->id]);
+$PAGE->set_title(get_string('managewordslabel', 'mod_playerwords'));
+$PAGE->set_heading($course->fullname);
+$PAGE->set_pagelayout('incourse');
+$PAGE->requires->js_call_amd('mod_playerwords/managewords', 'init');
 
 $templatecontext = [
     'cmid'                  => $cm->id,
     'sesskey'               => sesskey(),
     'backtogameurl'         => (new moodle_url('/mod/playerwords/view.php', ['id' => $cm->id]))->out(false),
     'backtogamebutton'      => get_string('backtogamebutton', 'mod_playerwords'),
+    'cansyncglossary'       => $cansyncglossary,
+    'syncglossarybutton'    => get_string('syncglossarybutton', 'mod_playerwords'),
     'managewordslabel'      => get_string('managewordslabel', 'mod_playerwords'),
     'manualwordlabel'       => get_string('manualwordlabel', 'mod_playerwords'),
     'manualhintlabel'       => get_string('manualhintlabel', 'mod_playerwords'),
@@ -123,10 +213,30 @@ $templatecontext = [
     'deletewordbutton'      => get_string('deletewordbutton', 'mod_playerwords'),
     'deletewordconfirm'     => get_string('deletewordconfirm', 'mod_playerwords'),
     'deletewordtitle'       => get_string('deletewordtitle', 'mod_playerwords'),
+    'bulkdeletebutton'      => get_string('bulkdeletebutton', 'mod_playerwords'),
+    'bulkdeleteconfirm'     => get_string('bulkdeleteconfirm', 'mod_playerwords'),
+    'editwordbutton'        => get_string('editwordbutton', 'mod_playerwords'),
+    'editwordlabel'         => get_string('editwordlabel', 'mod_playerwords'),
+    'savewordbutton'        => get_string('savewordbutton', 'mod_playerwords'),
+    'cancelbutton'          => get_string('cancelbutton', 'mod_playerwords'),
+    'selectall'             => get_string('selectall', 'mod_playerwords'),
+    'selectword'            => get_string('selectword', 'mod_playerwords'),
+    'wordupdated'           => get_string('wordupdated', 'mod_playerwords'),
+    'currentsort'           => $sort,
+    'currentdir'            => $dir,
+    'sort_word_url'         => $sorturls['word'],
+    'sort_word_icon'        => $sorticons['word'],
+    'sort_source_url'       => $sorturls['source'],
+    'sort_source_icon'      => $sorticons['source'],
+    'sort_approved_url'     => $sorturls['approved'],
+    'sort_approved_icon'    => $sorticons['approved'],
     'recentwords'           => $templaterows,
     'hasrecentwords'        => !empty($templaterows),
-    'cansyncglossary'       => $cansyncglossary,
-    'syncglossarybutton'    => get_string('syncglossarybutton', 'mod_playerwords'),
+    'haseditword'           => $editwordid > 0 && $editworddata !== null,
+    'editword_id'           => $editworddata ? (int)$editworddata->id : 0,
+    'editword_word'         => $editworddata ? $editworddata->word : '',
+    'editword_hint'         => $editworddata ? ($editworddata->hint ?? '') : '',
+    'cancelediteurl'        => $cancelediteurl->out(false),
 ];
 
 echo $OUTPUT->header();
