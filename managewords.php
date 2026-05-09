@@ -70,7 +70,7 @@ if (optional_param('addword', 0, PARAM_BOOL)) {
     }
 }
 
-$recentwords = words_repository::get_recent_words((int)$instance->id, 20);
+$recentwords = words_repository::get_recent_words((int)$instance->id);
 
 $PAGE->set_url('/mod/playerwords/managewords.php', ['id' => $cm->id]);
 $PAGE->set_title(get_string('managewordslabel', 'mod_playerwords'));

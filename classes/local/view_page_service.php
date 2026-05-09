@@ -195,6 +195,7 @@ class view_page_service {
 
         $targetword = '';
         $roundwordid = 0;
+        $wordremoved = false;
 
         if ((int)$state['wordid'] > 0 && empty($state['finished'])) {
             $roundwordid = (int)$state['wordid'];
@@ -203,10 +204,16 @@ class view_page_service {
                 $targetword = word_normalizer::normalize($wordrecord->word, !empty($instance->ignore_accents));
                 $state['hint'] = $wordrecord->hint ?? '';
                 $state['concept'] = $wordrecord->concept ?? '';
+            } else {
+                // Word was removed or unapproved mid-round; reset so the next load picks a fresh word.
+                $state['wordid'] = 0;
+                $state['attemptsused'] = 0;
+                $state['rows'] = [];
+                $wordremoved = true;
             }
         }
 
-        if ($targetword === '' || !empty($state['finished'])) {
+        if (!$wordremoved && ($targetword === '' || !empty($state['finished']))) {
             $completedround = $DB->count_records('playerwords_attempts', [
                 'playerwordsid' => $instance->id,
                 'userid' => $userid,

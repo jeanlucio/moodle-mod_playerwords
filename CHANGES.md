@@ -1,5 +1,10 @@
 # CHANGES
 
+## v0.12.1 (2026050901)
+
+- Fix: "Word pool" on the Manage words page now shows all approved words instead of only the 20 most recent — teachers can no longer miss active candidates
+- Fix: if the active word for an ongoing round is removed or unapproved mid-round, the round now resets cleanly on the next page load instead of silently switching to a different word on the same request
+
 ## v0.12.0 (2026050900)
 
 - Add "Give up" button: player can forfeit the current round, which ends it immediately, records the attempt as a loss, and starts the cooldown — the correct word is revealed on the same end screen

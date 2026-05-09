@@ -278,7 +278,7 @@ class words_repository {
      * @param int $limit Number of records.
      * @return array
      */
-    public static function get_recent_words(int $instanceid, int $limit = 10): array {
+    public static function get_recent_words(int $instanceid, int $limit = 0): array {
         global $DB;
 
         return $DB->get_records(
