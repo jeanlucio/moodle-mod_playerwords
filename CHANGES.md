@@ -1,5 +1,11 @@
 # CHANGES
 
+## v0.8.0 (2026050808)
+
+- Fix contrast on absent cells: background darkened from #6c757d to #495057 (contrast 4.1:1 → 7.0:1, WCAG AA)
+- Add non-colour visual indicators: ✓ on correct cells, ~ on present cells (helps colourblind users)
+- Add aria-label on every grid cell describing letter and state for screen readers
+
 ## v0.7.0 (2026050807)
 
 - Hint is now hidden by default; student must click "Reveal hint" to see it (prepared for future PlayerHUD item cost integration)

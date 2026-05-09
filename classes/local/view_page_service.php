@@ -416,9 +416,11 @@ class view_page_service {
                 $letters = preg_split('//u', $rowstate['word'], -1, PREG_SPLIT_NO_EMPTY);
                 foreach ($letters as $index => $letter) {
                     $cellstate = $rowstate['feedback'][$index] ?? 'absent';
+                    $upperletter = core_text::strtoupper($letter);
                     $rowletters[] = [
-                        'letter' => s(core_text::strtoupper($letter)),
+                        'letter' => s($upperletter),
                         'state' => $cellstate,
+                        'arialabel' => get_string('cell_state_' . $cellstate, 'mod_playerwords', $upperletter),
                     ];
                 }
             } else if ($targetword !== '') {
@@ -426,6 +428,7 @@ class view_page_service {
                     $rowletters[] = [
                         'letter' => '',
                         'state' => 'empty',
+                        'arialabel' => get_string('cell_state_empty', 'mod_playerwords'),
                     ];
                 }
             }
