@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['actionscolumnlabel'] = 'Actions';
 $string['addwordbutton'] = 'Add word';
 $string['aigranularity'] = 'AI extraction scope';
 $string['aigranularity_course'] = 'Whole course';
@@ -44,6 +45,8 @@ $string['cooldown_unit_hours'] = 'Hours';
 $string['cooldown_unit_minutes'] = 'Minutes';
 $string['cooldownactive'] = 'You can start a new round in {$a}.';
 $string['cooldowncountdownlabel'] = 'Next round in';
+$string['deletewordbutton'] = 'Delete';
+$string['deletewordconfirm'] = 'Are you sure you want to delete this word? This action cannot be undone.';
 $string['error_atleastonesource'] = 'Select at least one word source.';
 $string['error_completionattempts'] = 'Required attempts must be at least 1.';
 $string['error_cooldown'] = 'Cooldown must be 0 or a positive value.';
@@ -130,6 +133,7 @@ $string['syncglossarybutton'] = 'Sync with glossary';
 $string['timer_seconds'] = 'Timer in seconds (0 to disable)';
 $string['timerlabel'] = 'Time left (s):';
 $string['wordcolumnlabel'] = 'Word';
+$string['worddeleted'] = 'Word deleted.';
 $string['wordmode'] = 'Word selection mode';
 $string['wordmode_random'] = 'Random word per round';
 $string['wordmode_shared'] = 'Shared sequence (all students receive the same words in the same order)';

@@ -1,5 +1,9 @@
 # CHANGES
 
+## v0.13.0 (2026050902)
+
+- Add "Delete" button per word on the Manage words page; teacher must confirm before the word is permanently removed
+
 ## v0.12.1 (2026050901)
 
 - Fix: "Word pool" on the Manage words page now shows all approved words instead of only the 20 most recent — teachers can no longer miss active candidates

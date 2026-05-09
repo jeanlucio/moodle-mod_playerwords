@@ -70,12 +70,21 @@ if (optional_param('addword', 0, PARAM_BOOL)) {
     }
 }
 
+if (optional_param('deleteword', 0, PARAM_BOOL)) {
+    require_sesskey();
+    $wordid = required_param('wordid', PARAM_INT);
+    words_repository::delete_word($wordid, (int)$instance->id);
+    $notification = get_string('worddeleted', 'mod_playerwords');
+    $notificationtype = 'success';
+}
+
 $recentwords = words_repository::get_recent_words((int)$instance->id);
 
 $PAGE->set_url('/mod/playerwords/managewords.php', ['id' => $cm->id]);
 $PAGE->set_title(get_string('managewordslabel', 'mod_playerwords'));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagelayout('incourse');
+$PAGE->requires->js_call_amd('mod_playerwords/managewords', 'init');
 
 $templaterows = [];
 foreach ($recentwords as $recentword) {
@@ -85,8 +94,9 @@ foreach ($recentwords as $recentword) {
         get_string('pendingstatus', 'mod_playerwords');
 
     $templaterows[] = [
-        'word' => $recentword->word,
-        'source' => $sourcelabel,
+        'id'       => (int)$recentword->id,
+        'word'     => $recentword->word,
+        'source'   => $sourcelabel,
         'approved' => $statuslabel,
     ];
 }
@@ -94,25 +104,28 @@ foreach ($recentwords as $recentword) {
 $cansyncglossary = ((int)$instance->sources & PLAYERWORDS_SOURCE_GLOSSARY) !== 0;
 
 $templatecontext = [
-    'cmid' => $cm->id,
-    'sesskey' => sesskey(),
-    'backtogameurl' => (new moodle_url('/mod/playerwords/view.php', ['id' => $cm->id]))->out(false),
-    'backtogamebutton' => get_string('backtogamebutton', 'mod_playerwords'),
-    'managewordslabel' => get_string('managewordslabel', 'mod_playerwords'),
-    'manualwordlabel' => get_string('manualwordlabel', 'mod_playerwords'),
-    'manualhintlabel' => get_string('manualhintlabel', 'mod_playerwords'),
+    'cmid'                  => $cm->id,
+    'sesskey'               => sesskey(),
+    'backtogameurl'         => (new moodle_url('/mod/playerwords/view.php', ['id' => $cm->id]))->out(false),
+    'backtogamebutton'      => get_string('backtogamebutton', 'mod_playerwords'),
+    'managewordslabel'      => get_string('managewordslabel', 'mod_playerwords'),
+    'manualwordlabel'       => get_string('manualwordlabel', 'mod_playerwords'),
+    'manualhintlabel'       => get_string('manualhintlabel', 'mod_playerwords'),
     'manualwordplaceholder' => get_string('manualwordplaceholder', 'mod_playerwords'),
     'manualhintplaceholder' => get_string('manualhintplaceholder', 'mod_playerwords'),
-    'addwordbutton' => get_string('addwordbutton', 'mod_playerwords'),
-    'recentwordslabel' => get_string('recentwordslabel', 'mod_playerwords'),
-    'nowordsyet' => get_string('nowordsyet', 'mod_playerwords'),
-    'wordcolumnlabel' => get_string('wordcolumnlabel', 'mod_playerwords'),
-    'sourcecolumnlabel' => get_string('sourcecolumnlabel', 'mod_playerwords'),
-    'statuscolumnlabel' => get_string('statuscolumnlabel', 'mod_playerwords'),
-    'recentwords' => $templaterows,
-    'hasrecentwords' => !empty($templaterows),
-    'cansyncglossary' => $cansyncglossary,
-    'syncglossarybutton' => get_string('syncglossarybutton', 'mod_playerwords'),
+    'addwordbutton'         => get_string('addwordbutton', 'mod_playerwords'),
+    'recentwordslabel'      => get_string('recentwordslabel', 'mod_playerwords'),
+    'nowordsyet'            => get_string('nowordsyet', 'mod_playerwords'),
+    'wordcolumnlabel'       => get_string('wordcolumnlabel', 'mod_playerwords'),
+    'sourcecolumnlabel'     => get_string('sourcecolumnlabel', 'mod_playerwords'),
+    'statuscolumnlabel'     => get_string('statuscolumnlabel', 'mod_playerwords'),
+    'actionscolumnlabel'    => get_string('actionscolumnlabel', 'mod_playerwords'),
+    'deletewordbutton'      => get_string('deletewordbutton', 'mod_playerwords'),
+    'deletewordconfirm'     => get_string('deletewordconfirm', 'mod_playerwords'),
+    'recentwords'           => $templaterows,
+    'hasrecentwords'        => !empty($templaterows),
+    'cansyncglossary'       => $cansyncglossary,
+    'syncglossarybutton'    => get_string('syncglossarybutton', 'mod_playerwords'),
 ];
 
 echo $OUTPUT->header();

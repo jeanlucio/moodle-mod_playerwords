@@ -38,9 +38,13 @@
         "wordcolumnlabel": "Word",
         "sourcecolumnlabel": "Source",
         "statuscolumnlabel": "Status",
+        "actionscolumnlabel": "Actions",
+        "deletewordbutton": "Delete",
+        "deletewordconfirm": "Are you sure you want to delete this word?",
         "hasrecentwords": true,
         "recentwords": [
             {
+                "id": 1,
                 "word": "ocean",
                 "source": "Manual insertion",
                 "approved": "Approved"
@@ -108,6 +112,7 @@
                             <th scope="col">{{wordcolumnlabel}}</th>
                             <th scope="col">{{sourcecolumnlabel}}</th>
                             <th scope="col">{{statuscolumnlabel}}</th>
+                            <th scope="col">{{actionscolumnlabel}}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -116,6 +121,20 @@
                                 <td>{{word}}</td>
                                 <td>{{source}}</td>
                                 <td>{{approved}}</td>
+                                <td>
+                                    <form method="post"
+                                          action="{{{config.wwwroot}}}/mod/playerwords/managewords.php"
+                                          class="mod-playerwords-delete-form"
+                                          data-confirm="{{deletewordconfirm}}">
+                                        <input type="hidden" name="id" value="{{cmid}}">
+                                        <input type="hidden" name="deleteword" value="1">
+                                        <input type="hidden" name="wordid" value="{{id}}">
+                                        <input type="hidden" name="sesskey" value="{{sesskey}}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            {{deletewordbutton}}
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                         {{/recentwords}}
                     </tbody>

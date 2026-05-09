@@ -24,6 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['actionscolumnlabel'] = 'Ações';
 $string['addwordbutton'] = 'Adicionar palavra';
 $string['aigranularity'] = 'Escopo de extração da IA';
 $string['aigranularity_course'] = 'Curso inteiro';
@@ -44,6 +45,8 @@ $string['cooldown_unit_hours'] = 'Horas';
 $string['cooldown_unit_minutes'] = 'Minutos';
 $string['cooldownactive'] = 'Você pode iniciar uma nova rodada em {$a}.';
 $string['cooldowncountdownlabel'] = 'Próxima rodada em';
+$string['deletewordbutton'] = 'Excluir';
+$string['deletewordconfirm'] = 'Tem certeza que deseja excluir esta palavra? Esta ação não pode ser desfeita.';
 $string['error_atleastonesource'] = 'Selecione ao menos uma fonte de palavras.';
 $string['error_completionattempts'] = 'As tentativas exigidas devem ser no mínimo 1.';
 $string['error_cooldown'] = 'O cooldown deve ser 0 ou um valor positivo.';
@@ -130,6 +133,7 @@ $string['syncglossarybutton'] = 'Sincronizar com glossário';
 $string['timer_seconds'] = 'Temporizador em segundos (0 para desativar)';
 $string['timerlabel'] = 'Tempo restante (s):';
 $string['wordcolumnlabel'] = 'Palavra';
+$string['worddeleted'] = 'Palavra excluída.';
 $string['wordmode'] = 'Modo de seleção de palavras';
 $string['wordmode_random'] = 'Palavra aleatória por rodada';
 $string['wordmode_shared'] = 'Sequência compartilhada (todos os estudantes recebem as mesmas palavras na mesma ordem)';

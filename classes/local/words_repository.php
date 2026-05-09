@@ -272,6 +272,18 @@ class words_repository {
     }
 
     /**
+     * Deletes one word from a given activity instance.
+     *
+     * @param int $wordid Word id.
+     * @param int $instanceid Activity instance id.
+     * @return bool
+     */
+    public static function delete_word(int $wordid, int $instanceid): bool {
+        global $DB;
+        return $DB->delete_records('playerwords_words', ['id' => $wordid, 'playerwordsid' => $instanceid]);
+    }
+
+    /**
      * Returns latest words for teacher preview.
      *
      * @param int $instanceid Activity instance id.
