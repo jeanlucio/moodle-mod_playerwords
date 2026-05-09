@@ -36,8 +36,8 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
                 e.preventDefault();
                 Promise.all([
                     ModalSaveCancel.create({
-                        title: form.dataset.confirm,
-                        body: '',
+                        title: form.dataset.title,
+                        body: form.dataset.confirm,
                         show: true,
                         removeOnClose: true,
                     }),

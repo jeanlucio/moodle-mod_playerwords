@@ -40,7 +40,8 @@
         "statuscolumnlabel": "Status",
         "actionscolumnlabel": "Actions",
         "deletewordbutton": "Delete",
-        "deletewordconfirm": "Are you sure you want to delete this word?",
+        "deletewordconfirm": "Are you sure you want to delete this word? This action cannot be undone.",
+        "deletewordtitle": "Delete word",
         "hasrecentwords": true,
         "recentwords": [
             {
@@ -125,6 +126,7 @@
                                     <form method="post"
                                           action="{{{config.wwwroot}}}/mod/playerwords/managewords.php"
                                           class="mod-playerwords-delete-form"
+                                          data-title="{{deletewordtitle}}"
                                           data-confirm="{{deletewordconfirm}}">
                                         <input type="hidden" name="id" value="{{cmid}}">
                                         <input type="hidden" name="deleteword" value="1">

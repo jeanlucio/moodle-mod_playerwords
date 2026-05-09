@@ -47,6 +47,7 @@ $string['cooldownactive'] = 'Você pode iniciar uma nova rodada em {$a}.';
 $string['cooldowncountdownlabel'] = 'Próxima rodada em';
 $string['deletewordbutton'] = 'Excluir';
 $string['deletewordconfirm'] = 'Tem certeza que deseja excluir esta palavra? Esta ação não pode ser desfeita.';
+$string['deletewordtitle'] = 'Excluir palavra';
 $string['error_atleastonesource'] = 'Selecione ao menos uma fonte de palavras.';
 $string['error_completionattempts'] = 'As tentativas exigidas devem ser no mínimo 1.';
 $string['error_cooldown'] = 'O cooldown deve ser 0 ou um valor positivo.';

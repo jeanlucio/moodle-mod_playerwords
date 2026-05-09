@@ -122,6 +122,7 @@ $templatecontext = [
     'actionscolumnlabel'    => get_string('actionscolumnlabel', 'mod_playerwords'),
     'deletewordbutton'      => get_string('deletewordbutton', 'mod_playerwords'),
     'deletewordconfirm'     => get_string('deletewordconfirm', 'mod_playerwords'),
+    'deletewordtitle'       => get_string('deletewordtitle', 'mod_playerwords'),
     'recentwords'           => $templaterows,
     'hasrecentwords'        => !empty($templaterows),
     'cansyncglossary'       => $cansyncglossary,

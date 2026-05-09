@@ -47,6 +47,7 @@ $string['cooldownactive'] = 'You can start a new round in {$a}.';
 $string['cooldowncountdownlabel'] = 'Next round in';
 $string['deletewordbutton'] = 'Delete';
 $string['deletewordconfirm'] = 'Are you sure you want to delete this word? This action cannot be undone.';
+$string['deletewordtitle'] = 'Delete word';
 $string['error_atleastonesource'] = 'Select at least one word source.';
 $string['error_completionattempts'] = 'Required attempts must be at least 1.';
 $string['error_cooldown'] = 'Cooldown must be 0 or a positive value.';
