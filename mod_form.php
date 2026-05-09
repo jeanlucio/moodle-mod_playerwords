@@ -51,7 +51,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
      * @return void
      */
     public function definition(): void {
-        global $CFG;
+        global $CFG, $COURSE, $DB;
 
         $mform = $this->_form;
 
@@ -107,6 +107,21 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setType('aigranularity', PARAM_ALPHA);
         $mform->setDefault('aigranularity', 'course');
         $mform->hideIf('aigranularity', 'source_ai', 'notchecked');
+
+        $glossaryoptions = [0 => get_string('glossaryid_all', 'mod_playerwords')];
+        $courseglossaries = $DB->get_records('glossary', ['course' => $COURSE->id], 'name ASC', 'id, name');
+        foreach ($courseglossaries as $glossary) {
+            $glossaryoptions[$glossary->id] = format_string($glossary->name);
+        }
+        $mform->addElement(
+            'select',
+            'glossaryid',
+            get_string('glossaryid', 'mod_playerwords'),
+            $glossaryoptions
+        );
+        $mform->setType('glossaryid', PARAM_INT);
+        $mform->setDefault('glossaryid', 0);
+        $mform->hideIf('glossaryid', 'source_glossary', 'notchecked');
 
         $mform->addElement('header', 'gameplayheader', get_string('gameplayheader', 'mod_playerwords'));
 

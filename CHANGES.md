@@ -1,5 +1,11 @@
 # CHANGES
 
+## v0.11.0 (2026050811)
+
+- Add glossary integration: teacher selects a glossary (or all course glossaries) as word source; concepts are imported into the word pool with their definitions as hints
+- Sync runs automatically when the activity is saved; teacher can also trigger it manually via "Sync with glossary" button on the Manage words page
+- Words outside the configured length range are skipped; re-syncing updates hints without duplicating entries
+
 ## v0.10.0 (2026050810)
 
 - Validate guess charset: only Unicode letters accepted; digits, spaces and symbols are rejected with a clear error message

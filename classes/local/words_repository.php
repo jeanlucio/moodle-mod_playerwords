@@ -146,6 +146,90 @@ class words_repository {
     }
 
     /**
+     * Imports approved glossary entries into the word pool for a given activity instance.
+     *
+     * Existing words (matched case-insensitively by concept) have their hint updated.
+     * New words are inserted as approved. Words outside the configured length bounds are skipped.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @return int Number of new words imported.
+     */
+    public static function sync_glossary_words(\stdClass $instance): int {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        if (!((int)$instance->sources & PLAYERWORDS_SOURCE_GLOSSARY)) {
+            return 0;
+        }
+
+        $glossaryid = (int)($instance->glossaryid ?? 0);
+        if ($glossaryid > 0) {
+            $glossaryids = [$glossaryid];
+        } else {
+            $glossaryids = $DB->get_fieldset_select(
+                'glossary',
+                'id',
+                'course = :course',
+                ['course' => $instance->course]
+            );
+            if (empty($glossaryids)) {
+                return 0;
+            }
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($glossaryids, SQL_PARAMS_NAMED, 'gid');
+        $entries = $DB->get_records_sql(
+            "SELECT ge.id, ge.concept, ge.definition"
+            . " FROM {glossary_entries} ge"
+            . " WHERE ge.glossaryid $insql AND ge.approved = 1",
+            $inparams
+        );
+
+        $existing = $DB->get_records_select(
+            'playerwords_words',
+            'playerwordsid = :pid AND source = :source',
+            ['pid' => $instance->id, 'source' => 'glossary'],
+            '',
+            'id, word'
+        );
+        $existingmap = [];
+        foreach ($existing as $rec) {
+            $existingmap[core_text::strtolower($rec->word)] = $rec->id;
+        }
+
+        $imported = 0;
+        foreach ($entries as $entry) {
+            $concept = trim($entry->concept);
+            if ($concept === '') {
+                continue;
+            }
+            $wordlength = core_text::strlen($concept);
+            if ($wordlength < (int)$instance->min_length || $wordlength > (int)$instance->max_length) {
+                continue;
+            }
+            $hint = trim(html_entity_decode(strip_tags($entry->definition), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            $key = core_text::strtolower($concept);
+            if (isset($existingmap[$key])) {
+                $DB->set_field('playerwords_words', 'hint', $hint, ['id' => $existingmap[$key]]);
+            } else {
+                $DB->insert_record('playerwords_words', (object)[
+                    'playerwordsid' => $instance->id,
+                    'word'          => $concept,
+                    'hint'          => $hint,
+                    'source'        => 'glossary',
+                    'approved'      => 1,
+                    'timecreated'   => time(),
+                    'addedby'       => 0,
+                ]);
+                $existingmap[$key] = true;
+                $imported++;
+            }
+        }
+
+        return $imported;
+    }
+
+    /**
      * Returns latest words for teacher preview.
      *
      * @param int $instanceid Activity instance id.

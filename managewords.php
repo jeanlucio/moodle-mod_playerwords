@@ -23,6 +23,7 @@
  */
 
 require(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/lib.php');
 
 use mod_playerwords\local\words_repository;
 
@@ -37,6 +38,13 @@ require_capability('mod/playerwords:addinstance', $context);
 
 $notification = null;
 $notificationtype = null;
+
+if (optional_param('syncglossary', 0, PARAM_BOOL)) {
+    require_sesskey();
+    $imported = words_repository::sync_glossary_words($instance);
+    $notification = get_string('glossarysynced', 'mod_playerwords', $imported);
+    $notificationtype = 'success';
+}
 
 if (optional_param('addword', 0, PARAM_BOOL)) {
     require_sesskey();
@@ -83,6 +91,8 @@ foreach ($recentwords as $recentword) {
     ];
 }
 
+$cansyncglossary = ((int)$instance->sources & PLAYERWORDS_SOURCE_GLOSSARY) !== 0;
+
 $templatecontext = [
     'cmid' => $cm->id,
     'sesskey' => sesskey(),
@@ -101,6 +111,8 @@ $templatecontext = [
     'statuscolumnlabel' => get_string('statuscolumnlabel', 'mod_playerwords'),
     'recentwords' => $templaterows,
     'hasrecentwords' => !empty($templaterows),
+    'cansyncglossary' => $cansyncglossary,
+    'syncglossarybutton' => get_string('syncglossarybutton', 'mod_playerwords'),
 ];
 
 echo $OUTPUT->header();

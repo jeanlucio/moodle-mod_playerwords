@@ -25,6 +25,8 @@
         "sesskey": "abc123",
         "backtogameurl": "https://example.com/mod/playerwords/view.php?id=1",
         "backtogamebutton": "Back to game",
+        "cansyncglossary": true,
+        "syncglossarybutton": "Sync with glossary",
         "managewordslabel": "Manual words",
         "manualwordlabel": "Word",
         "manualhintlabel": "Hint",
@@ -49,6 +51,19 @@
 <p>
     <a href="{{{backtogameurl}}}" class="btn btn-link mb-3">{{backtogamebutton}}</a>
 </p>
+
+{{#cansyncglossary}}
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/managewords.php">
+            <input type="hidden" name="id" value="{{cmid}}">
+            <input type="hidden" name="syncglossary" value="1">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <button type="submit" class="btn btn-outline-secondary">{{syncglossarybutton}}</button>
+        </form>
+    </div>
+</div>
+{{/cansyncglossary}}
 
 <div class="card mb-3">
     <div class="card-body">

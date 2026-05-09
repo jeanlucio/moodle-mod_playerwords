@@ -237,6 +237,7 @@ function playerwords_add_instance(stdClass $data): int {
     $data->timemodified = time();
     $data->id = $DB->insert_record('playerwords', $data);
     playerwords_grade_item_update($data);
+    \mod_playerwords\local\words_repository::sync_glossary_words($data);
     return $data->id;
 }
 
@@ -267,6 +268,7 @@ function playerwords_update_instance(stdClass $data): bool {
     $data->timemodified = time();
     $result = $DB->update_record('playerwords', $data);
     playerwords_grade_item_update($data);
+    \mod_playerwords\local\words_repository::sync_glossary_words($data);
     return $result;
 }
 
