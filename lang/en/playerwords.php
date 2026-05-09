@@ -47,6 +47,7 @@ $string['error_atleastonesource'] = 'Select at least one word source.';
 $string['error_completionattempts'] = 'Required attempts must be at least 1.';
 $string['error_cooldown'] = 'Cooldown must be 0 or a positive value.';
 $string['error_grademethod_average_all'] = 'This grading method requires a maximum rounds limit greater than 0.';
+$string['error_invalidchars'] = 'The guess must contain letters only.';
 $string['error_manualwordlength'] = 'Word length must be between {$a->min} and {$a->max} characters.';
 $string['error_manualwordrequired'] = 'Word is required.';
 $string['error_maxattempts'] = 'Maximum attempts must be at least 1.';

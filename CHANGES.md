@@ -1,5 +1,9 @@
 # CHANGES
 
+## v0.10.0 (2026050810)
+
+- Validate guess charset: only Unicode letters accepted; digits, spaces and symbols are rejected with a clear error message
+
 ## v0.9.0 (2026050809)
 
 - Add grading method "Average over all required rounds": grade = sum of scores ÷ max_rounds, rewarding students who complete all rounds; requires max_rounds > 0

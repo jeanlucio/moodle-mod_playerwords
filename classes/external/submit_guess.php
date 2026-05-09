@@ -116,6 +116,15 @@ class submit_guess extends external_api {
         $normalizedguess = word_normalizer::normalize($guess, !empty($instance->ignore_accents));
         $targetlength = core_text::strlen($targetword);
 
+        if (!preg_match('/^[\p{L}]+$/u', $normalizedguess)) {
+            return self::build_error_result(
+                get_string('error_invalidchars', 'mod_playerwords'),
+                'warning',
+                (int)$state['attemptsused'],
+                false
+            );
+        }
+
         if (core_text::strlen($normalizedguess) !== $targetlength) {
             return self::build_error_result(
                 get_string('guesslengthmismatch', 'mod_playerwords', $targetlength),
@@ -279,6 +288,8 @@ class submit_guess extends external_api {
             'timeleft'         => 0,
             'notification'     => $message,
             'notificationtype' => $type,
+            'revealword'       => '',
+            'revealdefinition' => '',
         ];
     }
 }

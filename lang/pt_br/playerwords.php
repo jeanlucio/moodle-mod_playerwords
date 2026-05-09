@@ -47,6 +47,7 @@ $string['error_atleastonesource'] = 'Selecione ao menos uma fonte de palavras.';
 $string['error_completionattempts'] = 'As tentativas exigidas devem ser no mínimo 1.';
 $string['error_cooldown'] = 'O cooldown deve ser 0 ou um valor positivo.';
 $string['error_grademethod_average_all'] = 'Este método de avaliação requer um limite de rodadas maior que 0.';
+$string['error_invalidchars'] = 'O palpite deve conter apenas letras.';
 $string['error_manualwordlength'] = 'A palavra deve ter entre {$a->min} e {$a->max} caracteres.';
 $string['error_manualwordrequired'] = 'A palavra é obrigatória.';
 $string['error_maxattempts'] = 'O número máximo de tentativas deve ser no mínimo 1.';

@@ -251,6 +251,10 @@ class view_page_service {
         $targetlength = core_text::strlen($targetword);
         $guesslength = core_text::strlen($normalizedguess);
 
+        if (!preg_match('/^[\p{L}]+$/u', $normalizedguess)) {
+            return [$state, get_string('error_invalidchars', 'mod_playerwords'), 'warning'];
+        }
+
         if ($guesslength !== $targetlength) {
             $message = get_string('guesslengthmismatch', 'mod_playerwords', $targetlength);
             return [$state, $message, 'warning'];
