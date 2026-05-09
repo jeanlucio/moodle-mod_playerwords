@@ -1,5 +1,10 @@
 # CHANGES
 
+## v0.7.0 (2026050807)
+
+- Hint is now hidden by default; student must click "Reveal hint" to see it (prepared for future PlayerHUD item cost integration)
+- Hint text is never sent to the browser until the student explicitly reveals it
+
 ## v0.6.0 (2026050806)
 
 - Show correct word and definition after every round (win or lose)

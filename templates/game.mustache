@@ -79,6 +79,14 @@
                 <span class="ms-3"><strong>{{timerlabel}}</strong> {{timeleft}}</span>
             {{/timerenabled}}
         </div>
+        {{#canhint}}
+            <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php" class="mb-2">
+                <input type="hidden" name="id" value="{{cmid}}">
+                <input type="hidden" name="revealhint" value="1">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <button type="submit" class="btn btn-outline-info btn-sm">{{hintbuttonlabel}}</button>
+            </form>
+        {{/canhint}}
         {{#showhint}}
             <div class="alert alert-info"><strong>{{hintlabel}}</strong> {{hintvalue}}</div>
         {{/showhint}}

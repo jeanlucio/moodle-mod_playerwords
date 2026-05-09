@@ -61,6 +61,7 @@ $string['grademethod_last'] = 'Última tentativa';
 $string['guesslabel'] = 'Seu palpite';
 $string['guesslengthmismatch'] = 'O palpite deve ter exatamente {$a} letras.';
 $string['guessplaceholder'] = 'Digite uma palavra';
+$string['hintbuttonlabel'] = 'Revelar dica';
 $string['hintlabel'] = 'Dica';
 $string['ignore_accents'] = 'Aceitar palavras sem acentos';
 $string['managewordsbutton'] = 'Gerenciar palavras';

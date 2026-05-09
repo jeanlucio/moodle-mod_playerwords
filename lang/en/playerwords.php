@@ -61,6 +61,7 @@ $string['grademethod_last'] = 'Last attempt';
 $string['guesslabel'] = 'Your guess';
 $string['guesslengthmismatch'] = 'The guess must have exactly {$a} letters.';
 $string['guessplaceholder'] = 'Type a word';
+$string['hintbuttonlabel'] = 'Reveal hint';
 $string['hintlabel'] = 'Hint';
 $string['ignore_accents'] = 'Accept words without accents';
 $string['managewordsbutton'] = 'Manage words';

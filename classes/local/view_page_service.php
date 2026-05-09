@@ -77,6 +77,11 @@ class view_page_service {
 
         [$state, $targetword, $roundwordid] = self::ensure_round_state($state, $instance, $userid);
 
+        if (optional_param('revealhint', 0, PARAM_BOOL)) {
+            require_sesskey();
+            $state['hintrevealed'] = true;
+        }
+
         if (optional_param('submitguess', 0, PARAM_BOOL)) {
             require_sesskey();
             [$state, $notification, $notificationtype] = self::handle_guess_submission(
@@ -126,6 +131,7 @@ class view_page_service {
                 'attemptsused' => 0,
                 'starttime' => 0,
                 'hint' => '',
+                'hintrevealed' => false,
                 'rows' => [],
                 'finished' => false,
             ];
@@ -203,6 +209,7 @@ class view_page_service {
                 $state['attemptsused'] = 0;
                 $state['starttime'] = time();
                 $state['hint'] = $pickedword->hint ?? '';
+                $state['hintrevealed'] = false;
                 $state['rows'] = [];
                 $state['finished'] = false;
             }
@@ -332,8 +339,10 @@ class view_page_service {
             'timerlabel' => get_string('timerlabel', 'mod_playerwords'),
             'timeleft' => $timeleft,
             'hintlabel' => get_string('hintlabel', 'mod_playerwords'),
-            'hintvalue' => $state['hint'] ?? '',
-            'showhint' => !empty($state['hint']),
+            'hintvalue' => !empty($state['hintrevealed']) ? ($state['hint'] ?? '') : '',
+            'showhint' => !empty($state['hintrevealed']) && !empty($state['hint']),
+            'canhint' => !empty($state['hint']) && empty($state['hintrevealed']) && empty($state['finished']),
+            'hintbuttonlabel' => get_string('hintbuttonlabel', 'mod_playerwords'),
             'rows' => $rows,
             'roundfinished' => !empty($state['finished']),
             'guesslabel' => get_string('guesslabel', 'mod_playerwords'),
