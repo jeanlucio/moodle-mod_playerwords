@@ -93,6 +93,11 @@ class view_page_service {
             );
         }
 
+        if (optional_param('forfeit', 0, PARAM_BOOL)) {
+            require_sesskey();
+            [$state, $notification, $notificationtype] = self::handle_forfeit($state, $instance, $userid);
+        }
+
         self::save_state((int)$cm->id, $userid, $state);
 
         $templatecontext = self::build_template_context(
@@ -104,9 +109,10 @@ class view_page_service {
         );
 
         return [
-            'notification' => $notification,
+            'notification'     => $notification,
             'notificationtype' => $notificationtype,
-            'templatecontext' => $templatecontext,
+            'templatecontext'  => $templatecontext,
+            'cooldownuntil'    => (int)($state['cooldownuntil'] ?? 0),
         ];
     }
 
@@ -126,14 +132,18 @@ class view_page_service {
         }
         if (!isset($SESSION->mod_playerwords[$sessionkey])) {
             $SESSION->mod_playerwords[$sessionkey] = [
-                'wordid' => 0,
-                'wordtext' => '',
+                'wordid'       => 0,
+                'wordtext'     => '',
+                'concept'      => '',
                 'attemptsused' => 0,
-                'starttime' => 0,
-                'hint' => '',
+                'starttime'    => 0,
+                'hint'         => '',
                 'hintrevealed' => false,
-                'rows' => [],
-                'finished' => false,
+                'rows'         => [],
+                'finished'     => false,
+                'won'          => false,
+                'forfeited'    => false,
+                'cooldownuntil' => 0,
             ];
         }
 
@@ -192,6 +202,7 @@ class view_page_service {
             if ($wordrecord) {
                 $targetword = word_normalizer::normalize($wordrecord->word, !empty($instance->ignore_accents));
                 $state['hint'] = $wordrecord->hint ?? '';
+                $state['concept'] = $wordrecord->concept ?? '';
             }
         }
 
@@ -206,12 +217,16 @@ class view_page_service {
                 $roundwordid = (int)$pickedword->id;
                 $state['wordid'] = $roundwordid;
                 $state['wordtext'] = $pickedword->word;
+                $state['concept'] = $pickedword->concept ?? '';
                 $state['attemptsused'] = 0;
                 $state['starttime'] = time();
                 $state['hint'] = $pickedword->hint ?? '';
                 $state['hintrevealed'] = false;
                 $state['rows'] = [];
                 $state['finished'] = false;
+                $state['won'] = false;
+                $state['forfeited'] = false;
+                $state['cooldownuntil'] = 0;
             }
         }
 
@@ -280,6 +295,11 @@ class view_page_service {
         }
 
         $state['finished'] = true;
+        $state['won'] = $iscompleted;
+        $state['forfeited'] = false;
+        if ((int)$instance->cooldown_seconds > 0) {
+            $state['cooldownuntil'] = time() + (int)$instance->cooldown_seconds;
+        }
         $timeused = max(0, time() - (int)$state['starttime']);
         $score = gameplay_service::calculate_round_score(
             $instance,
@@ -309,6 +329,88 @@ class view_page_service {
     }
 
     /**
+     * Handles a forfeit submission: marks the round as lost without an extra attempt.
+     *
+     * @param array $state Current session state.
+     * @param \stdClass $instance Activity instance.
+     * @param int $userid User id.
+     * @return array [$state, $notification, $notificationtype]
+     */
+    private static function handle_forfeit(
+        array $state,
+        \stdClass $instance,
+        int $userid
+    ): array {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        if (empty($state['wordid']) || !empty($state['finished'])) {
+            return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning'];
+        }
+
+        $state['finished'] = true;
+        $state['won'] = false;
+        $state['forfeited'] = true;
+        if ((int)$instance->cooldown_seconds > 0) {
+            $state['cooldownuntil'] = time() + (int)$instance->cooldown_seconds;
+        }
+
+        $timeused = max(0, time() - (int)$state['starttime']);
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $userid,
+            'wordid'        => (int)$state['wordid'],
+            'attempts_used' => (int)$state['attemptsused'],
+            'time_used'     => $timeused,
+            'completed'     => 0,
+            'score'         => 0.0,
+            'timecreated'   => time(),
+        ]);
+        playerwords_update_grades($instance, $userid);
+
+        return [$state, get_string('roundforfeited', 'mod_playerwords'), 'warning'];
+    }
+
+    /**
+     * Returns the Wordle-style feedback message for the end screen.
+     *
+     * @param array $state Session state.
+     * @return string
+     */
+    private static function build_feedback_message(array $state): string {
+        if (empty($state['finished'])) {
+            return '';
+        }
+        if (!empty($state['forfeited'])) {
+            return get_string('feedback_forfeited', 'mod_playerwords');
+        }
+        if (!empty($state['won'])) {
+            $keys = [
+                'feedback_genius', 'feedback_magnificent', 'feedback_impressive',
+                'feedback_splendid', 'feedback_great', 'feedback_phew',
+            ];
+            $index = min(max(0, (int)$state['attemptsused'] - 1), count($keys) - 1);
+            return get_string($keys[$index], 'mod_playerwords');
+        }
+        return get_string('feedback_lost', 'mod_playerwords');
+    }
+
+    /**
+     * Returns a formatted countdown string, or empty if no cooldown is active.
+     *
+     * @param array $state Session state.
+     * @return string
+     */
+    private static function build_cooldown_text(array $state): string {
+        $until = (int)($state['cooldownuntil'] ?? 0);
+        if ($until <= 0) {
+            return '';
+        }
+        $remaining = $until - time();
+        return $remaining > 0 ? format_time($remaining) : '';
+    }
+
+    /**
      * Builds template context array.
      *
      * @param \stdClass $cm Course module.
@@ -330,6 +432,12 @@ class view_page_service {
         if ((int)$instance->timer_seconds > 0 && !empty($state['starttime'])) {
             $timeleft = max(0, (int)$instance->timer_seconds - (time() - (int)$state['starttime']));
         }
+
+        $concept = $state['concept'] ?? '';
+        $wordtext = $state['wordtext'] ?? '';
+        $showrevealconcept = !empty($state['finished'])
+            && $concept !== ''
+            && core_text::strtolower($concept) !== core_text::strtolower($wordtext);
 
         return [
             'cmid' => $cm->id,
@@ -353,13 +461,22 @@ class view_page_service {
             'guessplaceholder' => get_string('guessplaceholder', 'mod_playerwords'),
             'guessmaxlength' => ($targetword !== '') ? core_text::strlen($targetword) : (int)$instance->max_length,
             'submitguess' => get_string('submitguess', 'mod_playerwords'),
+            'forfeitlabel' => get_string('forfeitbutton', 'mod_playerwords'),
+            'forfeitconfirm' => get_string('forfeitconfirm', 'mod_playerwords'),
             'newroundlabel' => get_string('newroundlabel', 'mod_playerwords'),
+            'newroundready' => get_string('newroundready', 'mod_playerwords'),
+            'cooldowncountdownlabel' => get_string('cooldowncountdownlabel', 'mod_playerwords'),
+            'cooldowntext' => self::build_cooldown_text($state),
+            'feedbackmessage' => self::build_feedback_message($state),
             'canmanagewords' => $canmanagewords,
             'managewordsbutton' => get_string('managewordsbutton', 'mod_playerwords'),
             'managewordsurl' => (new moodle_url('/mod/playerwords/managewords.php', ['id' => $cm->id]))->out(false),
             'showreveal' => !empty($state['finished']) && !empty($state['wordtext']),
-            'revealword' => $state['wordtext'] ?? '',
+            'revealword' => $wordtext,
             'revealwordlabel' => get_string('revealwordlabel', 'mod_playerwords'),
+            'showrevealconcept' => $showrevealconcept,
+            'revealconcept' => $concept,
+            'revealconceptlabel' => get_string('revealconceptlabel', 'mod_playerwords'),
             'showdefinition' => !empty($state['finished']) && !empty($state['hint']),
             'revealdefinition' => $state['hint'] ?? '',
             'revealdefinitionlabel' => get_string('revealdefinitionlabel', 'mod_playerwords'),

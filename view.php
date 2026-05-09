@@ -54,6 +54,7 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->requires->css('/mod/playerwords/styles.css');
 
 $pagedata = view_page_service::build_page_data($cm, $instance, $context, (int)$USER->id);
+$PAGE->requires->js_call_amd('mod_playerwords/game', 'init', [(int)($pagedata['cooldownuntil'] ?? 0)]);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($instance->name, true, ['context' => $context]));

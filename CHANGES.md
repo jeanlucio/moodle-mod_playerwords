@@ -1,5 +1,14 @@
 # CHANGES
 
+## v0.12.0 (2026050900)
+
+- Add "Give up" button: player can forfeit the current round, which ends it immediately, records the attempt as a loss, and starts the cooldown — the correct word is revealed on the same end screen
+- Show Wordle-style performance feedback on the end screen (Genius → Phew for wins, distinct messages for loss and forfeit)
+- Show the full original concept name on the end screen when the guessed word was extracted from a multi-word glossary entry (e.g. word "Militar" → "Ditadura Militar: Regime autoritário...")
+- Show cooldown countdown on the end screen ("Next round in 23h 59m 45s"), updated in real time via JavaScript
+- Multi-word glossary concepts now split into individual words: each non-stopword token becomes a separate pool entry with the full definition as hint; existing single-word concepts are unaffected
+- Add `concept` column to `playerwords_words` to store the original glossary concept name
+
 ## v0.11.0 (2026050811)
 
 - Add glossary integration: teacher selects a glossary (or all course glossaries) as word source; concepts are imported into the word pool with their definitions as hints

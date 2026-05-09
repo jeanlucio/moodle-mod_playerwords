@@ -59,6 +59,8 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="playerwordsid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="word" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Game word"/>
+        <FIELD NAME="concept" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"
+            COMMENT="Original concept name; set when word is extracted from a multi-word glossary entry"/>
         <FIELD NAME="hint" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Optional hint"/>
         <FIELD NAME="source" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="manual" SEQUENCE="false"
             COMMENT="Word source: manual, glossary or ai"/>

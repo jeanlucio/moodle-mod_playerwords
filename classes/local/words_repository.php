@@ -30,6 +30,36 @@ use core_text;
  * Repository for words used by the activity.
  */
 class words_repository {
+    /** @var string[] Stopwords ignored when splitting multi-word glossary concepts. */
+    private const GLOSSARY_STOPWORDS = [
+        'a', 'ao', 'aos', 'às', 'as', 'com', 'da', 'das', 'de', 'do', 'dos',
+        'e', 'em', 'entre', 'na', 'nas', 'nem', 'no', 'nos',
+        'o', 'os', 'ou', 'para', 'pela', 'pelas', 'pelo', 'pelos',
+        'por', 'que', 'se', 'sob', 'um', 'uma', 'uns', 'umas',
+    ];
+
+    /**
+     * Splits a glossary concept into individual candidate words, ignoring stopwords.
+     *
+     * Single-word concepts are returned as-is. For multi-word concepts each
+     * non-stopword token becomes a separate candidate. If all tokens are stopwords
+     * every token is returned as a fallback.
+     *
+     * @param string $concept Raw concept string from a glossary entry.
+     * @return string[]
+     */
+    private static function extract_candidate_words(string $concept): array {
+        $tokens = preg_split('/\s+/u', $concept, -1, PREG_SPLIT_NO_EMPTY);
+        if (count($tokens) === 1) {
+            return $tokens;
+        }
+        $filtered = array_values(array_filter(
+            $tokens,
+            fn($t) => !in_array(core_text::strtolower($t), self::GLOSSARY_STOPWORDS, true)
+        ));
+        return $filtered !== [] ? $filtered : $tokens;
+    }
+
     /**
      * Returns approved words that match configured length.
      *
@@ -47,7 +77,7 @@ class words_repository {
                 'approved' => 1,
             ],
             '',
-            'id, word, hint'
+            'id, word, hint, concept'
         );
 
         $candidates = [];
@@ -114,7 +144,7 @@ class words_repository {
                 'playerwordsid' => $instanceid,
                 'approved' => 1,
             ],
-            'id, word, hint',
+            'id, word, hint, concept',
             IGNORE_MISSING
         );
 
@@ -136,6 +166,7 @@ class words_repository {
         $record = (object)[
             'playerwordsid' => $instanceid,
             'word' => trim($word),
+            'concept' => trim($word),
             'hint' => trim($hint),
             'source' => 'manual',
             'approved' => 1,
@@ -203,26 +234,37 @@ class words_repository {
             if ($concept === '') {
                 continue;
             }
-            $wordlength = core_text::strlen($concept);
-            if ($wordlength < (int)$instance->min_length || $wordlength > (int)$instance->max_length) {
-                continue;
-            }
             $hint = trim(html_entity_decode(strip_tags($entry->definition), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-            $key = core_text::strtolower($concept);
-            if (isset($existingmap[$key])) {
-                $DB->set_field('playerwords_words', 'hint', $hint, ['id' => $existingmap[$key]]);
-            } else {
-                $DB->insert_record('playerwords_words', (object)[
-                    'playerwordsid' => $instance->id,
-                    'word'          => $concept,
-                    'hint'          => $hint,
-                    'source'        => 'glossary',
-                    'approved'      => 1,
-                    'timecreated'   => time(),
-                    'addedby'       => 0,
-                ]);
-                $existingmap[$key] = true;
-                $imported++;
+            $words = self::extract_candidate_words($concept);
+
+            foreach ($words as $word) {
+                $wordlength = core_text::strlen($word);
+                if ($wordlength < (int)$instance->min_length || $wordlength > (int)$instance->max_length) {
+                    continue;
+                }
+                $key = core_text::strtolower($word);
+                if (isset($existingmap[$key])) {
+                    if ($existingmap[$key] !== true) {
+                        $DB->update_record('playerwords_words', (object)[
+                            'id'      => $existingmap[$key],
+                            'hint'    => $hint,
+                            'concept' => $concept,
+                        ]);
+                    }
+                } else {
+                    $DB->insert_record('playerwords_words', (object)[
+                        'playerwordsid' => $instance->id,
+                        'word'          => $word,
+                        'concept'       => $concept,
+                        'hint'          => $hint,
+                        'source'        => 'glossary',
+                        'approved'      => 1,
+                        'timecreated'   => time(),
+                        'addedby'       => 0,
+                    ]);
+                    $existingmap[$key] = true;
+                    $imported++;
+                }
             }
         }
 
