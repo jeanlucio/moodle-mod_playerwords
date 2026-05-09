@@ -88,9 +88,9 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
 
         document.querySelectorAll('.playerwords-bulk-check').forEach(function(cb) {
             cb.addEventListener('change', function() {
-                var total   = document.querySelectorAll('.playerwords-bulk-check').length;
+                var total = document.querySelectorAll('.playerwords-bulk-check').length;
                 var checked = document.querySelectorAll('.playerwords-bulk-check:checked').length;
-                selectAllCheckbox.checked       = checked === total;
+                selectAllCheckbox.checked = checked === total;
                 selectAllCheckbox.indeterminate = checked > 0 && checked < total;
                 updateBulkButton();
             });
@@ -102,7 +102,7 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
      */
     var initBulkDelete = function() {
         bulkDeleteBtn = document.getElementById('playerwords-bulk-delete-btn');
-        bulkForm      = document.getElementById('playerwords-bulk-form');
+        bulkForm = document.getElementById('playerwords-bulk-form');
         if (!bulkDeleteBtn || !bulkForm) {
             return;
         }
@@ -111,7 +111,9 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
             showDeleteModal(
                 bulkDeleteBtn.dataset.title,
                 bulkDeleteBtn.dataset.confirm,
-                function() { bulkForm.submit(); }
+                function() {
+                    bulkForm.submit();
+                }
             );
         });
     };
@@ -130,13 +132,15 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
                     cb.checked = cb.value === wordid;
                 });
                 if (selectAllCheckbox) {
-                    selectAllCheckbox.checked       = false;
+                    selectAllCheckbox.checked = false;
                     selectAllCheckbox.indeterminate = false;
                 }
                 showDeleteModal(
                     btn.dataset.title,
                     btn.dataset.confirm,
-                    function() { bulkForm.submit(); }
+                    function() {
+                        bulkForm.submit();
+                    }
                 );
             });
         });
