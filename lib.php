@@ -307,6 +307,10 @@ function playerwords_delete_instance(int $id): bool {
  */
 function playerwords_supports(string $feature): mixed {
     switch ($feature) {
+        case FEATURE_GROUPS:
+            return true;
+        case FEATURE_GROUPINGS:
+            return true;
         case FEATURE_MOD_INTRO:
             return true;
         case FEATURE_SHOW_DESCRIPTION:
