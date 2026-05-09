@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_playerwords';
-$plugin->version   = 2026050808;
+$plugin->version   = 2026050809;
 $plugin->requires  = 2024100700; // Moodle 4.5+.
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = 'v0.8.0';
+$plugin->release   = 'v0.9.0';

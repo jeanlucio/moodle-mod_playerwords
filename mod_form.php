@@ -197,10 +197,11 @@ class mod_playerwords_mod_form extends moodleform_mod {
             'grademethod',
             get_string('grademethod', 'mod_playerwords'),
             [
-                PLAYERWORDS_GRADE_HIGHEST => get_string('grademethod_highest', 'mod_playerwords'),
-                PLAYERWORDS_GRADE_AVERAGE => get_string('grademethod_average', 'mod_playerwords'),
-                PLAYERWORDS_GRADE_FIRST   => get_string('grademethod_first', 'mod_playerwords'),
-                PLAYERWORDS_GRADE_LAST    => get_string('grademethod_last', 'mod_playerwords'),
+                PLAYERWORDS_GRADE_HIGHEST     => get_string('grademethod_highest', 'mod_playerwords'),
+                PLAYERWORDS_GRADE_AVERAGE     => get_string('grademethod_average', 'mod_playerwords'),
+                PLAYERWORDS_GRADE_FIRST       => get_string('grademethod_first', 'mod_playerwords'),
+                PLAYERWORDS_GRADE_LAST        => get_string('grademethod_last', 'mod_playerwords'),
+                PLAYERWORDS_GRADE_AVERAGE_ALL => get_string('grademethod_average_all', 'mod_playerwords'),
             ]
         );
         $mform->setType('grademethod', PARAM_INT);
@@ -261,6 +262,13 @@ class mod_playerwords_mod_form extends moodleform_mod {
             ((int)$data['completionattempts'] < 1)
         ) {
             $errors['completionattemptsgroup'] = get_string('error_completionattempts', 'mod_playerwords');
+        }
+
+        if (
+            (int)$data['grademethod'] === PLAYERWORDS_GRADE_AVERAGE_ALL &&
+            (int)$data['max_rounds'] === 0
+        ) {
+            $errors['grademethod'] = get_string('error_grademethod_average_all', 'mod_playerwords');
         }
 
         return $errors;

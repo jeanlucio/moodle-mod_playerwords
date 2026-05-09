@@ -43,6 +43,9 @@ define('PLAYERWORDS_GRADE_FIRST', 3);
 /** Grade aggregation: score from the last round. */
 define('PLAYERWORDS_GRADE_LAST', 4);
 
+/** Grade aggregation: average over all required rounds (uses max_rounds as denominator). */
+define('PLAYERWORDS_GRADE_AVERAGE_ALL', 5);
+
 /** Word selection mode: a random word is picked each round. */
 define('PLAYERWORDS_WORDMODE_RANDOM', 1);
 
@@ -150,6 +153,12 @@ function playerwords_calculate_user_grade(stdClass $instance, array $attempts): 
             return $scores[array_key_first($scores)];
         case PLAYERWORDS_GRADE_LAST:
             return $scores[array_key_last($scores)];
+        case PLAYERWORDS_GRADE_AVERAGE_ALL:
+            $totalrounds = (int)($instance->max_rounds ?? 0);
+            if ($totalrounds <= 0) {
+                return array_sum($scores) / count($scores);
+            }
+            return array_sum($scores) / $totalrounds;
         case PLAYERWORDS_GRADE_HIGHEST:
         default:
             return max($scores);

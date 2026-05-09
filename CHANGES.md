@@ -1,5 +1,9 @@
 # CHANGES
 
+## v0.9.0 (2026050809)
+
+- Add grading method "Average over all required rounds": grade = sum of scores ÷ max_rounds, rewarding students who complete all rounds; requires max_rounds > 0
+
 ## v0.8.0 (2026050808)
 
 - Fix contrast on absent cells: background darkened from #6c757d to #495057 (contrast 4.1:1 → 7.0:1, WCAG AA)
