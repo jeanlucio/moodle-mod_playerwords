@@ -30,20 +30,12 @@ use core_text;
  * Repository for words used by the activity.
  */
 class words_repository {
-    /** @var string[] Stopwords ignored when splitting multi-word glossary concepts. */
-    private const GLOSSARY_STOPWORDS = [
-        'a', 'ao', 'aos', 'às', 'as', 'com', 'da', 'das', 'de', 'do', 'dos',
-        'e', 'em', 'entre', 'na', 'nas', 'nem', 'no', 'nos',
-        'o', 'os', 'ou', 'para', 'pela', 'pelas', 'pelo', 'pelos',
-        'por', 'que', 'se', 'sob', 'um', 'uma', 'uns', 'umas',
-    ];
-
     /**
-     * Splits a glossary concept into individual candidate words, ignoring stopwords.
+     * Splits a glossary concept into individual candidate words, ignoring configured stopwords.
      *
      * Single-word concepts are returned as-is. For multi-word concepts each
-     * non-stopword token becomes a separate candidate. If all tokens are stopwords
-     * every token is returned as a fallback.
+     * non-stopword token becomes a separate candidate. If all tokens are stopwords,
+     * or if no stopwords are configured, every token is returned.
      *
      * @param string $concept Raw concept string from a glossary entry.
      * @return string[]
@@ -53,9 +45,22 @@ class words_repository {
         if (count($tokens) === 1) {
             return $tokens;
         }
+        $raw = (string)(get_config('mod_playerwords', 'glossarystopwords') ?? '');
+        $stopwords = [];
+        if ($raw !== '') {
+            foreach (explode(',', $raw) as $w) {
+                $w = core_text::strtolower(trim($w));
+                if ($w !== '') {
+                    $stopwords[] = $w;
+                }
+            }
+        }
+        if (empty($stopwords)) {
+            return $tokens;
+        }
         $filtered = array_values(array_filter(
             $tokens,
-            fn($t) => !in_array(core_text::strtolower($t), self::GLOSSARY_STOPWORDS, true)
+            fn($t) => !in_array(core_text::strtolower($t), $stopwords, true)
         ));
         return $filtered !== [] ? $filtered : $tokens;
     }
@@ -210,7 +215,7 @@ class words_repository {
 
         [$insql, $inparams] = $DB->get_in_or_equal($glossaryids, SQL_PARAMS_NAMED, 'gid');
         $entries = $DB->get_records_sql(
-            "SELECT ge.id, ge.concept, ge.definition"
+            "SELECT ge.id, ge.concept, ge.definition, ge.glossaryid"
             . " FROM {glossary_entries} ge"
             . " WHERE ge.glossaryid $insql AND ge.approved = 1",
             $inparams
@@ -246,10 +251,12 @@ class words_repository {
                 if (isset($existingmap[$key])) {
                     if ($existingmap[$key] !== true) {
                         $DB->update_record('playerwords_words', (object)[
-                            'id'      => $existingmap[$key],
-                            'hint'    => $hint,
-                            'concept' => $concept,
+                            'id'         => $existingmap[$key],
+                            'hint'       => $hint,
+                            'concept'    => $concept,
+                            'glossaryid' => (int)$entry->glossaryid,
                         ]);
+                        $existingmap[$key] = true;
                     }
                 } else {
                     $DB->insert_record('playerwords_words', (object)[
@@ -258,6 +265,7 @@ class words_repository {
                         'concept'       => $concept,
                         'hint'          => $hint,
                         'source'        => 'glossary',
+                        'glossaryid'    => (int)$entry->glossaryid,
                         'approved'      => 1,
                         'timecreated'   => time(),
                         'addedby'       => 0,
@@ -266,6 +274,17 @@ class words_repository {
                     $imported++;
                 }
             }
+        }
+
+        $orphanids = [];
+        foreach ($existingmap as $val) {
+            if ($val !== true) {
+                $orphanids[] = $val;
+            }
+        }
+        if (!empty($orphanids)) {
+            [$delsql, $delparams] = $DB->get_in_or_equal($orphanids, SQL_PARAMS_NAMED, 'del');
+            $DB->delete_records_select('playerwords_words', "id $delsql", $delparams);
         }
 
         return $imported;
@@ -369,13 +388,11 @@ class words_repository {
         string $dir = 'DESC'
     ): array {
         global $DB;
-        return $DB->get_records(
-            'playerwords_words',
-            ['playerwordsid' => $instanceid],
-            "$sort $dir",
-            'id, word, source, approved',
-            0,
-            $limit
-        );
+        $sql = "SELECT w.id, w.word, w.source, w.approved, g.name AS glossaryname"
+            . " FROM {playerwords_words} w"
+            . " LEFT JOIN {glossary} g ON g.id = w.glossaryid"
+            . " WHERE w.playerwordsid = :playerwordsid"
+            . " ORDER BY w.$sort $dir";
+        return $DB->get_records_sql($sql, ['playerwordsid' => $instanceid], 0, $limit);
     }
 }

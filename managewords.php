@@ -161,6 +161,9 @@ foreach ($sortcols as $col) {
 $templaterows = [];
 foreach ($recentwords as $recentword) {
     $sourcelabel = get_string('source_' . $recentword->source, 'mod_playerwords');
+    if ($recentword->source === 'glossary' && !empty($recentword->glossaryname)) {
+        $sourcelabel .= ' (' . format_string($recentword->glossaryname) . ')';
+    }
     $statuslabel = ((int)$recentword->approved === 1) ?
         get_string('approvedstatus', 'mod_playerwords') :
         get_string('pendingstatus', 'mod_playerwords');
