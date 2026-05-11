@@ -67,7 +67,6 @@
         "cooldownactive": false,
         "cooldowntext": "23h 59m 45s",
         "cooldowncountdownlabel": "Next round in",
-        "newroundready": "Ready to play!",
         "guesslabel": "Your guess",
         "guessplaceholder": "Type a word",
         "guessmaxlength": 7,
@@ -224,8 +223,7 @@
                 <p class="text-muted mt-2">
                     {{cooldowncountdownlabel}}
                     <strong>
-                        <span id="playerwords-cooldown-countdown"
-                              data-ready="{{newroundready}}">{{cooldowntext}}</span>
+                        <span id="playerwords-cooldown-countdown">{{cooldowntext}}</span>
                     </strong>
                 </p>
             {{/cooldowntext}}

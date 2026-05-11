@@ -116,7 +116,6 @@ $string['modulename'] = 'PlayerWords';
 $string['modulename_help'] = 'PlayerWords is a Wordle-style activity that challenges students to guess key terms from the course content.';
 $string['modulenameplural'] = 'PlayerWords';
 $string['newroundlabel'] = 'Start a new round';
-$string['newroundready'] = 'Ready to play!';
 $string['nogamewords'] = 'No approved words are available for this activity yet.';
 $string['nowordsyet'] = 'No words have been added yet.';
 $string['pendingstatus'] = 'Pending';

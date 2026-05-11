@@ -116,7 +116,6 @@ $string['modulename'] = 'PlayerWords';
 $string['modulename_help'] = 'O PlayerWords é uma atividade no estilo Wordle que desafia os estudantes a adivinharem termos-chave do conteúdo do curso.';
 $string['modulenameplural'] = 'PlayerWords';
 $string['newroundlabel'] = 'Iniciar nova rodada';
-$string['newroundready'] = 'Pronto para jogar!';
 $string['nogamewords'] = 'Ainda não há palavras aprovadas disponíveis para esta atividade.';
 $string['nowordsyet'] = 'Ainda não há palavras cadastradas.';
 $string['pendingstatus'] = 'Pendente';

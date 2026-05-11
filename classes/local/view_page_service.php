@@ -497,7 +497,6 @@ class view_page_service {
             'forfeitlabel' => get_string('forfeitbutton', 'mod_playerwords'),
             'forfeitconfirm' => get_string('forfeitconfirm', 'mod_playerwords'),
             'newroundlabel' => get_string('newroundlabel', 'mod_playerwords'),
-            'newroundready' => get_string('newroundready', 'mod_playerwords'),
             'cooldowncountdownlabel' => get_string('cooldowncountdownlabel', 'mod_playerwords'),
             'cooldowntext' => self::build_cooldown_text($state),
             'feedbackmessage' => self::build_feedback_message($state),
