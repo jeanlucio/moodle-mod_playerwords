@@ -63,29 +63,24 @@ class view_page_service {
 
         if ((int)$state['wordid'] === 0 || !empty($state['finished'])) {
             $restrictionnotice = self::get_round_restriction_notice($instance, $userid);
+            if (!empty($state['finished'])) {
+                self::save_state((int)$cm->id, $userid, $state);
+                $displayword = (int)($state['wordid'] ?? 0) > 0 ? ($state['wordtext'] ?? '') : '';
+                $templatectx = self::build_template_context($cm, $instance, $state, $displayword, $canmanagewords);
+                if ($restrictionnotice !== null && (int)($state['cooldownuntil'] ?? 0) <= time()) {
+                    $templatectx['cooldownactive'] = true;
+                }
+                return [
+                    'notification'     => null,
+                    'notificationtype' => null,
+                    'templatecontext'  => $templatectx,
+                    'cooldownuntil'    => (int)($state['cooldownuntil'] ?? 0),
+                    'timeleft'         => 0,
+                    'timertotal'       => 0,
+                ];
+            }
             if ($restrictionnotice !== null) {
                 self::save_state((int)$cm->id, $userid, $state);
-                if (
-                    !empty($state['finished']) &&
-                    (int)($state['wordid'] ?? 0) > 0 &&
-                    (int)($state['cooldownuntil'] ?? 0) > time()
-                ) {
-                    $templatectx = self::build_template_context(
-                        $cm,
-                        $instance,
-                        $state,
-                        $state['wordtext'] ?? '',
-                        $canmanagewords
-                    );
-                    return [
-                        'notification'     => null,
-                        'notificationtype' => null,
-                        'templatecontext'  => $templatectx,
-                        'cooldownuntil'    => (int)($state['cooldownuntil'] ?? 0),
-                        'timeleft'         => 0,
-                        'timertotal'       => 0,
-                    ];
-                }
                 $templatectx = self::build_template_context($cm, $instance, $state, '', $canmanagewords);
                 $templatectx['nogamewords'] = $restrictionnotice;
                 return [
