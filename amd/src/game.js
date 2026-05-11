@@ -78,13 +78,14 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
     /**
      * Updates the countdown span every second until the timestamp is reached.
      *
-     * @param {HTMLElement} el  The span element to update.
+     * @param {HTMLElement} el    The span element to update.
      * @param {number}      until Unix timestamp (seconds) when the cooldown ends.
+     * @param {number}      cmid  Course-module id used to build the reload URL.
      */
-    var tick = function(el, until) {
+    var tick = function(el, until, cmid) {
         var remaining = until - Math.floor(Date.now() / 1000);
         if (remaining <= 0) {
-            window.location.href = window.location.pathname + window.location.search;
+            window.location.href = M.cfg.wwwroot + '/mod/playerwords/view.php?id=' + cmid;
             return;
         }
         var h = Math.floor(remaining / 3600);
@@ -98,7 +99,7 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
         parts.push(String(s).padStart(2, '0') + 's');
         el.textContent = parts.join(' ');
         window.setTimeout(function() {
-            tick(el, until);
+            tick(el, until, cmid);
         }, 1000);
     };
 
@@ -164,13 +165,14 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
      * Starts the cooldown countdown if the element is present.
      *
      * @param {number} until Unix timestamp when the cooldown ends.
+     * @param {number} cmid  Course-module id used to build the reload URL.
      */
-    var initCountdown = function(until) {
+    var initCountdown = function(until, cmid) {
         var el = document.getElementById('playerwords-cooldown-countdown');
         if (!el) {
             return;
         }
-        tick(el, until);
+        tick(el, until, cmid);
     };
 
     /**
@@ -247,8 +249,9 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
          * @param {number} cooldownUntil Unix timestamp when the cooldown ends (0 = disabled).
          * @param {number} timeleft      Seconds remaining in the current round (0 = no timer).
          * @param {number} timertotal    Total seconds configured for the round (0 = no timer).
+         * @param {number} cmid          Course-module id used to build the reload URL.
          */
-        init: function(cooldownUntil, timeleft, timertotal) {
+        init: function(cooldownUntil, timeleft, timertotal, cmid) {
             initInputFilter();
             initForfeit();
             initKeyboard();
@@ -256,7 +259,7 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
                 initTimer(timeleft, timertotal || 0);
             }
             if (cooldownUntil > 0) {
-                initCountdown(cooldownUntil);
+                initCountdown(cooldownUntil, cmid);
             }
         },
     };

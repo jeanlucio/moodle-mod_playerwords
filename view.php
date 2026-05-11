@@ -58,6 +58,7 @@ $PAGE->requires->js_call_amd('mod_playerwords/game', 'init', [
     (int)($pagedata['cooldownuntil'] ?? 0),
     (int)($pagedata['timeleft'] ?? 0),
     (int)($pagedata['timertotal'] ?? 0),
+    (int)$cm->id,
 ]);
 
 echo $OUTPUT->header();
