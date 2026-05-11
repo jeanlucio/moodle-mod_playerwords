@@ -133,9 +133,9 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
             el.classList.add('pw-timer-urgent');
         }
         if (remaining <= 0) {
-            var forfeitForm = document.getElementById('playerwords-forfeit-form');
-            if (forfeitForm) {
-                forfeitForm.submit();
+            var timeoutForm = document.getElementById('playerwords-timeout-form');
+            if (timeoutForm) {
+                timeoutForm.submit();
             }
             return;
         }

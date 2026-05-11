@@ -147,6 +147,12 @@
                 <input type="hidden" name="forfeit" value="1">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
             </form>
+            <form id="playerwords-timeout-form"
+                  method="post"
+                  action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}">
+                <input type="hidden" name="timeout" value="1">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+            </form>
             <div class="d-flex gap-2 mt-2 mod-playerwords-actions">
                 <button type="submit" form="playerwords-guess-form" class="btn btn-primary flex-grow-1">{{submitguess}}</button>
                 <button type="submit" form="playerwords-forfeit-form" class="btn btn-outline-danger flex-grow-1">{{forfeitlabel}}</button>

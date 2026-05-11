@@ -122,6 +122,11 @@ class view_page_service {
             [$state, $notification, $notificationtype] = self::handle_forfeit($state, $instance, $userid);
         }
 
+        if (optional_param('timeout', 0, PARAM_BOOL)) {
+            require_sesskey();
+            [$state, $notification, $notificationtype] = self::handle_timeout($state, $instance, $userid);
+        }
+
         self::save_state((int)$cm->id, $userid, $state);
 
         $templatecontext = self::build_template_context(
@@ -405,6 +410,49 @@ class view_page_service {
     }
 
     /**
+     * Handles a timer-expiry submission: identical to forfeit but records timedout flag.
+     *
+     * @param array $state Current session state.
+     * @param \stdClass $instance Activity instance.
+     * @param int $userid User id.
+     * @return array [$state, $notification, $notificationtype]
+     */
+    private static function handle_timeout(
+        array $state,
+        \stdClass $instance,
+        int $userid
+    ): array {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        if (empty($state['wordid']) || !empty($state['finished'])) {
+            return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning'];
+        }
+
+        $state['finished'] = true;
+        $state['won'] = false;
+        $state['timedout'] = true;
+        if ((int)$instance->cooldown_seconds > 0) {
+            $state['cooldownuntil'] = time() + (int)$instance->cooldown_seconds;
+        }
+
+        $timeused = max(0, time() - (int)$state['starttime']);
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $userid,
+            'wordid'        => (int)$state['wordid'],
+            'attempts_used' => (int)$state['attemptsused'],
+            'time_used'     => $timeused,
+            'completed'     => 0,
+            'score'         => 0.0,
+            'timecreated'   => time(),
+        ]);
+        playerwords_update_grades($instance, $userid);
+
+        return [$state, get_string('roundtimeout', 'mod_playerwords'), 'warning'];
+    }
+
+    /**
      * Returns the Wordle-style feedback message for the end screen.
      *
      * @param array $state Session state.
@@ -416,6 +464,9 @@ class view_page_service {
         }
         if (!empty($state['forfeited'])) {
             return get_string('feedback_forfeited', 'mod_playerwords');
+        }
+        if (!empty($state['timedout'])) {
+            return get_string('feedback_timeout', 'mod_playerwords');
         }
         if (!empty($state['won'])) {
             $keys = [
