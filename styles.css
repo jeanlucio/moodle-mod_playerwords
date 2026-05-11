@@ -1,3 +1,16 @@
+.mod-playerwords-game {
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+    border: 1px solid var(--gray-300, #dee2e6);
+    border-radius: 0.5rem;
+    padding: 1.25rem 1.5rem;
+}
+
+.mod-playerwords-game > p {
+    text-align: center;
+}
+
 .mod-playerwords-game .mod-playerwords-grid {
     display: flex;
     flex-direction: column;
@@ -66,18 +79,8 @@
     color: rgba(0, 0, 0, 0.55);
 }
 
-.mod-playerwords-game .mod-playerwords-form {
-    max-width: 20rem;
-    margin-inline: auto;
-}
-
-.mod-playerwords-game .mod-playerwords-actions {
-    max-width: 20rem;
-    margin-inline: auto;
-}
-
 .mod-playerwords-game .mod-playerwords-status {
-    display: inline-flex;
+    display: flex;
     flex-wrap: wrap;
     gap: 0.25rem 1rem;
     align-items: center;
@@ -88,6 +91,16 @@
     width: fit-content;
     margin-inline: auto;
     margin-bottom: 1rem;
+}
+
+.mod-playerwords-game .mod-playerwords-form {
+    max-width: 20rem;
+    margin-inline: auto;
+}
+
+.mod-playerwords-game .mod-playerwords-actions {
+    max-width: 20rem;
+    margin-inline: auto;
 }
 
 .mod-playerwords-keyboard {
@@ -161,6 +174,10 @@
     .modal-dialog {
         margin-inline: 0.75rem;
         max-width: calc(100vw - 1.5rem);
+    }
+
+    .mod-playerwords-game {
+        padding: 1rem;
     }
 }
 
