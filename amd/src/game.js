@@ -27,6 +27,8 @@
 define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(ModalSaveCancel, ModalEvents, Str) {
     'use strict';
 
+    var SHAKE_KEY = 'pw_shake_pending';
+
     /**
      * Strips non-letter characters from the guess input as the user types.
      *
@@ -239,7 +241,107 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
                     input.value += key;
                 }
             }
+            input.dispatchEvent(new Event('input'));
         });
+    };
+
+    /**
+     * Finds the first fully-empty grid row, marks it as active, and syncs the
+     * guess input value into it as the user types.
+     */
+    var initGridPreview = function() {
+        var input = document.getElementById('playerwords-guess');
+        if (!input) {
+            return;
+        }
+
+        var activeRow = null;
+        var activeCells = null;
+
+        document.querySelectorAll('.mod-playerwords-row').forEach(function(row) {
+            if (activeRow) {
+                return;
+            }
+            var cells = Array.from(row.querySelectorAll('.mod-playerwords-cell'));
+            var allEmpty = cells.every(function(c) {
+                return c.classList.contains('is-empty');
+            });
+            if (allEmpty) {
+                activeRow = row;
+                activeCells = cells;
+            }
+        });
+
+        if (!activeRow) {
+            return;
+        }
+
+        activeRow.classList.add('pw-row-active');
+
+        var updatePreview = function() {
+            var val = input.value.toUpperCase();
+            activeCells.forEach(function(cell, i) {
+                cell.textContent = i < val.length ? val[i] : '';
+            });
+        };
+
+        input.addEventListener('input', updatePreview);
+    };
+
+    /**
+     * Sets a sessionStorage flag before the guess form submits so the next
+     * page load knows to shake the last filled row.
+     */
+    var initGuessSubmitFlag = function() {
+        var form = document.querySelector('.mod-playerwords-form');
+        if (!form) {
+            return;
+        }
+        form.addEventListener('submit', function() {
+            try {
+                window.sessionStorage.setItem(SHAKE_KEY, '1');
+            } catch (e) {
+                // Storage may be unavailable; shake is non-critical.
+            }
+        });
+    };
+
+    /**
+     * On page load, if a guess was just submitted and the round is still active,
+     * plays a shake animation on the last filled row.
+     */
+    var initShakeLastRow = function() {
+        var pending;
+        try {
+            pending = window.sessionStorage.getItem(SHAKE_KEY);
+            window.sessionStorage.removeItem(SHAKE_KEY);
+        } catch (e) {
+            return;
+        }
+        if (!pending) {
+            return;
+        }
+        if (!document.getElementById('playerwords-forfeit-form')) {
+            return;
+        }
+
+        var lastFilledRow = null;
+        document.querySelectorAll('.mod-playerwords-row').forEach(function(row) {
+            var cells = row.querySelectorAll('.mod-playerwords-cell');
+            var hasFilled = Array.from(cells).some(function(c) {
+                return !c.classList.contains('is-empty') && c.textContent.trim();
+            });
+            if (hasFilled) {
+                lastFilledRow = row;
+            }
+        });
+
+        if (lastFilledRow) {
+            lastFilledRow.classList.add('pw-shake');
+            window.setTimeout(function() {
+                lastFilledRow.classList.remove('pw-shake');
+            }, 500);
+        }
     };
 
     return {
@@ -255,6 +357,9 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
             initInputFilter();
             initForfeit();
             initKeyboard();
+            initGridPreview();
+            initGuessSubmitFlag();
+            initShakeLastRow();
             if (timeleft > 0) {
                 initTimer(timeleft, timertotal || 0);
             }
