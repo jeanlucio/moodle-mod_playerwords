@@ -113,6 +113,8 @@ class view_page_service {
             'notificationtype' => $notificationtype,
             'templatecontext'  => $templatecontext,
             'cooldownuntil'    => (int)($state['cooldownuntil'] ?? 0),
+            'timeleft'         => (int)($templatecontext['timeleft'] ?? 0),
+            'timertotal'       => (int)$instance->timer_seconds,
         ];
     }
 
@@ -487,6 +489,9 @@ class view_page_service {
             'showdefinition' => !empty($state['finished']) && !empty($state['hint']),
             'revealdefinition' => $state['hint'] ?? '',
             'revealdefinitionlabel' => get_string('revealdefinitionlabel', 'mod_playerwords'),
+            'keyboardlabel' => get_string('keyboard_label', 'mod_playerwords'),
+            'keyboardenterlabel' => get_string('keyboard_enter', 'mod_playerwords'),
+            'keyboardbackspacelabel' => get_string('keyboard_backspace', 'mod_playerwords'),
         ];
     }
 

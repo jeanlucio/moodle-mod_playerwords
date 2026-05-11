@@ -152,10 +152,10 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setDefault('max_length', 12);
         $mform->addRule('max_length', null, 'numeric', null, 'client');
 
-        $mform->addElement('text', 'timer_seconds', get_string('timer_seconds', 'mod_playerwords'));
-        $mform->setType('timer_seconds', PARAM_INT);
-        $mform->setDefault('timer_seconds', 0);
-        $mform->addRule('timer_seconds', null, 'numeric', null, 'client');
+        $mform->addElement('text', 'timer_minutes', get_string('timer_minutes', 'mod_playerwords'));
+        $mform->setType('timer_minutes', PARAM_INT);
+        $mform->setDefault('timer_minutes', 0);
+        $mform->addRule('timer_minutes', null, 'numeric', null, 'client');
 
         $mform->addElement(
             'advcheckbox',
@@ -264,8 +264,8 @@ class mod_playerwords_mod_form extends moodleform_mod {
             $errors['max_length'] = get_string('error_maxlength', 'mod_playerwords');
         }
 
-        if ((int)$data['timer_seconds'] < 0) {
-            $errors['timer_seconds'] = get_string('error_timerseconds', 'mod_playerwords');
+        if ((int)$data['timer_minutes'] < 0) {
+            $errors['timer_minutes'] = get_string('error_timerseconds', 'mod_playerwords');
         }
 
         if ((int)$data['cooldown_amount'] < 0) {
@@ -363,6 +363,10 @@ class mod_playerwords_mod_form extends moodleform_mod {
                 $defaultvalues['cooldown_amount'] = max(1, (int) round($seconds / 60));
                 $defaultvalues['cooldown_unit']   = 'minutes';
             }
+        }
+
+        if (isset($defaultvalues['timer_seconds'])) {
+            $defaultvalues['timer_minutes'] = (int)round((int)$defaultvalues['timer_seconds'] / 60);
         }
     }
 }

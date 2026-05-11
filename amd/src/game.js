@@ -16,7 +16,8 @@
 /**
  * AMD module for mod_playerwords game interactions.
  *
- * Handles the forfeit confirmation dialog and the post-round cooldown countdown.
+ * Handles the forfeit confirmation dialog, the post-round cooldown countdown,
+ * and the virtual keyboard.
  *
  * @module     mod_playerwords/game
  * @copyright  2026 Jean Lúcio
@@ -25,6 +26,24 @@
 
 define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(ModalSaveCancel, ModalEvents, Str) {
     'use strict';
+
+    /**
+     * Strips non-letter characters from the guess input as the user types.
+     *
+     * Handles physical keyboard input; virtual keyboard only sends letters by design.
+     */
+    var initInputFilter = function() {
+        var input = document.getElementById('playerwords-guess');
+        if (!input) {
+            return;
+        }
+        input.addEventListener('input', function() {
+            var filtered = input.value.replace(/[^\p{L}]/gu, '');
+            if (filtered !== input.value) {
+                input.value = filtered;
+            }
+        });
+    };
 
     /**
      * Attaches a Moodle confirmation modal to the forfeit form submit event.
@@ -84,6 +103,64 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
     };
 
     /**
+     * Formats a seconds count as "Xmin YYs".
+     *
+     * @param {number} seconds Total seconds remaining.
+     * @returns {string}
+     */
+    var formatGameTime = function(seconds) {
+        var m = Math.floor(seconds / 60);
+        var s = seconds % 60;
+        return m + 'min ' + String(s).padStart(2, '0') + 's';
+    };
+
+    /**
+     * Ticks the round timer down one second and re-schedules itself.
+     *
+     * Adds the urgency class once remaining time falls below the threshold,
+     * and submits the forfeit form when time runs out.
+     *
+     * @param {HTMLElement} el        The span showing the countdown.
+     * @param {number}      remaining Seconds remaining.
+     * @param {number}      threshold Seconds at which to add the urgency class.
+     */
+    var tickTimer = function(el, remaining, threshold) {
+        el.textContent = formatGameTime(remaining);
+        if (remaining <= threshold) {
+            el.classList.add('pw-timer-urgent');
+        }
+        if (remaining <= 0) {
+            var forfeitForm = document.getElementById('playerwords-forfeit-form');
+            if (forfeitForm) {
+                forfeitForm.submit();
+            }
+            return;
+        }
+        window.setTimeout(function() {
+            tickTimer(el, remaining - 1, threshold);
+        }, 1000);
+    };
+
+    /**
+     * Starts the round timer countdown if the timer element is present and
+     * there is an active round (forfeit form exists).
+     *
+     * @param {number} timeleft   Seconds remaining at page load.
+     * @param {number} timertotal Total seconds configured for the round.
+     */
+    var initTimer = function(timeleft, timertotal) {
+        var el = document.getElementById('playerwords-timer-countdown');
+        if (!el || timeleft <= 0) {
+            return;
+        }
+        if (!document.getElementById('playerwords-forfeit-form')) {
+            return;
+        }
+        var threshold = timertotal > 0 ? Math.max(10, Math.floor(timertotal * 0.2)) : 30;
+        tickTimer(el, timeleft, threshold);
+    };
+
+    /**
      * Starts the cooldown countdown if the element is present.
      *
      * @param {number} until Unix timestamp when the cooldown ends.
@@ -96,14 +173,88 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
         tick(el, until);
     };
 
+    /**
+     * Applies state classes to keyboard keys from the rendered grid, then wires
+     * key-click events to the guess input and form.
+     */
+    var initKeyboard = function() {
+        var keyboard = document.getElementById('playerwords-keyboard');
+        if (!keyboard) {
+            return;
+        }
+        var input = document.getElementById('playerwords-guess');
+        var form = document.querySelector('.mod-playerwords-form');
+        if (!input || !form) {
+            return;
+        }
+
+        // State precedence: correct (3) > present (2) > absent (1).
+        var stateRank = {absent: 1, present: 2, correct: 3};
+        var letterStates = {};
+
+        document.querySelectorAll('.mod-playerwords-cell').forEach(function(cell) {
+            var letter = cell.textContent.trim().toUpperCase();
+            if (!letter) {
+                return;
+            }
+            var bestState = null;
+            var bestRank = 0;
+            Object.keys(stateRank).forEach(function(s) {
+                if (cell.classList.contains('is-' + s) && stateRank[s] > bestRank) {
+                    bestRank = stateRank[s];
+                    bestState = s;
+                }
+            });
+            if (bestState && (!letterStates[letter] || stateRank[bestState] > stateRank[letterStates[letter]])) {
+                letterStates[letter] = bestState;
+            }
+        });
+
+        keyboard.querySelectorAll('[data-key]').forEach(function(btn) {
+            var key = btn.dataset.key;
+            if (letterStates[key]) {
+                btn.classList.add('is-' + letterStates[key]);
+            }
+        });
+
+        keyboard.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-key]');
+            if (!btn) {
+                return;
+            }
+            var key = btn.dataset.key;
+            if (key === 'BACKSPACE') {
+                input.value = input.value.slice(0, -1);
+            } else if (key === 'ENTER') {
+                if (form.requestSubmit) {
+                    form.requestSubmit();
+                } else {
+                    form.submit();
+                }
+            } else {
+                var max = parseInt(input.getAttribute('maxlength'), 10);
+                if (input.value.length < max) {
+                    input.value += key;
+                }
+            }
+        });
+    };
+
     return {
         /**
          * Entry point called by view.php via $PAGE->requires->js_call_amd().
          *
          * @param {number} cooldownUntil Unix timestamp when the cooldown ends (0 = disabled).
+         * @param {number} timeleft      Seconds remaining in the current round (0 = no timer).
+         * @param {number} timertotal    Total seconds configured for the round (0 = no timer).
          */
-        init: function(cooldownUntil) {
+        init: function(cooldownUntil, timeleft, timertotal) {
+            initInputFilter();
             initForfeit();
+            initKeyboard();
+            if (timeleft > 0) {
+                initTimer(timeleft, timertotal || 0);
+            }
             if (cooldownUntil > 0) {
                 initCountdown(cooldownUntil);
             }

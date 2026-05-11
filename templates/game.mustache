@@ -91,7 +91,10 @@
         <div class="mod-playerwords-status mb-3">
             <span><strong>{{attemptslabel}}</strong> {{attemptsused}} / {{maxattempts}}</span>
             {{#timerenabled}}
-                <span class="ms-3"><strong>{{timerlabel}}</strong> {{timeleft}}</span>
+                <span class="ms-3">
+                    <strong>{{timerlabel}}</strong>
+                    <span id="playerwords-timer-countdown">{{timeleft}}</span>
+                </span>
             {{/timerenabled}}
         </div>
         {{#canhint}}
@@ -117,6 +120,7 @@
         </div>
 
         {{^roundfinished}}
+        <div>
             <div class="d-flex align-items-end">
                 <form method="post"
                       action="{{{config.wwwroot}}}/mod/playerwords/view.php"
@@ -148,6 +152,52 @@
                     <button type="submit" class="btn btn-outline-danger btn-sm">{{forfeitlabel}}</button>
                 </form>
             </div>
+            <div id="playerwords-keyboard" class="mod-playerwords-keyboard" role="group" aria-label="{{keyboardlabel}}">
+                <div class="mod-playerwords-keyboard-row">
+                    <button type="button" class="pw-key" data-key="Q" tabindex="-1">Q</button>
+                    <button type="button" class="pw-key" data-key="W" tabindex="-1">W</button>
+                    <button type="button" class="pw-key" data-key="E" tabindex="-1">E</button>
+                    <button type="button" class="pw-key" data-key="R" tabindex="-1">R</button>
+                    <button type="button" class="pw-key" data-key="T" tabindex="-1">T</button>
+                    <button type="button" class="pw-key" data-key="Y" tabindex="-1">Y</button>
+                    <button type="button" class="pw-key" data-key="U" tabindex="-1">U</button>
+                    <button type="button" class="pw-key" data-key="I" tabindex="-1">I</button>
+                    <button type="button" class="pw-key" data-key="O" tabindex="-1">O</button>
+                    <button type="button" class="pw-key" data-key="P" tabindex="-1">P</button>
+                </div>
+                <div class="mod-playerwords-keyboard-row">
+                    <button type="button" class="pw-key" data-key="A" tabindex="-1">A</button>
+                    <button type="button" class="pw-key" data-key="S" tabindex="-1">S</button>
+                    <button type="button" class="pw-key" data-key="D" tabindex="-1">D</button>
+                    <button type="button" class="pw-key" data-key="F" tabindex="-1">F</button>
+                    <button type="button" class="pw-key" data-key="G" tabindex="-1">G</button>
+                    <button type="button" class="pw-key" data-key="H" tabindex="-1">H</button>
+                    <button type="button" class="pw-key" data-key="J" tabindex="-1">J</button>
+                    <button type="button" class="pw-key" data-key="K" tabindex="-1">K</button>
+                    <button type="button" class="pw-key" data-key="L" tabindex="-1">L</button>
+                    <button type="button" class="pw-key" data-key="Ç" tabindex="-1">Ç</button>
+                </div>
+                <div class="mod-playerwords-keyboard-row">
+                    <button type="button"
+                            class="pw-key pw-key-wide"
+                            data-key="ENTER"
+                            tabindex="-1"
+                            aria-label="{{keyboardenterlabel}}">&#x21b5;</button>
+                    <button type="button" class="pw-key" data-key="Z" tabindex="-1">Z</button>
+                    <button type="button" class="pw-key" data-key="X" tabindex="-1">X</button>
+                    <button type="button" class="pw-key" data-key="C" tabindex="-1">C</button>
+                    <button type="button" class="pw-key" data-key="V" tabindex="-1">V</button>
+                    <button type="button" class="pw-key" data-key="B" tabindex="-1">B</button>
+                    <button type="button" class="pw-key" data-key="N" tabindex="-1">N</button>
+                    <button type="button" class="pw-key" data-key="M" tabindex="-1">M</button>
+                    <button type="button"
+                            class="pw-key pw-key-wide"
+                            data-key="BACKSPACE"
+                            tabindex="-1"
+                            aria-label="{{keyboardbackspacelabel}}">&#x232b;</button>
+                </div>
+            </div>
+        </div>
         {{/roundfinished}}
 
         {{#roundfinished}}

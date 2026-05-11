@@ -233,6 +233,8 @@ function playerwords_add_instance(stdClass $data): int {
     $amount      = (int)($data->cooldown_amount ?? 0);
     $data->cooldown_seconds = $amount * ($multipliers[$unit] ?? 86400);
     unset($data->cooldown_amount, $data->cooldown_unit);
+    $data->timer_seconds = max(0, (int)($data->timer_minutes ?? 0)) * 60;
+    unset($data->timer_minutes);
     $data->timecreated  = time();
     $data->timemodified = time();
     $data->id = $DB->insert_record('playerwords', $data);
@@ -264,6 +266,8 @@ function playerwords_update_instance(stdClass $data): bool {
     $amount      = (int)($data->cooldown_amount ?? 0);
     $data->cooldown_seconds = $amount * ($multipliers[$unit] ?? 86400);
     unset($data->cooldown_amount, $data->cooldown_unit);
+    $data->timer_seconds = max(0, (int)($data->timer_minutes ?? 0)) * 60;
+    unset($data->timer_minutes);
     $data->id           = $data->instance;
     $data->timemodified = time();
     $result = $DB->update_record('playerwords', $data);
