@@ -378,6 +378,54 @@ class words_repository {
     }
 
     /**
+     * Inserts one AI-generated word as pending approval.
+     *
+     * @param int $instanceid Activity instance id.
+     * @param int $userid User id.
+     * @param string $word Word text.
+     * @param string $hint Optional hint or definition.
+     * @return void
+     */
+    public static function add_ai_word(int $instanceid, int $userid, string $word, string $hint): void {
+        global $DB;
+
+        $record = (object)[
+            'playerwordsid' => $instanceid,
+            'word' => trim($word),
+            'concept' => trim($word),
+            'hint' => trim($hint),
+            'source' => 'ai',
+            'approved' => 0,
+            'timecreated' => time(),
+            'addedby' => $userid,
+        ];
+        $DB->insert_record('playerwords_words', $record);
+    }
+
+    /**
+     * Bulk-approves words that belong to the given activity instance.
+     *
+     * @param int[] $wordids Word ids to approve.
+     * @param int $instanceid Activity instance id.
+     * @return void
+     */
+    public static function approve_words_bulk(array $wordids, int $instanceid): void {
+        global $DB;
+        if (empty($wordids)) {
+            return;
+        }
+        [$insql, $inparams] = $DB->get_in_or_equal($wordids, SQL_PARAMS_NAMED, 'wid');
+        $inparams['instanceid'] = $instanceid;
+        $DB->set_field_select(
+            'playerwords_words',
+            'approved',
+            1,
+            "id $insql AND playerwordsid = :instanceid",
+            $inparams
+        );
+    }
+
+    /**
      * Returns words for the teacher word pool, ordered by the given column.
      *
      * Both $sort and $dir must be validated by the caller against an allow-list

@@ -25,6 +25,7 @@
 require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
+use mod_playerwords\local\ai_word_generator;
 use mod_playerwords\local\words_repository;
 
 $id = required_param('id', PARAM_INT);
@@ -119,13 +120,41 @@ if (optional_param('deleteword', 0, PARAM_BOOL)) {
     $notificationtype = 'success';
 }
 
-if (optional_param('bulkdelete', 0, PARAM_BOOL)) {
+$bulkaction = optional_param('bulkaction', '', PARAM_ALPHA);
+if ($bulkaction !== '') {
     require_sesskey();
     $wordids = optional_param_array('bulk_ids', [], PARAM_INT);
     $wordids = array_values(array_filter(array_map('intval', $wordids)));
-    words_repository::delete_words_bulk($wordids, (int)$instance->id);
-    $notification = get_string('bulkdeleted', 'mod_playerwords');
-    $notificationtype = 'success';
+    if ($bulkaction === 'delete') {
+        words_repository::delete_words_bulk($wordids, (int)$instance->id);
+        $notification = get_string('bulkdeleted', 'mod_playerwords');
+        $notificationtype = 'success';
+    } else if ($bulkaction === 'approve') {
+        words_repository::approve_words_bulk($wordids, (int)$instance->id);
+        $notification = get_string('bulkapproved', 'mod_playerwords');
+        $notificationtype = 'success';
+    }
+}
+
+if (optional_param('generateai', 0, PARAM_BOOL)) {
+    require_sesskey();
+    $topic = trim(optional_param('aitopic', '', PARAM_TEXT));
+    $count = max(1, min(20, (int)optional_param('aicount', 10, PARAM_INT)));
+    if ($topic !== '') {
+        try {
+            $saved = ai_word_generator::generate_and_save($instance, (int)$USER->id, $topic, $count);
+            if ($saved > 0) {
+                $notification = get_string('aigeneratedsaved', 'mod_playerwords', $saved);
+                $notificationtype = 'success';
+            } else {
+                $notification = get_string('aigeneratednone', 'mod_playerwords');
+                $notificationtype = 'warning';
+            }
+        } catch (\moodle_exception $e) {
+            $notification = get_string('aigenerateerror', 'mod_playerwords');
+            $notificationtype = 'error';
+        }
+    }
 }
 
 $recentwords = words_repository::get_recent_words((int)$instance->id, 0, $sort, $dir);
@@ -178,6 +207,7 @@ foreach ($recentwords as $recentword) {
         'word'        => $recentword->word,
         'source'      => $sourcelabel,
         'approved'    => $statuslabel,
+        'ispending'   => ((int)$recentword->approved !== 1),
         'editwordurl' => $editurl->out(false),
     ];
 }
@@ -195,51 +225,58 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->requires->js_call_amd('mod_playerwords/managewords', 'init');
 
 $templatecontext = [
-    'cmid'                  => $cm->id,
-    'sesskey'               => sesskey(),
-    'backtogameurl'         => (new moodle_url('/mod/playerwords/view.php', ['id' => $cm->id]))->out(false),
-    'backtogamebutton'      => get_string('backtogamebutton', 'mod_playerwords'),
-    'cansyncglossary'       => $cansyncglossary,
-    'syncglossarybutton'    => get_string('syncglossarybutton', 'mod_playerwords'),
-    'managewordslabel'      => get_string('managewordslabel', 'mod_playerwords'),
-    'manualwordlabel'       => get_string('manualwordlabel', 'mod_playerwords'),
-    'manualhintlabel'       => get_string('manualhintlabel', 'mod_playerwords'),
-    'manualwordplaceholder' => get_string('manualwordplaceholder', 'mod_playerwords'),
-    'manualhintplaceholder' => get_string('manualhintplaceholder', 'mod_playerwords'),
-    'addwordbutton'         => get_string('addwordbutton', 'mod_playerwords'),
-    'recentwordslabel'      => get_string('recentwordslabel', 'mod_playerwords'),
-    'nowordsyet'            => get_string('nowordsyet', 'mod_playerwords'),
-    'wordcolumnlabel'       => get_string('wordcolumnlabel', 'mod_playerwords'),
-    'sourcecolumnlabel'     => get_string('sourcecolumnlabel', 'mod_playerwords'),
-    'statuscolumnlabel'     => get_string('statuscolumnlabel', 'mod_playerwords'),
-    'actionscolumnlabel'    => get_string('actionscolumnlabel', 'mod_playerwords'),
-    'deletewordbutton'      => get_string('deletewordbutton', 'mod_playerwords'),
-    'deletewordconfirm'     => get_string('deletewordconfirm', 'mod_playerwords'),
-    'deletewordtitle'       => get_string('deletewordtitle', 'mod_playerwords'),
-    'bulkdeletebutton'      => get_string('bulkdeletebutton', 'mod_playerwords'),
-    'bulkdeleteconfirm'     => get_string('bulkdeleteconfirm', 'mod_playerwords'),
-    'editwordbutton'        => get_string('editwordbutton', 'mod_playerwords'),
-    'editwordlabel'         => get_string('editwordlabel', 'mod_playerwords'),
-    'savewordbutton'        => get_string('savewordbutton', 'mod_playerwords'),
-    'cancelbutton'          => get_string('cancelbutton', 'mod_playerwords'),
-    'selectall'             => get_string('selectall', 'mod_playerwords'),
-    'selectword'            => get_string('selectword', 'mod_playerwords'),
-    'wordupdated'           => get_string('wordupdated', 'mod_playerwords'),
-    'currentsort'           => $sort,
-    'currentdir'            => $dir,
-    'sort_word_url'         => $sorturls['word'],
-    'sort_word_icon'        => $sorticons['word'],
-    'sort_source_url'       => $sorturls['source'],
-    'sort_source_icon'      => $sorticons['source'],
-    'sort_approved_url'     => $sorturls['approved'],
-    'sort_approved_icon'    => $sorticons['approved'],
-    'recentwords'           => $templaterows,
-    'hasrecentwords'        => !empty($templaterows),
-    'haseditword'           => $editwordid > 0 && $editworddata !== null,
-    'editword_id'           => $editworddata ? (int)$editworddata->id : 0,
-    'editword_word'         => $editworddata ? $editworddata->word : '',
-    'editword_hint'         => $editworddata ? ($editworddata->hint ?? '') : '',
-    'cancelediteurl'        => $cancelediteurl->out(false),
+    'cmid'                   => $cm->id,
+    'sesskey'                => sesskey(),
+    'backtogameurl'          => (new moodle_url('/mod/playerwords/view.php', ['id' => $cm->id]))->out(false),
+    'backtogamebutton'       => get_string('backtogamebutton', 'mod_playerwords'),
+    'cansyncglossary'        => $cansyncglossary,
+    'syncglossarybutton'     => get_string('syncglossarybutton', 'mod_playerwords'),
+    'managewordslabel'       => get_string('managewordslabel', 'mod_playerwords'),
+    'manualwordlabel'        => get_string('manualwordlabel', 'mod_playerwords'),
+    'manualhintlabel'        => get_string('manualhintlabel', 'mod_playerwords'),
+    'manualwordplaceholder'  => get_string('manualwordplaceholder', 'mod_playerwords'),
+    'manualhintplaceholder'  => get_string('manualhintplaceholder', 'mod_playerwords'),
+    'addwordbutton'          => get_string('addwordbutton', 'mod_playerwords'),
+    'hasai'                  => ai_word_generator::has_key(),
+    'aigeneratetitle'        => get_string('aigeneratetitle', 'mod_playerwords'),
+    'aigeneratetopic'        => get_string('aigeneratetopic', 'mod_playerwords'),
+    'aigeneratecount'        => get_string('aigeneratecount', 'mod_playerwords'),
+    'aigeneratebutton'       => get_string('aigeneratebutton', 'mod_playerwords'),
+    'recentwordslabel'       => get_string('recentwordslabel', 'mod_playerwords'),
+    'nowordsyet'             => get_string('nowordsyet', 'mod_playerwords'),
+    'wordcolumnlabel'        => get_string('wordcolumnlabel', 'mod_playerwords'),
+    'sourcecolumnlabel'      => get_string('sourcecolumnlabel', 'mod_playerwords'),
+    'statuscolumnlabel'      => get_string('statuscolumnlabel', 'mod_playerwords'),
+    'actionscolumnlabel'     => get_string('actionscolumnlabel', 'mod_playerwords'),
+    'deletewordbutton'       => get_string('deletewordbutton', 'mod_playerwords'),
+    'deletewordconfirm'      => get_string('deletewordconfirm', 'mod_playerwords'),
+    'deletewordtitle'        => get_string('deletewordtitle', 'mod_playerwords'),
+    'bulkapprovebutton'      => get_string('bulkapprovebutton', 'mod_playerwords'),
+    'bulkapprovebuttontitle' => get_string('bulkapprovebuttontitle', 'mod_playerwords'),
+    'bulkapproveconfirm'     => get_string('bulkapproveconfirm', 'mod_playerwords'),
+    'bulkdeletebutton'       => get_string('bulkdeletebutton', 'mod_playerwords'),
+    'bulkdeleteconfirm'      => get_string('bulkdeleteconfirm', 'mod_playerwords'),
+    'editwordbutton'         => get_string('editwordbutton', 'mod_playerwords'),
+    'editwordlabel'          => get_string('editwordlabel', 'mod_playerwords'),
+    'savewordbutton'         => get_string('savewordbutton', 'mod_playerwords'),
+    'cancelbutton'           => get_string('cancelbutton', 'mod_playerwords'),
+    'selectall'              => get_string('selectall', 'mod_playerwords'),
+    'selectword'             => get_string('selectword', 'mod_playerwords'),
+    'currentsort'            => $sort,
+    'currentdir'             => $dir,
+    'sort_word_url'          => $sorturls['word'],
+    'sort_word_icon'         => $sorticons['word'],
+    'sort_source_url'        => $sorturls['source'],
+    'sort_source_icon'       => $sorticons['source'],
+    'sort_approved_url'      => $sorturls['approved'],
+    'sort_approved_icon'     => $sorticons['approved'],
+    'recentwords'            => $templaterows,
+    'hasrecentwords'         => !empty($templaterows),
+    'haseditword'            => $editwordid > 0 && $editworddata !== null,
+    'editword_id'            => $editworddata ? (int)$editworddata->id : 0,
+    'editword_word'          => $editworddata ? $editworddata->word : '',
+    'editword_hint'          => $editworddata ? ($editworddata->hint ?? '') : '',
+    'cancelediteurl'         => $cancelediteurl->out(false),
 ];
 
 echo $OUTPUT->header();

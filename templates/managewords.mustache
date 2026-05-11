@@ -33,6 +33,11 @@
         "manualwordplaceholder": "Enter a word",
         "manualhintplaceholder": "Optional hint for students",
         "addwordbutton": "Add word",
+        "hasai": true,
+        "aigeneratetitle": "Generate words with AI",
+        "aigeneratetopic": "Topic",
+        "aigeneratecount": "Number of words",
+        "aigeneratebutton": "Generate with AI",
         "recentwordslabel": "Word pool",
         "nowordsyet": "No words have been added yet.",
         "wordcolumnlabel": "Word",
@@ -42,6 +47,9 @@
         "deletewordbutton": "Delete",
         "deletewordconfirm": "Are you sure you want to delete this word? This action cannot be undone.",
         "deletewordtitle": "Delete word",
+        "bulkapprovebutton": "Approve selected",
+        "bulkapprovebuttontitle": "Approve selected words",
+        "bulkapproveconfirm": "Are you sure you want to approve the selected words?",
         "bulkdeletebutton": "Delete selected",
         "bulkdeleteconfirm": "Are you sure you want to delete the selected words? This action cannot be undone.",
         "editwordbutton": "Edit",
@@ -70,7 +78,16 @@
                 "word": "ocean",
                 "source": "Manual insertion",
                 "approved": "Approved",
+                "ispending": false,
                 "editwordurl": "https://example.com/mod/playerwords/managewords.php?id=1&editwordid=1"
+            },
+            {
+                "id": 2,
+                "word": "cosmos",
+                "source": "AI extraction",
+                "approved": "Pending",
+                "ispending": true,
+                "editwordurl": "https://example.com/mod/playerwords/managewords.php?id=1&editwordid=2"
             }
         ]
     }
@@ -168,6 +185,43 @@
     </div>
 </div>
 
+{{#hasai}}
+<div class="card mb-3">
+    <div class="card-body">
+        <h3 class="h5">{{aigeneratetitle}}</h3>
+        <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/managewords.php">
+            <input type="hidden" name="id" value="{{cmid}}">
+            <input type="hidden" name="generateai" value="1">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <input type="hidden" name="sort" value="{{currentsort}}">
+            <input type="hidden" name="dir" value="{{currentdir}}">
+
+            <label for="playerwords-aitopic" class="form-label">{{aigeneratetopic}}</label>
+            <input
+                type="text"
+                id="playerwords-aitopic"
+                name="aitopic"
+                class="form-control"
+                required
+            >
+
+            <label for="playerwords-aicount" class="form-label mt-2">{{aigeneratecount}}</label>
+            <input
+                type="number"
+                id="playerwords-aicount"
+                name="aicount"
+                class="form-control"
+                value="10"
+                min="1"
+                max="20"
+            >
+
+            <button type="submit" class="btn btn-outline-primary mt-2">{{aigeneratebutton}}</button>
+        </form>
+    </div>
+</div>
+{{/hasai}}
+
 <div class="card">
     <div class="card-body">
         <h3 class="h6">{{recentwordslabel}}</h3>
@@ -176,15 +230,25 @@
                   method="post"
                   action="{{{config.wwwroot}}}/mod/playerwords/managewords.php">
                 <input type="hidden" name="id" value="{{cmid}}">
-                <input type="hidden" name="bulkdelete" value="1">
+                <input type="hidden" id="playerwords-bulk-action" name="bulkaction" value="">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
                 <input type="hidden" name="sort" value="{{currentsort}}">
                 <input type="hidden" name="dir" value="{{currentdir}}">
 
                 <div class="mb-2">
                     <button type="button"
+                            id="playerwords-bulk-approve-btn"
+                            class="btn btn-outline-success btn-sm me-2"
+                            data-labelbase="{{bulkapprovebutton}}"
+                            data-title="{{bulkapprovebuttontitle}}"
+                            data-confirm="{{bulkapproveconfirm}}"
+                            disabled>
+                        {{bulkapprovebutton}}
+                    </button>
+                    <button type="button"
                             id="playerwords-bulk-delete-btn"
                             class="btn btn-outline-danger btn-sm"
+                            data-labelbase="{{bulkdeletebutton}}"
                             data-title="{{deletewordtitle}}"
                             data-confirm="{{bulkdeleteconfirm}}"
                             disabled>
@@ -231,7 +295,8 @@
                                                name="bulk_ids[]"
                                                value="{{id}}"
                                                class="form-check-input playerwords-bulk-check"
-                                               aria-label="{{selectword}} {{word}}">
+                                               aria-label="{{selectword}} {{word}}"
+                                               {{#ispending}}data-pending="1"{{/ispending}}>
                                     </td>
                                     <td>{{word}}</td>
                                     <td>{{source}}</td>

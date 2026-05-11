@@ -16,9 +16,11 @@
 /**
  * AMD module for mod_playerwords manage-words page interactions.
  *
- * Provides select-all, bulk delete and single-row delete via a shared bulk form.
- * Individual "Delete" buttons pre-select their own checkbox then trigger the same
- * confirmation modal before submitting, avoiding nested-form constraints.
+ * Provides select-all, bulk approve, bulk delete and single-row delete via a
+ * shared bulk form. Approve and delete buttons track separate counts: the approve
+ * button counts only pending (unapproved) checked rows; the delete button counts
+ * all checked rows. Individual "Delete" buttons pre-select their own checkbox then
+ * trigger a confirmation modal before submitting.
  *
  * @module     mod_playerwords/managewords
  * @copyright  2026 Jean Lúcio
@@ -29,18 +31,33 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
     'use strict';
 
     var bulkForm = null;
+    var bulkActionField = null;
     var selectAllCheckbox = null;
     var bulkDeleteBtn = null;
+    var bulkApproveBtn = null;
 
     /**
-     * Enables or disables the bulk-delete button based on checked row count.
+     * Refreshes both bulk-action button states and labels based on current selection.
+     *
+     * The approve button is enabled only when at least one pending word is checked.
+     * The delete button is enabled when at least one word (any status) is checked.
+     * Both labels show the relevant count in parentheses.
      */
-    var updateBulkButton = function() {
-        if (!bulkDeleteBtn) {
-            return;
+    var updateBulkButtons = function() {
+        var totalCount = document.querySelectorAll('.playerwords-bulk-check:checked').length;
+        var pendingCount = document.querySelectorAll(
+            '.playerwords-bulk-check:checked[data-pending="1"]'
+        ).length;
+
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.disabled = totalCount === 0;
+            bulkDeleteBtn.textContent = bulkDeleteBtn.dataset.labelbase + ' (' + totalCount + ')';
         }
-        var count = document.querySelectorAll('.playerwords-bulk-check:checked').length;
-        bulkDeleteBtn.disabled = count === 0;
+
+        if (bulkApproveBtn) {
+            bulkApproveBtn.disabled = pendingCount === 0;
+            bulkApproveBtn.textContent = bulkApproveBtn.dataset.labelbase + ' (' + pendingCount + ')';
+        }
     };
 
     /**
@@ -50,7 +67,7 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
      * @param {string} body  Modal body string.
      * @param {Function} onConfirm Called when the user clicks the save button.
      */
-    var showDeleteModal = function(title, body, onConfirm) {
+    var showModal = function(title, body, onConfirm) {
         Promise.all([
             ModalSaveCancel.create({
                 title: title,
@@ -83,7 +100,7 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
             document.querySelectorAll('.playerwords-bulk-check').forEach(function(cb) {
                 cb.checked = selectAllCheckbox.checked;
             });
-            updateBulkButton();
+            updateBulkButtons();
         });
 
         document.querySelectorAll('.playerwords-bulk-check').forEach(function(cb) {
@@ -92,37 +109,63 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
                 var checked = document.querySelectorAll('.playerwords-bulk-check:checked').length;
                 selectAllCheckbox.checked = checked === total;
                 selectAllCheckbox.indeterminate = checked > 0 && checked < total;
-                updateBulkButton();
+                updateBulkButtons();
             });
         });
     };
 
     /**
-     * Attaches the confirmation modal to the bulk-delete button.
+     * Wires up both bulk-action buttons (approve and delete).
+     *
+     * Each button sets the hidden bulkaction field to the appropriate action
+     * value before submitting the shared form.
      */
-    var initBulkDelete = function() {
-        bulkDeleteBtn = document.getElementById('playerwords-bulk-delete-btn');
+    var initBulkActions = function() {
         bulkForm = document.getElementById('playerwords-bulk-form');
-        if (!bulkDeleteBtn || !bulkForm) {
+        bulkActionField = document.getElementById('playerwords-bulk-action');
+        bulkDeleteBtn = document.getElementById('playerwords-bulk-delete-btn');
+        bulkApproveBtn = document.getElementById('playerwords-bulk-approve-btn');
+
+        if (!bulkForm) {
             return;
         }
 
-        bulkDeleteBtn.addEventListener('click', function() {
-            showDeleteModal(
-                bulkDeleteBtn.dataset.title,
-                bulkDeleteBtn.dataset.confirm,
-                function() {
-                    bulkForm.submit();
-                }
-            );
-        });
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.addEventListener('click', function() {
+                showModal(
+                    bulkDeleteBtn.dataset.title,
+                    bulkDeleteBtn.dataset.confirm,
+                    function() {
+                        if (bulkActionField) {
+                            bulkActionField.value = 'delete';
+                        }
+                        bulkForm.submit();
+                    }
+                );
+            });
+        }
+
+        if (bulkApproveBtn) {
+            bulkApproveBtn.addEventListener('click', function() {
+                showModal(
+                    bulkApproveBtn.dataset.title,
+                    bulkApproveBtn.dataset.confirm,
+                    function() {
+                        if (bulkActionField) {
+                            bulkActionField.value = 'approve';
+                        }
+                        bulkForm.submit();
+                    }
+                );
+            });
+        }
     };
 
     /**
      * Attaches a click handler to each single-row delete button.
      *
-     * Unchecks all checkboxes, checks only the clicked row, then shows the modal
-     * and submits the shared bulk form on confirmation.
+     * Unchecks all checkboxes, checks only the clicked row, then shows a
+     * confirmation modal and submits with bulkaction=delete on confirmation.
      */
     var initSingleDelete = function() {
         document.querySelectorAll('.playerwords-single-delete-btn').forEach(function(btn) {
@@ -135,10 +178,13 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
                     selectAllCheckbox.checked = false;
                     selectAllCheckbox.indeterminate = false;
                 }
-                showDeleteModal(
+                showModal(
                     btn.dataset.title,
                     btn.dataset.confirm,
                     function() {
+                        if (bulkActionField) {
+                            bulkActionField.value = 'delete';
+                        }
                         bulkForm.submit();
                     }
                 );
@@ -152,8 +198,9 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
          */
         init: function() {
             initSelectAll();
-            initBulkDelete();
+            initBulkActions();
             initSingleDelete();
+            updateBulkButtons();
         },
     };
 });
