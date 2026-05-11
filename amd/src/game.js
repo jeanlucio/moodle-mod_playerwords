@@ -84,7 +84,7 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
     var tick = function(el, until) {
         var remaining = until - Math.floor(Date.now() / 1000);
         if (remaining <= 0) {
-            el.textContent = el.dataset.ready;
+            window.location.reload();
             return;
         }
         var h = Math.floor(remaining / 3600);

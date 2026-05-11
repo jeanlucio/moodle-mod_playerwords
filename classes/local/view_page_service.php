@@ -65,12 +65,36 @@ class view_page_service {
             $restrictionnotice = self::get_round_restriction_notice($instance, $userid);
             if ($restrictionnotice !== null) {
                 self::save_state((int)$cm->id, $userid, $state);
+                if (
+                    !empty($state['finished']) &&
+                    (int)($state['wordid'] ?? 0) > 0 &&
+                    (int)($state['cooldownuntil'] ?? 0) > time()
+                ) {
+                    $templatectx = self::build_template_context(
+                        $cm,
+                        $instance,
+                        $state,
+                        $state['wordtext'] ?? '',
+                        $canmanagewords
+                    );
+                    return [
+                        'notification'     => null,
+                        'notificationtype' => null,
+                        'templatecontext'  => $templatectx,
+                        'cooldownuntil'    => (int)($state['cooldownuntil'] ?? 0),
+                        'timeleft'         => 0,
+                        'timertotal'       => 0,
+                    ];
+                }
                 $templatectx = self::build_template_context($cm, $instance, $state, '', $canmanagewords);
                 $templatectx['nogamewords'] = $restrictionnotice;
                 return [
                     'notification'     => null,
                     'notificationtype' => null,
                     'templatecontext'  => $templatectx,
+                    'cooldownuntil'    => 0,
+                    'timeleft'         => 0,
+                    'timertotal'       => 0,
                 ];
             }
         }
@@ -492,6 +516,7 @@ class view_page_service {
             'keyboardlabel' => get_string('keyboard_label', 'mod_playerwords'),
             'keyboardenterlabel' => get_string('keyboard_enter', 'mod_playerwords'),
             'keyboardbackspacelabel' => get_string('keyboard_backspace', 'mod_playerwords'),
+            'cooldownactive' => !empty($state['finished']) && ((int)($state['cooldownuntil'] ?? 0) > time()),
         ];
     }
 

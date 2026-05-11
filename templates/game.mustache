@@ -64,6 +64,7 @@
         "revealconcept": "Ditadura Militar",
         "showdefinition": true,
         "revealdefinition": "Regime autoritário que durou de 1964 a 1985.",
+        "cooldownactive": false,
         "cooldowntext": "23h 59m 45s",
         "cooldowncountdownlabel": "Next round in",
         "newroundready": "Ready to play!",
@@ -228,12 +229,14 @@
                     </strong>
                 </p>
             {{/cooldowntext}}
+            {{^cooldownactive}}
             <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php" class="mt-2">
                 <input type="hidden" name="id" value="{{cmid}}">
                 <input type="hidden" name="newround" value="1">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
                 <button type="submit" class="btn btn-secondary">{{newroundlabel}}</button>
             </form>
+            {{/cooldownactive}}
         {{/roundfinished}}
     {{/hastargetword}}
 </div>
