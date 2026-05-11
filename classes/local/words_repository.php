@@ -42,6 +42,10 @@ class words_repository {
      */
     private static function extract_candidate_words(string $concept): array {
         $tokens = preg_split('/\s+/u', $concept, -1, PREG_SPLIT_NO_EMPTY);
+        $tokens = array_values(array_filter($tokens, fn($t) => (bool)preg_match('/^[\p{L}]+$/u', $t)));
+        if ($tokens === []) {
+            return [];
+        }
         if (count($tokens) === 1) {
             return $tokens;
         }
@@ -87,8 +91,12 @@ class words_repository {
 
         $candidates = [];
         foreach ($records as $record) {
-            $wordlength = core_text::strlen(trim($record->word));
+            $word = trim($record->word);
+            $wordlength = core_text::strlen($word);
             if ($wordlength < (int)$instance->min_length || $wordlength > (int)$instance->max_length) {
+                continue;
+            }
+            if (!preg_match('/^[\p{L}]+$/u', $word)) {
                 continue;
             }
             $candidates[] = $record;
