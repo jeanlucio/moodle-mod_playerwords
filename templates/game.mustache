@@ -98,8 +98,7 @@
             {{/timerenabled}}
         </div>
         {{#canhint}}
-            <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php" class="mb-2">
-                <input type="hidden" name="id" value="{{cmid}}">
+            <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}" class="mb-2">
                 <input type="hidden" name="revealhint" value="1">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
                 <button type="submit" class="btn btn-outline-info btn-sm">{{hintbuttonlabel}}</button>
@@ -123,9 +122,8 @@
         <div>
             <div class="d-flex align-items-end">
                 <form method="post"
-                      action="{{{config.wwwroot}}}/mod/playerwords/view.php"
+                      action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}"
                       class="mod-playerwords-form flex-grow-1 me-2">
-                    <input type="hidden" name="id" value="{{cmid}}">
                     <input type="hidden" name="submitguess" value="1">
                     <input type="hidden" name="sesskey" value="{{sesskey}}">
                     <label for="playerwords-guess" class="form-label">{{guesslabel}}</label>
@@ -142,11 +140,10 @@
                 </form>
                 <form id="playerwords-forfeit-form"
                       method="post"
-                      action="{{{config.wwwroot}}}/mod/playerwords/view.php"
+                      action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}"
                       class="flex-shrink-0"
                       data-title="{{forfeitlabel}}"
                       data-confirm="{{forfeitconfirm}}">
-                    <input type="hidden" name="id" value="{{cmid}}">
                     <input type="hidden" name="forfeit" value="1">
                     <input type="hidden" name="sesskey" value="{{sesskey}}">
                     <button type="submit" class="btn btn-outline-danger btn-sm">{{forfeitlabel}}</button>
@@ -228,8 +225,7 @@
                 </p>
             {{/cooldowntext}}
             {{^cooldownactive}}
-            <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php" class="mt-2">
-                <input type="hidden" name="id" value="{{cmid}}">
+            <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}" class="mt-2">
                 <input type="hidden" name="newround" value="1">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
                 <button type="submit" class="btn btn-secondary">{{newroundlabel}}</button>
