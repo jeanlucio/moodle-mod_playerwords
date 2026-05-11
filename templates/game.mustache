@@ -120,34 +120,34 @@
 
         {{^roundfinished}}
         <div>
-            <div class="d-flex align-items-end">
-                <form method="post"
-                      action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}"
-                      class="mod-playerwords-form flex-grow-1 me-2">
-                    <input type="hidden" name="submitguess" value="1">
-                    <input type="hidden" name="sesskey" value="{{sesskey}}">
-                    <label for="playerwords-guess" class="form-label">{{guesslabel}}</label>
-                    <input
-                        type="text"
-                        id="playerwords-guess"
-                        name="guess"
-                        maxlength="{{guessmaxlength}}"
-                        class="form-control"
-                        placeholder="{{guessplaceholder}}"
-                        required
-                    >
-                    <button type="submit" class="btn btn-primary mt-2">{{submitguess}}</button>
-                </form>
-                <form id="playerwords-forfeit-form"
-                      method="post"
-                      action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}"
-                      class="flex-shrink-0"
-                      data-title="{{forfeitlabel}}"
-                      data-confirm="{{forfeitconfirm}}">
-                    <input type="hidden" name="forfeit" value="1">
-                    <input type="hidden" name="sesskey" value="{{sesskey}}">
-                    <button type="submit" class="btn btn-outline-danger btn-sm">{{forfeitlabel}}</button>
-                </form>
+            <form id="playerwords-guess-form"
+                  method="post"
+                  action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}"
+                  class="mod-playerwords-form">
+                <input type="hidden" name="submitguess" value="1">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <label for="playerwords-guess" class="form-label">{{guesslabel}}</label>
+                <input
+                    type="text"
+                    id="playerwords-guess"
+                    name="guess"
+                    maxlength="{{guessmaxlength}}"
+                    class="form-control"
+                    placeholder="{{guessplaceholder}}"
+                    required
+                >
+            </form>
+            <form id="playerwords-forfeit-form"
+                  method="post"
+                  action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}"
+                  data-title="{{forfeitlabel}}"
+                  data-confirm="{{forfeitconfirm}}">
+                <input type="hidden" name="forfeit" value="1">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+            </form>
+            <div class="d-flex gap-2 mt-2 mod-playerwords-actions">
+                <button type="submit" form="playerwords-guess-form" class="btn btn-primary flex-grow-1">{{submitguess}}</button>
+                <button type="submit" form="playerwords-forfeit-form" class="btn btn-outline-danger flex-grow-1">{{forfeitlabel}}</button>
             </div>
             <div id="playerwords-keyboard" class="mod-playerwords-keyboard" role="group" aria-label="{{keyboardlabel}}">
                 <div class="mod-playerwords-keyboard-row">
