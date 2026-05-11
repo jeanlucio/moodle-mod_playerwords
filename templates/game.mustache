@@ -98,7 +98,8 @@
             {{/timerenabled}}
         </div>
         {{#canhint}}
-            <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}" class="mb-2">
+            <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}"
+                  class="mod-playerwords-hint-form mb-2">
                 <input type="hidden" name="revealhint" value="1">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
                 <button type="submit" class="btn btn-outline-info btn-sm">{{hintbuttonlabel}}</button>

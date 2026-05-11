@@ -11,6 +11,10 @@
     text-align: center;
 }
 
+.mod-playerwords-game .mod-playerwords-hint-form {
+    text-align: center;
+}
+
 .mod-playerwords-game .mod-playerwords-grid {
     display: flex;
     flex-direction: column;
