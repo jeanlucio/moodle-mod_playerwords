@@ -251,10 +251,6 @@ class words_repository {
             $words = self::extract_candidate_words($concept);
 
             foreach ($words as $word) {
-                $wordlength = core_text::strlen($word);
-                if ($wordlength < (int)$instance->min_length || $wordlength > (int)$instance->max_length) {
-                    continue;
-                }
                 $key = core_text::strtolower($word);
                 if (isset($existingmap[$key])) {
                     if ($existingmap[$key] !== true) {

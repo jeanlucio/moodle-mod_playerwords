@@ -75,7 +75,10 @@ class ai_word_generator {
     ): int {
         $generator = new \local_playergames\cartridge\ai_generator();
         $language = get_string('thislanguage', 'langconfig');
-        $items = $generator->generate($topic, $language, $count, 3);
+        $singlewordctx = 'Important: every "term" value must be a single word with no spaces, '
+            . 'hyphens or punctuation — exactly one token.';
+        $requestcount = min(60, $count * 3);
+        $items = $generator->generate($topic, $language, $requestcount, 3, [], $singlewordctx);
 
         if (!is_array($items)) {
             return 0;
@@ -83,6 +86,10 @@ class ai_word_generator {
 
         $saved = 0;
         foreach ($items as $item) {
+            if ($saved >= $count) {
+                break;
+            }
+
             $term = trim($item['term'] ?? '');
             $hint = trim($item['definition'] ?? '');
 
@@ -96,11 +103,6 @@ class ai_word_generator {
             }
 
             if (!preg_match('/^[\p{L}]+$/u', $term)) {
-                continue;
-            }
-
-            $termlen = core_text::strlen($term);
-            if ($termlen < (int)$instance->min_length || $termlen > (int)$instance->max_length) {
                 continue;
             }
 
