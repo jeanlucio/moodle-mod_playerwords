@@ -205,7 +205,8 @@ class view_page_service {
         if (!isset($SESSION->mod_playerwords[$sessionkey])) {
             return;
         }
-        $SESSION->mod_playerwords[$sessionkey]['finished'] = true;
+        $SESSION->mod_playerwords[$sessionkey]['wordid'] = 0;
+        $SESSION->mod_playerwords[$sessionkey]['finished'] = false;
     }
 
     /**
