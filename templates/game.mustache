@@ -73,7 +73,11 @@
         "submitguess": "Submit guess",
         "forfeitlabel": "Give up",
         "forfeitconfirm": "Are you sure you want to give up?",
-        "newroundlabel": "Start a new round"
+        "newroundlabel": "Start a new round",
+        "roundstarted": true,
+        "showlobby": false,
+        "startlabel": "Start round",
+        "lobbytimerinfo": "You have 1 min to guess the word."
     }
 }}
 <div class="mod-playerwords-game">
@@ -88,6 +92,19 @@
     {{/hastargetword}}
 
     {{#hastargetword}}
+        {{#showlobby}}
+        <div class="mod-playerwords-lobby text-center my-3">
+            {{#timerenabled}}
+                <p class="text-muted">{{lobbytimerinfo}}</p>
+            {{/timerenabled}}
+            <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}">
+                <input type="hidden" name="startround" value="1">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                <button type="submit" class="btn btn-primary btn-lg">{{startlabel}}</button>
+            </form>
+        </div>
+        {{/showlobby}}
+        {{^showlobby}}
         <div class="mod-playerwords-status">
             <span><strong>{{attemptslabel}}</strong> {{attemptsused}} / {{maxattempts}}</span>
             {{#timerenabled}}
@@ -241,5 +258,6 @@
             </form>
             {{/cooldownactive}}
         {{/roundfinished}}
+        {{/showlobby}}
     {{/hastargetword}}
 </div>

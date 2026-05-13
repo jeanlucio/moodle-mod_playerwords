@@ -28,6 +28,7 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
     'use strict';
 
     var SHAKE_KEY = 'pw_shake_pending';
+    var SCROLL_KEY = 'pw_scroll_y';
 
     /**
      * Strips non-letter characters from the guess input as the user types.
@@ -156,6 +157,7 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
         if (!el || timeleft <= 0) {
             return;
         }
+        el.textContent = formatGameTime(timeleft);
         if (!document.getElementById('playerwords-forfeit-form')) {
             return;
         }
@@ -300,8 +302,9 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
         form.addEventListener('submit', function() {
             try {
                 window.sessionStorage.setItem(SHAKE_KEY, '1');
+                window.sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
             } catch (e) {
-                // Storage may be unavailable; shake is non-critical.
+                // Storage may be unavailable; shake and scroll restore are non-critical.
             }
         });
     };
@@ -365,6 +368,19 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
             }
             if (cooldownUntil > 0) {
                 initCountdown(cooldownUntil, cmid);
+            }
+            var guessInput = document.getElementById('playerwords-guess');
+            if (guessInput && document.getElementById('playerwords-forfeit-form')) {
+                guessInput.focus({preventScroll: true});
+            }
+            try {
+                var savedScroll = window.sessionStorage.getItem(SCROLL_KEY);
+                window.sessionStorage.removeItem(SCROLL_KEY);
+                if (savedScroll !== null) {
+                    window.scrollTo(0, parseInt(savedScroll, 10));
+                }
+            } catch (e) {
+                // Storage unavailable; scroll restore is non-critical.
             }
         },
     };

@@ -161,6 +161,7 @@ class submit_guess extends external_api {
 
         if ($iscompleted || $outofattempts || $outoftime) {
             $state['finished'] = true;
+            $state['endtime'] = time();
             $timeused = max(0, time() - (int)$state['starttime']);
             $score = gameplay_service::calculate_round_score(
                 $instance,
@@ -261,7 +262,10 @@ class submit_guess extends external_api {
         if ((int)$instance->timer_seconds <= 0 || empty($state['starttime'])) {
             return 0;
         }
-        return max(0, (int)$instance->timer_seconds - (time() - (int)$state['starttime']));
+        $reference = !empty($state['finished']) && !empty($state['endtime'])
+            ? (int)$state['endtime']
+            : time();
+        return max(0, (int)$instance->timer_seconds - ($reference - (int)$state['starttime']));
     }
 
     /**

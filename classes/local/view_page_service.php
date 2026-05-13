@@ -96,6 +96,27 @@ class view_page_service {
 
         [$state, $targetword, $roundwordid] = self::ensure_round_state($state, $instance, $userid);
 
+        if (optional_param('startround', 0, PARAM_BOOL)) {
+            require_sesskey();
+            $state['starttime'] = time();
+            $state['roundstarted'] = true;
+            self::save_state((int)$cm->id, $userid, $state);
+            redirect(new moodle_url('/mod/playerwords/view.php', ['id' => $cm->id]));
+        }
+
+        if (empty($state['roundstarted'])) {
+            self::save_state((int)$cm->id, $userid, $state);
+            $templatecontext = self::build_template_context($cm, $instance, $state, $targetword, $canmanagewords);
+            return [
+                'notification'     => null,
+                'notificationtype' => null,
+                'templatecontext'  => $templatecontext,
+                'cooldownuntil'    => 0,
+                'timeleft'         => 0,
+                'timertotal'       => (int)$instance->timer_seconds,
+            ];
+        }
+
         if (optional_param('revealhint', 0, PARAM_BOOL)) {
             require_sesskey();
             $state['hintrevealed'] = true;
@@ -166,10 +187,11 @@ class view_page_service {
                 'hint'         => '',
                 'hintrevealed' => false,
                 'rows'         => [],
-                'finished'     => false,
-                'won'          => false,
-                'forfeited'    => false,
+                'finished'      => false,
+                'won'           => false,
+                'forfeited'     => false,
                 'cooldownuntil' => 0,
+                'roundstarted'  => false,
             ];
         }
 
@@ -231,6 +253,10 @@ class view_page_service {
                 $targetword = word_normalizer::normalize($wordrecord->word, !empty($instance->ignore_accents));
                 $state['hint'] = $wordrecord->hint ?? '';
                 $state['concept'] = $wordrecord->concept ?? '';
+                // Backward compat: sessions created before roundstarted flag was added.
+                if (empty($state['roundstarted']) && !empty($state['starttime'])) {
+                    $state['roundstarted'] = true;
+                }
             } else {
                 // Word was removed or unapproved mid-round; reset so the next load picks a fresh word.
                 $state['wordid'] = 0;
@@ -253,7 +279,7 @@ class view_page_service {
                 $state['wordtext'] = $pickedword->word;
                 $state['concept'] = $pickedword->concept ?? '';
                 $state['attemptsused'] = 0;
-                $state['starttime'] = time();
+                $state['starttime'] = 0;
                 $state['hint'] = $pickedword->hint ?? '';
                 $state['hintrevealed'] = false;
                 $state['rows'] = [];
@@ -261,6 +287,7 @@ class view_page_service {
                 $state['won'] = false;
                 $state['forfeited'] = false;
                 $state['cooldownuntil'] = 0;
+                $state['roundstarted'] = false;
             }
         }
 
@@ -329,6 +356,7 @@ class view_page_service {
         }
 
         $state['finished'] = true;
+        $state['endtime'] = time();
         $state['won'] = $iscompleted;
         $state['forfeited'] = false;
         if ((int)$instance->cooldown_seconds > 0) {
@@ -383,6 +411,7 @@ class view_page_service {
         }
 
         $state['finished'] = true;
+        $state['endtime'] = time();
         $state['won'] = false;
         $state['forfeited'] = true;
         if ((int)$instance->cooldown_seconds > 0) {
@@ -426,6 +455,7 @@ class view_page_service {
         }
 
         $state['finished'] = true;
+        $state['endtime'] = time();
         $state['won'] = false;
         $state['timedout'] = true;
         if ((int)$instance->cooldown_seconds > 0) {
@@ -509,8 +539,11 @@ class view_page_service {
     ): array {
         $rows = self::build_rows($state, $targetword, (int)$instance->max_attempts);
         $timeleft = 0;
-        if ((int)$instance->timer_seconds > 0 && !empty($state['starttime'])) {
-            $timeleft = max(0, (int)$instance->timer_seconds - (time() - (int)$state['starttime']));
+        if ((int)$instance->timer_seconds > 0 && !empty($state['roundstarted']) && !empty($state['starttime'])) {
+            $reference = !empty($state['finished']) && !empty($state['endtime'])
+                ? (int)$state['endtime']
+                : time();
+            $timeleft = max(0, (int)$instance->timer_seconds - ($reference - (int)$state['starttime']));
         }
 
         $concept = $state['concept'] ?? '';
@@ -563,6 +596,14 @@ class view_page_service {
             'keyboardenterlabel' => get_string('keyboard_enter', 'mod_playerwords'),
             'keyboardbackspacelabel' => get_string('keyboard_backspace', 'mod_playerwords'),
             'cooldownactive' => !empty($state['finished']) && ((int)($state['cooldownuntil'] ?? 0) > time()),
+            'roundstarted'   => !empty($state['roundstarted']),
+            'showlobby'      => empty($state['finished']) && empty($state['roundstarted']) && ($targetword !== ''),
+            'startlabel'     => get_string('startround', 'mod_playerwords'),
+            'lobbytimerinfo' => (
+                (int)$instance->timer_seconds > 0
+                    ? get_string('lobby_timerinfo', 'mod_playerwords', format_time((int)$instance->timer_seconds))
+                    : ''
+            ),
         ];
     }
 
