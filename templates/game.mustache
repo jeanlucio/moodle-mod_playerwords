@@ -77,7 +77,22 @@
         "roundstarted": true,
         "showlobby": false,
         "startlabel": "Start round",
-        "lobbytimerinfo": "You have 1 min to guess the word."
+        "lobbytimerinfo": "You have 1 min to guess the word.",
+        "showranking": true,
+        "rankingurl": "https://example.com/mod/playerwords/ranking.php?id=1",
+        "rankingviewfulllabel": "Full ranking",
+        "rankingtitle": "Ranking",
+        "rankingpositionlabel": "#",
+        "rankingplayerlabel": "Player",
+        "rankingpointslabel": "Points",
+        "rankingrows": [
+            {"position": 1, "fullname": "Ana Silva", "totalscore": 300, "iscurrentuser": false},
+            {"position": 2, "fullname": "You", "totalscore": 200, "iscurrentuser": true}
+        ],
+        "rankinghasoutsider": false,
+        "rankingoutsiderrow": null,
+        "rankingempty": false,
+        "rankingemptylabel": "No rounds completed yet."
     }
 }}
 <div class="mod-playerwords-game">
@@ -86,6 +101,11 @@
             <a href="{{{managewordsurl}}}" class="btn btn-secondary">{{managewordsbutton}}</a>
         </p>
     {{/canmanagewords}}
+    {{#showranking}}
+        <p class="text-end">
+            <a href="{{{rankingurl}}}" class="btn btn-outline-secondary btn-sm">{{rankingviewfulllabel}}</a>
+        </p>
+    {{/showranking}}
 
     {{^hastargetword}}
         <div class="alert alert-warning">{{nogamewords}}</div>
@@ -250,6 +270,44 @@
                     </strong>
                 </p>
             {{/cooldowntext}}
+            {{#showranking}}
+                <div class="mod-playerwords-ranking-inline mt-3">
+                    <h6 class="mb-2">{{rankingtitle}}</h6>
+                    {{#rankingempty}}
+                        <p class="text-muted small">{{rankingemptylabel}}</p>
+                    {{/rankingempty}}
+                    {{^rankingempty}}
+                        <table class="table table-sm mod-playerwords-ranking-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{rankingpositionlabel}}</th>
+                                    <th scope="col">{{rankingplayerlabel}}</th>
+                                    <th scope="col" class="text-end">{{rankingpointslabel}}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#rankingrows}}
+                                    <tr class="{{#iscurrentuser}}pw-ranking-you{{/iscurrentuser}}">
+                                        <td>{{position}}</td>
+                                        <td>{{fullname}}</td>
+                                        <td class="text-end">{{totalscore}}</td>
+                                    </tr>
+                                {{/rankingrows}}
+                                {{#rankinghasoutsider}}
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted pw-ranking-sep">&hellip;</td>
+                                    </tr>
+                                    <tr class="pw-ranking-you">
+                                        <td>{{rankingoutsiderrow.position}}</td>
+                                        <td>{{rankingoutsiderrow.fullname}}</td>
+                                        <td class="text-end">{{rankingoutsiderrow.totalscore}}</td>
+                                    </tr>
+                                {{/rankinghasoutsider}}
+                            </tbody>
+                        </table>
+                    {{/rankingempty}}
+                </div>
+            {{/showranking}}
             {{^cooldownactive}}
             <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}" class="mt-2">
                 <input type="hidden" name="newround" value="1">

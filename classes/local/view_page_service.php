@@ -66,7 +66,7 @@ class view_page_service {
             if (!empty($state['finished'])) {
                 self::save_state((int)$cm->id, $userid, $state);
                 $displayword = (int)($state['wordid'] ?? 0) > 0 ? ($state['wordtext'] ?? '') : '';
-                $templatectx = self::build_template_context($cm, $instance, $state, $displayword, $canmanagewords);
+                $templatectx = self::build_template_context($cm, $instance, $state, $displayword, $canmanagewords, $userid);
                 if ($restrictionnotice !== null && (int)($state['cooldownuntil'] ?? 0) <= time()) {
                     $templatectx['cooldownactive'] = true;
                 }
@@ -81,7 +81,7 @@ class view_page_service {
             }
             if ($restrictionnotice !== null) {
                 self::save_state((int)$cm->id, $userid, $state);
-                $templatectx = self::build_template_context($cm, $instance, $state, '', $canmanagewords);
+                $templatectx = self::build_template_context($cm, $instance, $state, '', $canmanagewords, $userid);
                 $templatectx['nogamewords'] = $restrictionnotice;
                 return [
                     'notification'     => null,
@@ -106,7 +106,14 @@ class view_page_service {
 
         if (empty($state['roundstarted'])) {
             self::save_state((int)$cm->id, $userid, $state);
-            $templatecontext = self::build_template_context($cm, $instance, $state, $targetword, $canmanagewords);
+            $templatecontext = self::build_template_context(
+                $cm,
+                $instance,
+                $state,
+                $targetword,
+                $canmanagewords,
+                $userid
+            );
             return [
                 'notification'     => null,
                 'notificationtype' => null,
@@ -150,7 +157,8 @@ class view_page_service {
             $instance,
             $state,
             $targetword,
-            $canmanagewords
+            $canmanagewords,
+            $userid
         );
 
         return [
@@ -535,7 +543,8 @@ class view_page_service {
         \stdClass $instance,
         array $state,
         string $targetword,
-        bool $canmanagewords
+        bool $canmanagewords,
+        int $userid
     ): array {
         $rows = self::build_rows($state, $targetword, (int)$instance->max_attempts);
         $timeleft = 0;
@@ -604,7 +613,59 @@ class view_page_service {
                     ? get_string('lobby_timerinfo', 'mod_playerwords', format_time((int)$instance->timer_seconds))
                     : ''
             ),
+        ] + self::build_ranking_context($instance, $cm, $userid, !empty($state['finished']));
+    }
+
+    /**
+     * Builds the ranking template context fields.
+     *
+     * Returns an empty set when show_ranking is disabled or the round is not finished.
+     * The inline ranking is only shown post-round; the rankingurl link is always present.
+     *
+     * @param \stdClass $instance Activity instance record.
+     * @param \stdClass $cm Course module record.
+     * @param int $userid Current user id.
+     * @param bool $roundfinished Whether the current round is finished.
+     * @return array
+     */
+    private static function build_ranking_context(
+        \stdClass $instance,
+        \stdClass $cm,
+        int $userid,
+        bool $roundfinished
+    ): array {
+        $rankingurl = (new moodle_url('/mod/playerwords/ranking.php', ['id' => $cm->id]))->out(false);
+
+        if (empty($instance->show_ranking)) {
+            return ['showranking' => false, 'rankingurl' => $rankingurl];
+        }
+
+        $base = [
+            'showranking'          => true,
+            'rankingurl'           => $rankingurl,
+            'rankingviewfulllabel' => get_string('ranking_viewfull', 'mod_playerwords'),
+            'rankingtitle'         => get_string('ranking_title', 'mod_playerwords'),
+            'rankingpositionlabel' => get_string('ranking_position', 'mod_playerwords'),
+            'rankingplayerlabel'   => get_string('ranking_player', 'mod_playerwords'),
+            'rankingpointslabel'   => get_string('ranking_points', 'mod_playerwords'),
+            'rankingemptylabel'    => get_string('ranking_empty', 'mod_playerwords'),
+            'rankingrows'          => [],
+            'rankinghasoutsider'   => false,
+            'rankingoutsiderrow'   => null,
+            'rankingempty'         => true,
         ];
+
+        if (!$roundfinished) {
+            return $base;
+        }
+
+        $ranking = ranking_service::get_ranking($instance, $cm, $userid);
+        $base['rankingrows']        = $ranking['rows'];
+        $base['rankinghasoutsider'] = $ranking['hasoutsider'];
+        $base['rankingoutsiderrow'] = $ranking['outsiderrow'];
+        $base['rankingempty']       = $ranking['isempty'];
+
+        return $base;
     }
 
     /**
