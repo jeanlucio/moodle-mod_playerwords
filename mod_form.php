@@ -41,11 +41,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
     private const SOURCE_GLOSSARY = 2;
 
     /**
-     * Source type bit flag for AI generated words.
-     */
-    private const SOURCE_AI = 4;
-
-    /**
      * Defines forms elements.
      *
      * @return void
@@ -85,14 +80,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
         );
         $mform->setType('source_glossary', PARAM_INT);
         $mform->setDefault('source_glossary', 0);
-
-        $mform->addElement(
-            'advcheckbox',
-            'source_ai',
-            get_string('source_ai', 'mod_playerwords')
-        );
-        $mform->setType('source_ai', PARAM_INT);
-        $mform->setDefault('source_ai', 0);
 
         $glossaryoptions = [0 => get_string('glossaryid_all', 'mod_playerwords')];
         $courseglossaries = $DB->get_records('glossary', ['course' => $COURSE->id], 'name ASC', 'id, name');
@@ -230,10 +217,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
         if (!empty($data['source_glossary'])) {
             $sources |= self::SOURCE_GLOSSARY;
         }
-        if (!empty($data['source_ai'])) {
-            $sources |= self::SOURCE_AI;
-        }
-
         if ($sources === 0) {
             $errors['source_manual'] = get_string('error_atleastonesource', 'mod_playerwords');
         }
@@ -327,7 +310,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
         if (!empty($defaultvalues['sources'])) {
             $defaultvalues['source_manual'] = (int)(($defaultvalues['sources'] & self::SOURCE_MANUAL) !== 0);
             $defaultvalues['source_glossary'] = (int)(($defaultvalues['sources'] & self::SOURCE_GLOSSARY) !== 0);
-            $defaultvalues['source_ai'] = (int)(($defaultvalues['sources'] & self::SOURCE_AI) !== 0);
         }
 
         if (!empty($defaultvalues['completionattempts'])) {

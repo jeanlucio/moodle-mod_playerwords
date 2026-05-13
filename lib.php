@@ -28,9 +28,6 @@ define('PLAYERWORDS_SOURCE_MANUAL', 1);
 /** Source type bit flag for glossary words. */
 define('PLAYERWORDS_SOURCE_GLOSSARY', 2);
 
-/** Source type bit flag for AI generated words. */
-define('PLAYERWORDS_SOURCE_AI', 4);
-
 /** Grade aggregation: highest score across all rounds. */
 define('PLAYERWORDS_GRADE_HIGHEST', 1);
 
@@ -67,10 +64,6 @@ function playerwords_build_sources(stdClass $data): int {
     if (!empty($data->source_glossary)) {
         $sources |= PLAYERWORDS_SOURCE_GLOSSARY;
     }
-    if (!empty($data->source_ai)) {
-        $sources |= PLAYERWORDS_SOURCE_AI;
-    }
-
     return $sources;
 }
 
@@ -227,7 +220,7 @@ function playerwords_add_instance(stdClass $data): int {
     $data->gradepass = isset($data->gradepass) ? (float)$data->gradepass : 0.0;
 
     $data->sources = playerwords_build_sources($data);
-    unset($data->source_manual, $data->source_glossary, $data->source_ai);
+    unset($data->source_manual, $data->source_glossary);
     $multipliers = ['minutes' => 60, 'hours' => 3600, 'days' => 86400];
     $unit        = $data->cooldown_unit ?? 'days';
     $amount      = (int)($data->cooldown_amount ?? 0);
@@ -260,7 +253,7 @@ function playerwords_update_instance(stdClass $data): bool {
     $data->gradepass = isset($data->gradepass) ? (float)$data->gradepass : 0.0;
 
     $data->sources = playerwords_build_sources($data);
-    unset($data->source_manual, $data->source_glossary, $data->source_ai);
+    unset($data->source_manual, $data->source_glossary);
     $multipliers = ['minutes' => 60, 'hours' => 3600, 'days' => 86400];
     $unit        = $data->cooldown_unit ?? 'days';
     $amount      = (int)($data->cooldown_amount ?? 0);
