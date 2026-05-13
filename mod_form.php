@@ -94,7 +94,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setType('source_ai', PARAM_INT);
         $mform->setDefault('source_ai', 0);
 
-
         $glossaryoptions = [0 => get_string('glossaryid_all', 'mod_playerwords')];
         $courseglossaries = $DB->get_records('glossary', ['course' => $COURSE->id], 'name ASC', 'id, name');
         foreach ($courseglossaries as $glossary) {
