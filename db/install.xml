@@ -13,9 +13,7 @@
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="sources" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
             COMMENT="Bitmask for enabled sources: manual, glossary, ai"/>
-        <FIELD NAME="aigranularity" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="course" SEQUENCE="false"
-            COMMENT="AI extraction scope: course, section or forum"/>
-        <FIELD NAME="glossaryid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+<FIELD NAME="glossaryid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
             COMMENT="Glossary to sync words from; 0 means all glossaries in the course"/>
         <FIELD NAME="min_length" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="4" SEQUENCE="false"
             COMMENT="Minimum allowed word length"/>

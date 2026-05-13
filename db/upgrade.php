@@ -198,5 +198,14 @@ function xmldb_playerwords_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026051000, 'playerwords');
     }
 
+    if ($oldversion < 2026051002) {
+        $table = new xmldb_table('playerwords');
+        $field = new xmldb_field('aigranularity');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2026051002, 'playerwords');
+    }
+
     return true;
 }

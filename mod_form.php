@@ -94,19 +94,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setType('source_ai', PARAM_INT);
         $mform->setDefault('source_ai', 0);
 
-        $mform->addElement(
-            'select',
-            'aigranularity',
-            get_string('aigranularity', 'mod_playerwords'),
-            [
-                'course' => get_string('aigranularity_course', 'mod_playerwords'),
-                'section' => get_string('aigranularity_section', 'mod_playerwords'),
-                'forum' => get_string('aigranularity_forum', 'mod_playerwords'),
-            ]
-        );
-        $mform->setType('aigranularity', PARAM_ALPHA);
-        $mform->setDefault('aigranularity', 'course');
-        $mform->hideIf('aigranularity', 'source_ai', 'notchecked');
 
         $glossaryoptions = [0 => get_string('glossaryid_all', 'mod_playerwords')];
         $courseglossaries = $DB->get_records('glossary', ['course' => $COURSE->id], 'name ASC', 'id, name');
