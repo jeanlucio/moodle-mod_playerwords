@@ -167,8 +167,8 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         provider::get_users_in_context($userlist);
         $userids = $userlist->get_userids();
 
-        $this->assertContains($student->id, $userids);
-        $this->assertContains($teacher->id, $userids);
+        $this->assertContains((int)$student->id, $userids);
+        $this->assertContains((int)$teacher->id, $userids);
     }
 
     /**
