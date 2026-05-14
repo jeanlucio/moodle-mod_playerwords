@@ -172,6 +172,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setDefault('cooldown_unit', 'days');
 
         $this->standard_grading_coursemodule_elements();
+        $mform->setDefault('grade[modgrade_type]', 'none');
 
         $mform->addElement(
             'select',
