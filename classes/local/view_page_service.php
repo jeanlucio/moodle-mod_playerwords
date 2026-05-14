@@ -566,6 +566,7 @@ class view_page_service {
      * @param array $state Session state.
      * @param string $targetword Current target.
      * @param bool $canmanagewords Whether user can manage words.
+     * @param int $userid Current user ID.
      * @return array
      */
     private static function build_template_context(

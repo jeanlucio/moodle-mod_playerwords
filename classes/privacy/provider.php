@@ -41,9 +41,8 @@ use core_privacy\local\request\writer;
  */
 class provider implements
     \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider,
-    \core_privacy\local\request\core_userlist_provider {
-
+    \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider {
     #[\Override]
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table(
@@ -149,7 +148,7 @@ class provider implements
             );
 
             if (!empty($attempts)) {
-                $rows = array_values(array_map(function(\stdClass $a): array {
+                $rows = array_values(array_map(function (\stdClass $a): array {
                     return [
                         'wordid'        => (int)$a->wordid,
                         'attempts_used' => (int)$a->attempts_used,
@@ -178,7 +177,7 @@ class provider implements
             );
 
             if (!empty($words)) {
-                $rows = array_values(array_map(function(\stdClass $w): array {
+                $rows = array_values(array_map(function (\stdClass $w): array {
                     return [
                         'word'        => $w->word,
                         'source'      => $w->source,
