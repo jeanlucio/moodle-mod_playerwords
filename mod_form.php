@@ -132,14 +132,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         $mform->addElement(
             'advcheckbox',
-            'ignore_accents',
-            get_string('ignore_accents', 'mod_playerwords')
-        );
-        $mform->setType('ignore_accents', PARAM_INT);
-        $mform->setDefault('ignore_accents', 1);
-
-        $mform->addElement(
-            'advcheckbox',
             'show_ranking',
             get_string('show_ranking', 'mod_playerwords')
         );

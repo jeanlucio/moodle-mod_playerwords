@@ -112,8 +112,8 @@ class submit_guess extends external_api {
             );
         }
 
-        $targetword = word_normalizer::normalize($wordrecord->word, !empty($instance->ignore_accents));
-        $normalizedguess = word_normalizer::normalize($guess, !empty($instance->ignore_accents));
+        $targetword = word_normalizer::normalize($wordrecord->word);
+        $normalizedguess = word_normalizer::normalize($guess);
         $targetlength = core_text::strlen($targetword);
 
         if (!preg_match('/^[\p{L}]+$/u', $normalizedguess)) {

@@ -104,7 +104,6 @@ $string['guesslengthmismatch'] = 'O palpite deve ter exatamente {$a} letras.';
 $string['guessplaceholder'] = 'Digite uma palavra';
 $string['hintbuttonlabel'] = 'Revelar dica';
 $string['hintlabel'] = 'Dica';
-$string['ignore_accents'] = 'Aceitar palavras sem acentos';
 $string['keyboard_backspace'] = 'Apagar última letra';
 $string['keyboard_enter'] = 'Confirmar';
 $string['keyboard_label'] = 'Teclado virtual';

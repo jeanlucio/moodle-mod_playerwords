@@ -138,7 +138,7 @@ class start_new_round extends external_api {
             ];
         }
 
-        $targetword = word_normalizer::normalize($pickedword->word, !empty($instance->ignore_accents));
+        $targetword = word_normalizer::normalize($pickedword->word);
         $SESSION->mod_playerwords[$sessionkey] = [
             'wordid'       => (int)$pickedword->id,
             'wordtext'     => $pickedword->word,

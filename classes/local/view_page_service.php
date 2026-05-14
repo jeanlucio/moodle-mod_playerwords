@@ -258,7 +258,7 @@ class view_page_service {
             $roundwordid = (int)$state['wordid'];
             $wordrecord = words_repository::get_approved_word_by_id($roundwordid, (int)$instance->id);
             if ($wordrecord) {
-                $targetword = word_normalizer::normalize($wordrecord->word, !empty($instance->ignore_accents));
+                $targetword = word_normalizer::normalize($wordrecord->word);
                 $state['hint'] = $wordrecord->hint ?? '';
                 $state['concept'] = $wordrecord->concept ?? '';
                 // Backward compat: sessions created before roundstarted flag was added.
@@ -281,7 +281,7 @@ class view_page_service {
             ]);
             $pickedword = words_repository::pick_round_word($instance, $completedround);
             if ($pickedword) {
-                $targetword = word_normalizer::normalize($pickedword->word, !empty($instance->ignore_accents));
+                $targetword = word_normalizer::normalize($pickedword->word);
                 $roundwordid = (int)$pickedword->id;
                 $state['wordid'] = $roundwordid;
                 $state['wordtext'] = $pickedword->word;
@@ -331,7 +331,7 @@ class view_page_service {
         }
 
         $guess = required_param('guess', PARAM_TEXT);
-        $normalizedguess = word_normalizer::normalize($guess, !empty($instance->ignore_accents));
+        $normalizedguess = word_normalizer::normalize($guess);
         $targetlength = core_text::strlen($targetword);
         $guesslength = core_text::strlen($normalizedguess);
 

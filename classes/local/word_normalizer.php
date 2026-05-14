@@ -31,17 +31,12 @@ use core_text;
  */
 class word_normalizer {
     /**
-     * Normalizes one word.
+     * Normalizes one word: lowercased and accent-stripped.
      *
      * @param string $value Raw word.
-     * @param bool $ignoreaccents Whether accents should be ignored.
      * @return string
      */
-    public static function normalize(string $value, bool $ignoreaccents): string {
-        $normalized = core_text::strtolower(trim($value));
-        if ($ignoreaccents) {
-            $normalized = core_text::strtolower(core_text::specialtoascii($normalized));
-        }
-        return $normalized;
+    public static function normalize(string $value): string {
+        return core_text::strtolower(core_text::specialtoascii(core_text::strtolower(trim($value))));
     }
 }

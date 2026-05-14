@@ -104,7 +104,6 @@ $string['guesslengthmismatch'] = 'The guess must have exactly {$a} letters.';
 $string['guessplaceholder'] = 'Type a word';
 $string['hintbuttonlabel'] = 'Reveal hint';
 $string['hintlabel'] = 'Hint';
-$string['ignore_accents'] = 'Accept words without accents';
 $string['keyboard_backspace'] = 'Delete last letter';
 $string['keyboard_enter'] = 'Submit';
 $string['keyboard_label'] = 'Virtual keyboard';
