@@ -122,7 +122,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         $mform->addElement('text', 'max_length', get_string('max_length', 'mod_playerwords'));
         $mform->setType('max_length', PARAM_INT);
-        $mform->setDefault('max_length', 12);
+        $mform->setDefault('max_length', 6);
         $mform->addRule('max_length', null, 'numeric', null, 'client');
 
         $mform->addElement('text', 'timer_minutes', get_string('timer_minutes', 'mod_playerwords'));

@@ -17,7 +17,7 @@
             COMMENT="Glossary to sync words from; 0 means all glossaries in the course"/>
         <FIELD NAME="min_length" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="4" SEQUENCE="false"
             COMMENT="Minimum allowed word length"/>
-        <FIELD NAME="max_length" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="12" SEQUENCE="false"
+        <FIELD NAME="max_length" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="6" SEQUENCE="false"
             COMMENT="Maximum allowed word length"/>
         <FIELD NAME="max_attempts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="6" SEQUENCE="false"
             COMMENT="Maximum attempts per round"/>
