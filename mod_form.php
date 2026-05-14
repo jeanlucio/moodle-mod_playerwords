@@ -131,9 +131,10 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->addRule('timer_minutes', null, 'numeric', null, 'client');
 
         $mform->addElement(
-            'advcheckbox',
+            'select',
             'show_ranking',
-            get_string('show_ranking', 'mod_playerwords')
+            get_string('show_ranking', 'mod_playerwords'),
+            [0 => get_string('no'), 1 => get_string('yes')]
         );
         $mform->setType('show_ranking', PARAM_INT);
         $mform->setDefault('show_ranking', 1);
