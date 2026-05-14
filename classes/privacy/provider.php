@@ -118,11 +118,13 @@ class provider implements
             $params
         );
 
-        $userlist->add_from_sql(
-            'addedby',
-            "SELECT pww.addedby FROM {playerwords_words} pww WHERE pww.playerwordsid = :pid AND pww.addedby > 0",
+        $addedbyids = $DB->get_fieldset_sql(
+            'SELECT DISTINCT addedby FROM {playerwords_words} WHERE playerwordsid = :pid AND addedby > 0',
             $params
         );
+        foreach ($addedbyids as $userid) {
+            $userlist->add_user((int) $userid);
+        }
     }
 
     #[\Override]
