@@ -29,17 +29,15 @@ use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\userlist;
-use core_privacy\local\request\writer;
 
 /**
  * Tests for the Privacy API provider.
  */
-final class provider_test extends \advanced_testcase {
+final class provider_test extends \core_privacy\tests\provider_testcase {
     #[\Override]
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
-        writer::reset_service();
     }
 
     /**
