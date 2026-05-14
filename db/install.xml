@@ -39,6 +39,14 @@
             DECIMALS="5" COMMENT="Minimum passing grade"/>
         <FIELD NAME="grademethod" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
             COMMENT="Grade aggregation: 1=highest, 2=average, 3=first, 4=last"/>
+        <FIELD NAME="hud_round_cost_item" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+            COMMENT="block_playerhud_items.id required to start a round; 0 = disabled"/>
+        <FIELD NAME="hud_round_cost_qty" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
+            COMMENT="Number of items consumed to start a round"/>
+        <FIELD NAME="hud_hint_cost_item" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+            COMMENT="block_playerhud_items.id required to reveal the hint; 0 = disabled"/>
+        <FIELD NAME="hud_hint_cost_qty" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
+            COMMENT="Number of items consumed to reveal the hint"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

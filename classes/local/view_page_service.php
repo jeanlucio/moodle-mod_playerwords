@@ -98,10 +98,25 @@ class view_page_service {
 
         if (optional_param('startround', 0, PARAM_BOOL)) {
             require_sesskey();
-            $state['starttime'] = time();
-            $state['roundstarted'] = true;
-            self::save_state((int)$cm->id, $userid, $state);
-            redirect(new moodle_url('/mod/playerwords/view.php', ['id' => $cm->id]));
+            $canstart = true;
+            if ((int)($instance->hud_round_cost_item ?? 0) > 0) {
+                $canstart = hud_service::consume_items(
+                    $userid,
+                    (int)$instance->hud_round_cost_item,
+                    max(1, (int)$instance->hud_round_cost_qty)
+                );
+                if (!$canstart) {
+                    $itemname = hud_service::get_item_name((int)$instance->hud_round_cost_item);
+                    $notification = get_string('hud_insufficient_round', 'mod_playerwords', $itemname);
+                    $notificationtype = 'warning';
+                }
+            }
+            if ($canstart) {
+                $state['starttime'] = time();
+                $state['roundstarted'] = true;
+                self::save_state((int)$cm->id, $userid, $state);
+                redirect(new moodle_url('/mod/playerwords/view.php', ['id' => $cm->id]));
+            }
         }
 
         if (empty($state['roundstarted'])) {
@@ -126,7 +141,22 @@ class view_page_service {
 
         if (optional_param('revealhint', 0, PARAM_BOOL)) {
             require_sesskey();
-            $state['hintrevealed'] = true;
+            if ((int)($instance->hud_hint_cost_item ?? 0) > 0) {
+                $consumed = hud_service::consume_items(
+                    $userid,
+                    (int)$instance->hud_hint_cost_item,
+                    max(1, (int)$instance->hud_hint_cost_qty)
+                );
+                if ($consumed) {
+                    $state['hintrevealed'] = true;
+                } else {
+                    $itemname = hud_service::get_item_name((int)$instance->hud_hint_cost_item);
+                    $notification = get_string('hud_insufficient_hint', 'mod_playerwords', $itemname);
+                    $notificationtype = 'warning';
+                }
+            } else {
+                $state['hintrevealed'] = true;
+            }
         }
 
         if (optional_param('submitguess', 0, PARAM_BOOL)) {
@@ -547,6 +577,35 @@ class view_page_service {
         int $userid
     ): array {
         $rows = self::build_rows($state, $targetword, (int)$instance->max_attempts);
+
+        // PlayerHUD cost labels — lobby start cost and hint button cost.
+        $hudstartcost = false;
+        $hudstartcostlabel = '';
+        $hintbuttonlabel = get_string('hintbuttonlabel', 'mod_playerwords');
+
+        $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
+        if ($roundcostitem > 0 && empty($state['finished']) && empty($state['roundstarted'])) {
+            $itemname = hud_service::get_item_name($roundcostitem);
+            if ($itemname !== '') {
+                $hudstartcost = true;
+                $hudstartcostlabel = get_string('hud_costlabel', 'mod_playerwords', [
+                    'qty'  => max(1, (int)($instance->hud_round_cost_qty ?? 1)),
+                    'item' => $itemname,
+                ]);
+            }
+        }
+
+        $hintcostitem = (int)($instance->hud_hint_cost_item ?? 0);
+        if ($hintcostitem > 0 && !empty($state['hint']) && empty($state['hintrevealed'])) {
+            $itemname = hud_service::get_item_name($hintcostitem);
+            if ($itemname !== '') {
+                $hintbuttonlabel .= ' (' . get_string('hud_costlabel', 'mod_playerwords', [
+                    'qty'  => max(1, (int)($instance->hud_hint_cost_qty ?? 1)),
+                    'item' => $itemname,
+                ]) . ')';
+            }
+        }
+
         $timeleft = 0;
         if ((int)$instance->timer_seconds > 0 && !empty($state['roundstarted']) && !empty($state['starttime'])) {
             $reference = !empty($state['finished']) && !empty($state['endtime'])
@@ -576,7 +635,7 @@ class view_page_service {
             'hintvalue' => !empty($state['hintrevealed']) ? ($state['hint'] ?? '') : '',
             'showhint' => !empty($state['hintrevealed']) && !empty($state['hint']),
             'canhint' => !empty($state['hint']) && empty($state['hintrevealed']) && empty($state['finished']),
-            'hintbuttonlabel' => get_string('hintbuttonlabel', 'mod_playerwords'),
+            'hintbuttonlabel' => $hintbuttonlabel,
             'rows' => $rows,
             'roundfinished' => !empty($state['finished']),
             'guesslabel' => get_string('guesslabel', 'mod_playerwords'),
@@ -606,8 +665,10 @@ class view_page_service {
             'keyboardbackspacelabel' => get_string('keyboard_backspace', 'mod_playerwords'),
             'cooldownactive' => !empty($state['finished']) && ((int)($state['cooldownuntil'] ?? 0) > time()),
             'roundstarted'   => !empty($state['roundstarted']),
-            'showlobby'      => empty($state['finished']) && empty($state['roundstarted']) && ($targetword !== ''),
-            'startlabel'     => get_string('startround', 'mod_playerwords'),
+            'showlobby'          => empty($state['finished']) && empty($state['roundstarted']) && ($targetword !== ''),
+            'startlabel'         => get_string('startround', 'mod_playerwords'),
+            'hudstartcost'       => $hudstartcost,
+            'hudstartcostlabel'  => $hudstartcostlabel,
             'lobbytimerinfo' => (
                 (int)$instance->timer_seconds > 0
                     ? get_string('lobby_timerinfo', 'mod_playerwords', format_time((int)$instance->timer_seconds))

@@ -171,6 +171,56 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setDefault('cooldown_amount', 1);
         $mform->setDefault('cooldown_unit', 'days');
 
+        // PlayerHUD integration — only rendered when block_playerhud exists in this course.
+        $hudblockid = null;
+        if (class_exists('\block_playerhud\game', false)) {
+            $hudblockid = \mod_playerwords\local\hud_service::get_block_instance_id($COURSE->id);
+        }
+
+        if ($hudblockid !== null) {
+            $huditems = \mod_playerwords\local\hud_service::get_items_for_block($hudblockid);
+            $itemoptions = [0 => get_string('hud_noitem', 'mod_playerwords')];
+            foreach ($huditems as $item) {
+                $itemoptions[$item->id] = format_string($item->name);
+            }
+
+            $mform->addElement(
+                'header',
+                'hudheader',
+                get_string('hud_header', 'mod_playerwords')
+            );
+
+            $mform->addElement(
+                'select',
+                'hud_round_cost_item',
+                get_string('hud_round_cost_item', 'mod_playerwords'),
+                $itemoptions
+            );
+            $mform->setType('hud_round_cost_item', PARAM_INT);
+            $mform->setDefault('hud_round_cost_item', 0);
+
+            $mform->addElement('text', 'hud_round_cost_qty', get_string('hud_round_cost_qty', 'mod_playerwords'));
+            $mform->setType('hud_round_cost_qty', PARAM_INT);
+            $mform->setDefault('hud_round_cost_qty', 1);
+            $mform->addRule('hud_round_cost_qty', null, 'numeric', null, 'client');
+            $mform->hideIf('hud_round_cost_qty', 'hud_round_cost_item', 'eq', 0);
+
+            $mform->addElement(
+                'select',
+                'hud_hint_cost_item',
+                get_string('hud_hint_cost_item', 'mod_playerwords'),
+                $itemoptions
+            );
+            $mform->setType('hud_hint_cost_item', PARAM_INT);
+            $mform->setDefault('hud_hint_cost_item', 0);
+
+            $mform->addElement('text', 'hud_hint_cost_qty', get_string('hud_hint_cost_qty', 'mod_playerwords'));
+            $mform->setType('hud_hint_cost_qty', PARAM_INT);
+            $mform->setDefault('hud_hint_cost_qty', 1);
+            $mform->addRule('hud_hint_cost_qty', null, 'numeric', null, 'client');
+            $mform->hideIf('hud_hint_cost_qty', 'hud_hint_cost_item', 'eq', 0);
+        }
+
         $this->standard_grading_coursemodule_elements();
         $mform->setDefault('grade[modgrade_type]', 'none');
 
@@ -229,6 +279,14 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         if ((int)$data['timer_minutes'] < 0) {
             $errors['timer_minutes'] = get_string('error_timerseconds', 'mod_playerwords');
+        }
+
+        if (!empty($data['hud_round_cost_item']) && (int)$data['hud_round_cost_qty'] < 1) {
+            $errors['hud_round_cost_qty'] = get_string('error_hud_cost_qty', 'mod_playerwords');
+        }
+
+        if (!empty($data['hud_hint_cost_item']) && (int)$data['hud_hint_cost_qty'] < 1) {
+            $errors['hud_hint_cost_qty'] = get_string('error_hud_cost_qty', 'mod_playerwords');
         }
 
         if ((int)$data['cooldown_amount'] < 0) {

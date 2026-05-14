@@ -53,6 +53,10 @@ class backup_playerwords_activity_structure_step extends backup_activity_structu
             'grade',
             'gradepass',
             'grademethod',
+            'hud_round_cost_item',
+            'hud_round_cost_qty',
+            'hud_hint_cost_item',
+            'hud_hint_cost_qty',
             'timecreated',
             'timemodified',
         ]);

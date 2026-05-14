@@ -78,6 +78,8 @@
         "showlobby": false,
         "startlabel": "Start round",
         "lobbytimerinfo": "You have 1 min to guess the word.",
+        "hudstartcost": false,
+        "hudstartcostlabel": "",
         "showranking": true,
         "rankingurl": "https://example.com/mod/playerwords/ranking.php?id=1",
         "rankingviewfulllabel": "Full ranking",
@@ -117,6 +119,9 @@
             {{#timerenabled}}
                 <p class="text-muted">{{lobbytimerinfo}}</p>
             {{/timerenabled}}
+            {{#hudstartcost}}
+                <p class="text-muted small mb-2">{{hudstartcostlabel}}</p>
+            {{/hudstartcost}}
             <form method="post" action="{{{config.wwwroot}}}/mod/playerwords/view.php?id={{cmid}}">
                 <input type="hidden" name="startround" value="1">
                 <input type="hidden" name="sesskey" value="{{sesskey}}">
