@@ -119,13 +119,13 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $course = $this->getDataGenerator()->create_course();
         $cm     = $this->make_cm($course);
         $user   = $this->getDataGenerator()->create_user();
-        $wordid = $this->make_word(get_admin()->id, (int)$cm->instance);
-        $this->make_attempt($user->id, (int)$cm->instance, $wordid);
+        $wordid = $this->make_word(get_admin()->id, (int)$cm->id);
+        $this->make_attempt($user->id, (int)$cm->id, $wordid);
 
         $contextlist = provider::get_contexts_for_userid($user->id);
         $contextids  = $contextlist->get_contextids();
 
-        $expected = \context_module::instance($cm->id)->id;
+        $expected = \context_module::instance($cm->cmid)->id;
         $this->assertContains((string)$expected, $contextids);
     }
 
@@ -139,12 +139,12 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $course = $this->getDataGenerator()->create_course();
         $cm     = $this->make_cm($course);
         $user   = $this->getDataGenerator()->create_user();
-        $this->make_word($user->id, (int)$cm->instance);
+        $this->make_word($user->id, (int)$cm->id);
 
         $contextlist = provider::get_contexts_for_userid($user->id);
         $contextids  = $contextlist->get_contextids();
 
-        $expected = \context_module::instance($cm->id)->id;
+        $expected = \context_module::instance($cm->cmid)->id;
         $this->assertContains((string)$expected, $contextids);
     }
 
@@ -159,10 +159,10 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $cm        = $this->make_cm($course);
         $student   = $this->getDataGenerator()->create_user();
         $teacher   = $this->getDataGenerator()->create_user();
-        $wordid    = $this->make_word($teacher->id, (int)$cm->instance);
-        $this->make_attempt($student->id, (int)$cm->instance, $wordid);
+        $wordid    = $this->make_word($teacher->id, (int)$cm->id);
+        $this->make_attempt($student->id, (int)$cm->id, $wordid);
 
-        $context  = \context_module::instance($cm->id);
+        $context  = \context_module::instance($cm->cmid);
         $userlist = new userlist($context, 'mod_playerwords');
         provider::get_users_in_context($userlist);
         $userids = $userlist->get_userids();
@@ -183,16 +183,16 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $course  = $this->getDataGenerator()->create_course();
         $cm      = $this->make_cm($course);
         $user    = $this->getDataGenerator()->create_user();
-        $wordid  = $this->make_word($user->id, (int)$cm->instance);
-        $this->make_attempt($user->id, (int)$cm->instance, $wordid);
+        $wordid  = $this->make_word($user->id, (int)$cm->id);
+        $this->make_attempt($user->id, (int)$cm->id, $wordid);
 
-        $context      = \context_module::instance($cm->id);
+        $context      = \context_module::instance($cm->cmid);
         $contextlist  = new approved_contextlist($user, 'mod_playerwords', [$context->id]);
         provider::delete_data_for_user($contextlist);
 
         $attempts = $DB->count_records('playerwords_attempts', [
             'userid'        => $user->id,
-            'playerwordsid' => (int)$cm->instance,
+            'playerwordsid' => (int)$cm->id,
         ]);
         $this->assertSame(0, $attempts);
 
@@ -213,11 +213,11 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $cm       = $this->make_cm($course);
         $user1    = $this->getDataGenerator()->create_user();
         $user2    = $this->getDataGenerator()->create_user();
-        $wordid   = $this->make_word($user1->id, (int)$cm->instance);
-        $this->make_attempt($user1->id, (int)$cm->instance, $wordid);
-        $this->make_attempt($user2->id, (int)$cm->instance, $wordid);
+        $wordid   = $this->make_word($user1->id, (int)$cm->id);
+        $this->make_attempt($user1->id, (int)$cm->id, $wordid);
+        $this->make_attempt($user2->id, (int)$cm->id, $wordid);
 
-        $context      = \context_module::instance($cm->id);
+        $context      = \context_module::instance($cm->cmid);
         $approvedlist = new approved_userlist($context, 'mod_playerwords', [$user1->id]);
         provider::delete_data_for_users($approvedlist);
 
