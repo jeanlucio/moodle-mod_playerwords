@@ -98,26 +98,31 @@ class provider implements
 
     #[\Override]
     public static function get_users_in_context(userlist $userlist): void {
+        global $DB;
+
         $context = $userlist->get_context();
         if (!$context instanceof \context_module) {
             return;
         }
 
-        $params = ['cmid' => $context->instanceid];
+        $instanceid = (int)$DB->get_field('course_modules', 'instance', ['id' => $context->instanceid]);
+        if (!$instanceid) {
+            return;
+        }
 
-        $sql = "SELECT pa.userid
-                  FROM {playerwords_attempts} pa
-                  JOIN {playerwords} pw ON pw.id = pa.playerwordsid
-                  JOIN {course_modules} cm ON cm.instance = pw.id
-                 WHERE cm.id = :cmid";
-        $userlist->add_from_sql('userid', $sql, $params);
+        $params = ['pid' => $instanceid];
 
-        $sql = "SELECT pww.addedby AS userid
-                  FROM {playerwords_words} pww
-                  JOIN {playerwords} pw ON pw.id = pww.playerwordsid
-                  JOIN {course_modules} cm ON cm.instance = pw.id
-                 WHERE cm.id = :cmid AND pww.addedby > 0";
-        $userlist->add_from_sql('userid', $sql, $params);
+        $userlist->add_from_sql(
+            'userid',
+            "SELECT pa.userid FROM {playerwords_attempts} pa WHERE pa.playerwordsid = :pid",
+            $params
+        );
+
+        $userlist->add_from_sql(
+            'addedby',
+            "SELECT pww.addedby FROM {playerwords_words} pww WHERE pww.playerwordsid = :pid AND pww.addedby > 0",
+            $params
+        );
     }
 
     #[\Override]
