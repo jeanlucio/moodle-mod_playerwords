@@ -34,7 +34,7 @@ class mod_playerwords_generator extends testing_module_generator {
      * @param array|null $options Module options (e.g. idnumber, section).
      * @return \stdClass Created course-module record.
      */
-    public function create_instance($record = null, array $options = null): \stdClass {
+    public function create_instance($record = null, ?array $options = null): \stdClass {
         $record = (object)(array)$record;
 
         $defaults = [
