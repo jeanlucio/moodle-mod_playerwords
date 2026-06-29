@@ -24,34 +24,25 @@
 
 namespace mod_playerwords\local;
 
-use core_text;
-
 /**
- * Wraps local_playergames\cartridge\ai_generator for single-word term generation.
+ * Generates single-word terms through the shared AI ladder.
  *
- * All methods guard against the optional dependency being absent.
+ * Routes generation to the AI Hub (local_aihub) for BYOK keys, falling back to
+ * the Moodle core_ai subsystem when the hub has no key or is not installed. This
+ * class owns the word-generation prompt and the response parsing; the hub returns
+ * raw, untrusted text.
  */
 class ai_word_generator {
     /**
-     * Returns true if the AI generator class is installed.
-     *
-     * @return bool
-     */
-    public static function is_available(): bool {
-        return class_exists('local_playergames\cartridge\ai_generator');
-    }
-
-    /**
-     * Returns true if the AI generator is installed and an API key is configured.
+     * Returns true when an AI source (hub key or core_ai) is available.
      *
      * @return bool
      */
     public static function has_key(): bool {
-        if (!self::is_available()) {
-            return false;
+        if (class_exists(\local_aihub\ai::class) && \local_aihub\ai::is_available()) {
+            return true;
         }
-        $generator = new \local_playergames\cartridge\ai_generator();
-        return $generator->has_key();
+        return self::has_core_ai();
     }
 
     /**
@@ -63,9 +54,9 @@ class ai_word_generator {
      * @param \stdClass $instance Activity instance record.
      * @param int $userid ID of the user triggering the generation.
      * @param string $topic Subject area or theme for the AI prompt.
-     * @param int $count Number of concepts to request (1–20).
+     * @param int $count Number of words to request (1–20).
      * @return int Number of words saved as pending.
-     * @throws \moodle_exception If no API key is available or the request fails.
+     * @throws \moodle_exception If no AI source is available or the request fails.
      */
     public static function generate_and_save(
         \stdClass $instance,
@@ -73,16 +64,17 @@ class ai_word_generator {
         string $topic,
         int $count
     ): int {
-        $generator = new \local_playergames\cartridge\ai_generator();
         $language = get_string('thislanguage', 'langconfig');
-        $singlewordctx = 'Important: every "term" value must be a single word with no spaces, '
-            . 'hyphens or punctuation — exactly one token.';
         $requestcount = min(60, $count * 3);
-        $items = $generator->generate($topic, $language, $requestcount, 3, [], $singlewordctx);
+        $prompt = self::build_prompt($topic, $language, $requestcount);
+        $description = get_string('aiusage', 'mod_playerwords', $topic);
 
-        if (!is_array($items)) {
-            return 0;
+        $result = self::call_ai($prompt, $description);
+        if (empty($result['success'])) {
+            throw new \moodle_exception('aigenerateerror', 'mod_playerwords');
         }
+
+        $items = self::parse_words((string)($result['data'] ?? ''));
 
         $saved = 0;
         foreach ($items as $item) {
@@ -91,7 +83,7 @@ class ai_word_generator {
             }
 
             $term = trim($item['term'] ?? '');
-            $hint = trim($item['definition'] ?? '');
+            $hint = trim($item['hint'] ?? '');
 
             if ($term === '') {
                 continue;
@@ -111,5 +103,175 @@ class ai_word_generator {
         }
 
         return $saved;
+    }
+
+    /**
+     * Builds the prompt asking the AI for single-word terms with hints.
+     *
+     * @param string $topic Subject area or theme.
+     * @param string $language Target language name.
+     * @param int $count Number of words to request.
+     * @return string The constructed prompt.
+     */
+    protected static function build_prompt(string $topic, string $language, int $count): string {
+        $langname = $language !== '' ? $language : 'English';
+        $example = '{"words":[{"term":"...","hint":"..."}]}';
+
+        $parts = [
+            "You are generating vocabulary words for a word-guessing game about the topic: \"{$topic}\".",
+            "Generate {$count} words. Write all text in language: {$langname}.",
+            'For each word provide:',
+            '- term: EXACTLY ONE word (a single token) — letters only, no spaces, hyphens, digits'
+                . ' or punctuation.',
+            '- hint: one short clue sentence that helps guess the word without containing the word itself.',
+            'Prefer common, guessable words. Avoid proper nouns and abbreviations.',
+            'IMPORTANT: Reply ONLY with a valid JSON object in this exact format, no code fences:',
+            $example,
+        ];
+
+        return implode("\n", $parts);
+    }
+
+    /**
+     * Parses the AI response into an array of term/hint pairs.
+     *
+     * Strips optional markdown code fences, then decodes the JSON. Accepts a
+     * "words" or legacy "concepts" wrapper, or a bare list.
+     *
+     * @param string $responsetext Raw text returned by the AI provider.
+     * @return array Array of arrays with keys: term, hint.
+     */
+    protected static function parse_words(string $responsetext): array {
+        $cleaned = preg_replace('/^\x60\x60\x60(?:json)?\s*/im', '', $responsetext);
+        $cleaned = preg_replace('/\x60\x60\x60\s*$/m', '', $cleaned);
+        $cleaned = trim($cleaned);
+
+        $decoded = json_decode($cleaned, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        if (isset($decoded['words']) && is_array($decoded['words'])) {
+            $list = $decoded['words'];
+        } else if (isset($decoded['concepts']) && is_array($decoded['concepts'])) {
+            $list = $decoded['concepts'];
+        } else if (isset($decoded[0]) && is_array($decoded[0])) {
+            $list = $decoded;
+        } else {
+            return [];
+        }
+
+        $items = [];
+        foreach ($list as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+            $items[] = [
+                'term' => (string)($entry['term'] ?? ''),
+                'hint' => (string)($entry['hint'] ?? ($entry['definition'] ?? '')),
+            ];
+        }
+        return $items;
+    }
+
+    /**
+     * Resolves an AI source and generates content.
+     *
+     * Routes to the AI Hub (local_aihub) first, which resolves personal then site
+     * BYOK keys. Falls back to the Moodle core_ai subsystem when the hub returns no
+     * result or is not installed.
+     *
+     * @param string $prompt The full prompt text.
+     * @param string $description Short label of what is being generated, for the hub usage log.
+     * @return array Result with keys: success (bool), data (string), message (string), provider (string).
+     */
+    protected static function call_ai(string $prompt, string $description): array {
+        $lasterror = ['success' => false, 'message' => '', 'data' => '', 'provider' => ''];
+
+        if (class_exists(\local_aihub\ai::class)) {
+            $result = \local_aihub\ai::generate_text('', $prompt, true, 'mod_playerwords', $description);
+            if (!empty($result['success'])) {
+                return $result;
+            }
+            // Preserve a real failure (e.g. an invalid key) so it is not masked as "no source".
+            if (!empty($result['message'])) {
+                $lasterror = $result;
+            }
+        }
+
+        if (self::has_core_ai()) {
+            $result = self::call_core_ai($prompt);
+            if ($result['success'] || !empty($result['message'])) {
+                return $result;
+            }
+        }
+
+        return $lasterror;
+    }
+
+    /**
+     * Returns true when the Moodle core_ai subsystem has a text-generation provider.
+     *
+     * @return bool
+     */
+    protected static function has_core_ai(): bool {
+        if (
+            !class_exists(\core_ai\manager::class)
+            || !class_exists(\core_ai\aiactions\generate_text::class)
+        ) {
+            return false;
+        }
+
+        try {
+            $actionclass = \core_ai\aiactions\generate_text::class;
+            $manager = \core\di::get(\core_ai\manager::class);
+            $providers = $manager->get_providers_for_actions([$actionclass], true);
+            return !empty($providers[$actionclass]);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Generates text via the Moodle core_ai subsystem (institutional fallback).
+     *
+     * @param string $prompt The prompt text.
+     * @return array Result with keys: success (bool), data (string), message (string), provider (string).
+     */
+    protected static function call_core_ai(string $prompt): array {
+        global $USER;
+
+        try {
+            $actionclass = \core_ai\aiactions\generate_text::class;
+            $manager = \core\di::get(\core_ai\manager::class);
+            $providers = $manager->get_providers_for_actions([$actionclass], true);
+
+            if (empty($providers[$actionclass])) {
+                return ['success' => false, 'message' => '', 'data' => '', 'provider' => ''];
+            }
+
+            $action = new \core_ai\aiactions\generate_text(
+                contextid: \context_system::instance()->id,
+                userid: (int) $USER->id,
+                prompttext: $prompt,
+            );
+
+            $response = $manager->process_action($action);
+
+            if (!$response->get_success()) {
+                return ['success' => false, 'message' => 'core_ai: provider returned failure', 'data' => '', 'provider' => ''];
+            }
+
+            $data = $response->get_response_data();
+            $content = (string) ($data['generatedcontent'] ?? '');
+
+            if ($content === '') {
+                return ['success' => false, 'message' => 'core_ai: empty response', 'data' => '', 'provider' => ''];
+            }
+
+            return ['success' => true, 'data' => $content, 'message' => '', 'provider' => 'Moodle AI'];
+        } catch (\Throwable $e) {
+            return ['success' => false, 'message' => 'core_ai: ' . $e->getMessage(), 'data' => '', 'provider' => ''];
+        }
     }
 }
