@@ -46,7 +46,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
      * @return void
      */
     public function definition(): void {
-        global $CFG, $COURSE, $DB;
+        global $CFG, $COURSE, $DB, $PAGE;
 
         $mform = $this->_form;
 
@@ -238,7 +238,15 @@ class mod_playerwords_mod_form extends moodleform_mod {
         );
         $mform->setType('grademethod', PARAM_INT);
         $mform->setDefault('grademethod', PLAYERWORDS_GRADE_HIGHEST);
+        $mform->addHelpButton('grademethod', 'grademethod', 'mod_playerwords');
         $mform->hideIf('grademethod', 'grade[modgrade_type]', 'eq', 'none');
+
+        $PAGE->requires->js_call_amd('mod_playerwords/grademethod', 'init', [
+            'id_max_rounds',
+            'id_grademethod',
+            (string) PLAYERWORDS_GRADE_AVERAGE_ALL,
+            (string) PLAYERWORDS_GRADE_HIGHEST,
+        ]);
 
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
