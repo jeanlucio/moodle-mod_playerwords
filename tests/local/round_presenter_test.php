@@ -26,9 +26,47 @@
 namespace mod_playerwords\local;
 
 /**
- * Tests for round_presenter — pure logic, no database required.
+ * Tests for round_presenter.
+ *
+ * Requires database access: build_round_result_context() computes cooldown/restriction
+ * fields via round_service, which reads playerwords_attempts directly instead of relying
+ * on session state (so a cooldown_seconds change always applies immediately).
  */
-final class round_presenter_test extends \basic_testcase {
+final class round_presenter_test extends \advanced_testcase {
+    /** @var \stdClass Course used by the DB-dependent tests. */
+    private \stdClass $course;
+
+    #[\Override]
+    protected function setUp(): void {
+        global $CFG;
+        parent::setUp();
+        $this->resetAfterTest();
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+        $this->course = $this->getDataGenerator()->create_course();
+    }
+
+    /**
+     * Creates a playerwords instance for the DB-dependent tests.
+     *
+     * NOTE: playerwords_add_instance() recomputes cooldown_seconds from the transient
+     * cooldown_amount/cooldown_unit form fields, ignoring a cooldown_seconds override.
+     *
+     * @param array $overrides Instance field overrides.
+     * @return \stdClass
+     */
+    private function make_instance(array $overrides = []): \stdClass {
+        global $DB;
+
+        $record = array_merge([
+            'course'          => $this->course->id,
+            'show_ranking'    => 0,
+            'cooldown_amount' => 0,
+        ], $overrides);
+
+        $instance = $this->getDataGenerator()->create_module('playerwords', $record);
+        return $DB->get_record('playerwords', ['id' => $instance->id], '*', MUST_EXIST);
+    }
+
     /**
      * Returns a minimal default state array, overridable per test.
      *
@@ -49,7 +87,6 @@ final class round_presenter_test extends \basic_testcase {
             'won'           => false,
             'forfeited'     => false,
             'timedout'      => false,
-            'cooldownuntil' => 0,
             'roundstarted'  => false,
         ], $overrides);
     }
@@ -97,7 +134,7 @@ final class round_presenter_test extends \basic_testcase {
      * @return void
      */
     public function test_build_cooldown_text_inactive(): void {
-        $this->assertSame('', round_presenter::build_cooldown_text($this->make_state()));
+        $this->assertSame('', round_presenter::build_cooldown_text(0));
     }
 
     /**
@@ -107,8 +144,7 @@ final class round_presenter_test extends \basic_testcase {
      * @return void
      */
     public function test_build_cooldown_text_active(): void {
-        $state = $this->make_state(['cooldownuntil' => time() + 3600]);
-        $this->assertNotSame('', round_presenter::build_cooldown_text($state));
+        $this->assertNotSame('', round_presenter::build_cooldown_text(time() + 3600));
     }
 
     /**
@@ -205,7 +241,7 @@ final class round_presenter_test extends \basic_testcase {
      * @return void
      */
     public function test_build_round_result_context_blank_when_not_finished(): void {
-        $instance = (object)['show_ranking' => 1];
+        $instance = $this->make_instance();
         $cm = (object)['id' => 5];
         $state = $this->make_state(['wordtext' => 'boca', 'concept' => 'boca', 'hint' => 'segredo']);
 
@@ -219,13 +255,17 @@ final class round_presenter_test extends \basic_testcase {
     }
 
     /**
-     * Tests that the round-result context reveals the word/definition once finished.
+     * Tests that the round-result context reveals the word/definition once finished, and
+     * computes the cooldown from the current instance settings rather than session state.
      *
      * @covers \mod_playerwords\local\round_presenter::build_round_result_context
      * @return void
      */
     public function test_build_round_result_context_reveals_when_finished(): void {
-        $instance = (object)['show_ranking' => 0];
+        global $DB;
+
+        $instance = $this->make_instance(['cooldown_amount' => 2, 'cooldown_unit' => 'minutes']);
+        $user = $this->getDataGenerator()->create_user();
         $cm = (object)['id' => 5];
         $state = $this->make_state([
             'finished'      => true,
@@ -234,10 +274,22 @@ final class round_presenter_test extends \basic_testcase {
             'wordtext'      => 'boca',
             'concept'       => 'boca',
             'hint'          => 'segredo',
-            'cooldownuntil' => time() + 3600,
         ]);
 
-        $context = round_presenter::build_round_result_context($instance, $cm, $state, 1, true);
+        // A round just finished for this user: an attempt row is what the cooldown is
+        // computed from (never from session state — see round_service::compute_cooldown_until()).
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $user->id,
+            'wordid'        => 1,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+        ]);
+
+        $context = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
 
         $this->assertTrue($context['showreveal']);
         $this->assertSame('boca', $context['revealword']);
@@ -245,5 +297,46 @@ final class round_presenter_test extends \basic_testcase {
         $this->assertSame('segredo', $context['revealdefinition']);
         $this->assertGreaterThan(time(), $context['cooldownuntil']);
         $this->assertTrue($context['cooldownactive']);
+    }
+
+    /**
+     * Tests that changing cooldown_seconds after a round finished takes effect immediately —
+     * the specific behaviour that motivated computing cooldown from the DB instead of caching
+     * it in session state at the moment the round ended.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_result_context
+     * @return void
+     */
+    public function test_cooldown_reflects_a_later_settings_change(): void {
+        global $DB;
+
+        // Round finished under a long (1 day) cooldown.
+        $instance = $this->make_instance(['cooldown_amount' => 1, 'cooldown_unit' => 'days']);
+        $user = $this->getDataGenerator()->create_user();
+        $cm = (object)['id' => 5];
+        $state = $this->make_state(['finished' => true, 'won' => true]);
+
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $user->id,
+            'wordid'        => 1,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+        ]);
+
+        $before = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
+        $this->assertTrue($before['cooldownactive']);
+        $this->assertGreaterThan(time() + 3600, $before['cooldownuntil']);
+
+        // The teacher disables the cooldown entirely.
+        $DB->set_field('playerwords', 'cooldown_seconds', 0, ['id' => $instance->id]);
+        $instance = $DB->get_record('playerwords', ['id' => $instance->id], '*', MUST_EXIST);
+
+        $after = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
+        $this->assertFalse($after['cooldownactive']);
+        $this->assertSame(0, $after['cooldownuntil']);
     }
 }

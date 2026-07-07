@@ -61,7 +61,6 @@ class round_service {
                 'won'           => false,
                 'forfeited'     => false,
                 'timedout'      => false,
-                'cooldownuntil' => 0,
                 'roundstarted'  => false,
             ];
         }
@@ -103,6 +102,38 @@ class round_service {
     }
 
     /**
+     * Returns the epoch when the player's cooldown ends, or 0 if none is active.
+     *
+     * Computed fresh from the last attempt's timestamp and the activity's current
+     * cooldown_seconds setting every time — never cached in session state — so a
+     * change to the setting takes effect immediately for cooldowns already ticking,
+     * the same way mod_quiz's inter-attempt delay always uses its current setting.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @param int $userid User id.
+     * @return int
+     */
+    public static function compute_cooldown_until(\stdClass $instance, int $userid): int {
+        global $DB;
+
+        if ((int)$instance->cooldown_seconds <= 0) {
+            return 0;
+        }
+
+        $lastattempttime = $DB->get_field_sql(
+            "SELECT MAX(timecreated) FROM {playerwords_attempts}"
+            . " WHERE playerwordsid = :pid AND userid = :uid",
+            ['pid' => $instance->id, 'uid' => $userid]
+        );
+        if (empty($lastattempttime)) {
+            return 0;
+        }
+
+        $until = (int)$lastattempttime + (int)$instance->cooldown_seconds;
+        return $until > time() ? $until : 0;
+    }
+
+    /**
      * Returns a restriction message if the user cannot start a new round, null otherwise.
      *
      * @param \stdClass $instance Activity instance.
@@ -122,18 +153,9 @@ class round_service {
             }
         }
 
-        if ((int)$instance->cooldown_seconds > 0) {
-            $lastattempttime = $DB->get_field_sql(
-                "SELECT MAX(timecreated) FROM {playerwords_attempts}"
-                . " WHERE playerwordsid = :pid AND userid = :uid",
-                ['pid' => $instance->id, 'uid' => $userid]
-            );
-            if (!empty($lastattempttime)) {
-                $remaining = (int)$instance->cooldown_seconds - (time() - (int)$lastattempttime);
-                if ($remaining > 0) {
-                    return get_string('cooldownactive', 'mod_playerwords', format_time($remaining));
-                }
-            }
+        $cooldownuntil = self::compute_cooldown_until($instance, $userid);
+        if ($cooldownuntil > 0) {
+            return get_string('cooldownactive', 'mod_playerwords', format_time($cooldownuntil - time()));
         }
 
         return null;
@@ -204,7 +226,6 @@ class round_service {
                 $state['won'] = false;
                 $state['forfeited'] = false;
                 $state['timedout'] = false;
-                $state['cooldownuntil'] = 0;
                 $state['roundstarted'] = false;
 
                 $event = \mod_playerwords\event\round_started::create([
@@ -418,9 +439,10 @@ class round_service {
         $state['won'] = $completed;
         $state['forfeited'] = $forfeited;
         $state['timedout'] = $timedout;
-        if ((int)$instance->cooldown_seconds > 0) {
-            $state['cooldownuntil'] = time() + (int)$instance->cooldown_seconds;
-        }
+        // Cooldown is never stored here: it is always computed fresh from the attempt
+        // record this method is about to insert, via compute_cooldown_until(). That way
+        // a later change to cooldown_seconds applies immediately, the same way mod_quiz's
+        // inter-attempt delay always reflects its current setting.
 
         $timeused = max(0, time() - (int)$state['starttime']);
         $score = gameplay_service::calculate_round_score(

@@ -88,15 +88,14 @@ class round_presenter {
     /**
      * Returns a formatted countdown string, or empty if no cooldown is active.
      *
-     * @param array $state Session state.
+     * @param int $cooldownuntil Epoch when the cooldown ends, 0 if inactive.
      * @return string
      */
-    public static function build_cooldown_text(array $state): string {
-        $until = (int)($state['cooldownuntil'] ?? 0);
-        if ($until <= 0) {
+    public static function build_cooldown_text(int $cooldownuntil): string {
+        if ($cooldownuntil <= 0) {
             return '';
         }
-        $remaining = $until - time();
+        $remaining = $cooldownuntil - time();
         return $remaining > 0 ? format_time($remaining) : '';
     }
 
@@ -222,6 +221,12 @@ class round_presenter {
         $wordtext = $state['wordtext'] ?? '';
         $showrevealconcept = $concept !== '' && core_text::strtolower($concept) !== core_text::strtolower($wordtext);
 
+        // Computed fresh from the DB every time (never from session state), so a change
+        // to cooldown_seconds or max_rounds takes effect immediately — see
+        // round_service::compute_cooldown_until() for why.
+        $cooldownuntil = round_service::compute_cooldown_until($instance, $userid);
+        $restricted = round_service::get_round_restriction_notice($instance, $userid) !== null;
+
         return [
             'feedbackmessage'       => self::build_feedback_message($state),
             'showreveal'            => ($wordtext !== ''),
@@ -233,10 +238,12 @@ class round_presenter {
             'showdefinition'        => !empty($state['hint']),
             'revealdefinition'      => $state['hint'] ?? '',
             'revealdefinitionlabel' => $blank['revealdefinitionlabel'],
-            'cooldownuntil'         => (int)($state['cooldownuntil'] ?? 0),
-            'cooldowntext'          => self::build_cooldown_text($state),
+            'cooldownuntil'         => $cooldownuntil,
+            'cooldowntext'          => self::build_cooldown_text($cooldownuntil),
             'cooldowncountdownlabel' => $blank['cooldowncountdownlabel'],
-            'cooldownactive'        => (int)($state['cooldownuntil'] ?? 0) > time(),
+            // Hides the new-round button for either reason: an active time-based
+            // cooldown, or the round limit having been reached.
+            'cooldownactive'        => $restricted,
             'newroundlabel'         => $blank['newroundlabel'],
         ] + self::build_ranking_context($instance, $cm, $userid, true);
     }

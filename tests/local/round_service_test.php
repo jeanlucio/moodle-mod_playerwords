@@ -181,7 +181,7 @@ final class round_service_test extends \advanced_testcase {
         $this->assertSame(['correct', 'correct', 'correct', 'correct'], array_values($feedback));
         $this->assertTrue($state['finished']);
         $this->assertTrue($state['won']);
-        $this->assertGreaterThan(time(), $state['cooldownuntil']);
+        $this->assertGreaterThan(time(), round_service::compute_cooldown_until($instance, $this->user->id));
         $this->assertSame('success', $notificationtype);
         $this->assertNotEmpty($notification);
 
@@ -305,7 +305,7 @@ final class round_service_test extends \advanced_testcase {
         $this->assertTrue($state['forfeited']);
         $this->assertFalse($state['won']);
         $this->assertSame('warning', $notificationtype);
-        $this->assertGreaterThan(time(), $state['cooldownuntil']);
+        $this->assertGreaterThan(time(), round_service::compute_cooldown_until($instance, $this->user->id));
 
         $attempts = $DB->get_records('playerwords_attempts', ['playerwordsid' => $instance->id]);
         $this->assertCount(1, $attempts);
@@ -391,5 +391,96 @@ final class round_service_test extends \advanced_testcase {
     public function test_restriction_notice_none_when_unrestricted(): void {
         $instance = $this->make_instance(['max_rounds' => 0, 'cooldown_amount' => 0]);
         $this->assertNull(round_service::get_round_restriction_notice($instance, $this->user->id));
+    }
+
+    /**
+     * Tests that no cooldown applies when the setting is disabled, even with a recent attempt.
+     *
+     * @covers \mod_playerwords\local\round_service::compute_cooldown_until
+     * @return void
+     */
+    public function test_compute_cooldown_until_disabled(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['cooldown_amount' => 0]);
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => 0,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+        ]);
+
+        $this->assertSame(0, round_service::compute_cooldown_until($instance, $this->user->id));
+    }
+
+    /**
+     * Tests that no cooldown applies when the player has never attempted the activity.
+     *
+     * @covers \mod_playerwords\local\round_service::compute_cooldown_until
+     * @return void
+     */
+    public function test_compute_cooldown_until_no_attempts_yet(): void {
+        $instance = $this->make_instance(['cooldown_amount' => 2, 'cooldown_unit' => 'minutes']);
+        $this->assertSame(0, round_service::compute_cooldown_until($instance, $this->user->id));
+    }
+
+    /**
+     * Tests that a cooldown already expired by elapsed time returns 0.
+     *
+     * @covers \mod_playerwords\local\round_service::compute_cooldown_until
+     * @return void
+     */
+    public function test_compute_cooldown_until_expired_by_time(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['cooldown_amount' => 1, 'cooldown_unit' => 'minutes']);
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => 0,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time() - 120,
+        ]);
+
+        $this->assertSame(0, round_service::compute_cooldown_until($instance, $this->user->id));
+    }
+
+    /**
+     * Tests that changing cooldown_seconds after an attempt already happened takes effect
+     * immediately on the next call — never cached from the moment the round finished, the
+     * same way mod_quiz's inter-attempt delay always uses its current setting.
+     *
+     * @covers \mod_playerwords\local\round_service::compute_cooldown_until
+     * @return void
+     */
+    public function test_compute_cooldown_until_reflects_a_later_settings_change(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['cooldown_amount' => 1, 'cooldown_unit' => 'days']);
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => 0,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+        ]);
+
+        $this->assertGreaterThan(time() + 3600, round_service::compute_cooldown_until($instance, $this->user->id));
+
+        // The teacher disables the cooldown entirely.
+        $DB->set_field('playerwords', 'cooldown_seconds', 0, ['id' => $instance->id]);
+        $instance = $DB->get_record('playerwords', ['id' => $instance->id], '*', MUST_EXIST);
+
+        $this->assertSame(0, round_service::compute_cooldown_until($instance, $this->user->id));
     }
 }

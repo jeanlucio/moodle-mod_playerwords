@@ -57,12 +57,9 @@ class view_page_service {
                 round_service::save_state((int)$cm->id, $userid, $state);
                 $displayword = (int)($state['wordid'] ?? 0) > 0 ? ($state['wordtext'] ?? '') : '';
                 $templatectx = self::build_template_context($cm, $instance, $state, $displayword, $canmanagewords, $userid);
-                if ($restrictionnotice !== null && (int)($state['cooldownuntil'] ?? 0) <= time()) {
-                    $templatectx['cooldownactive'] = true;
-                }
                 return [
                     'templatecontext' => $templatectx,
-                    'cooldownuntil'   => (int)($state['cooldownuntil'] ?? 0),
+                    'cooldownuntil'   => round_service::compute_cooldown_until($instance, $userid),
                     'timeleft'        => 0,
                     'timertotal'      => 0,
                 ];
@@ -94,7 +91,7 @@ class view_page_service {
 
         return [
             'templatecontext' => $templatecontext,
-            'cooldownuntil'   => (int)($state['cooldownuntil'] ?? 0),
+            'cooldownuntil'   => round_service::compute_cooldown_until($instance, $userid),
             'timeleft'        => (int)($templatecontext['timeleft'] ?? 0),
             'timertotal'      => (int)$instance->timer_seconds,
         ];
