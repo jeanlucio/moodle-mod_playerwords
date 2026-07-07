@@ -328,59 +328,48 @@ function playerwords_supports(string $feature): mixed {
 }
 
 /**
- * Checks if user completes the activity according to custom rules.
+ * Populates the course module info object with custom completion rule data.
  *
- * @param stdClass $course Course data.
- * @param stdClass $cm Course-module data.
- * @param int $userid User id.
- * @param bool $type Type of aggregation for completion requirements.
- * @return bool
+ * Called by Moodle when building cm_info. Stores the required attempt count in
+ * customdata so activity_custom_completion::get_available_custom_rules() can
+ * determine whether the rule is enabled for this instance, and so
+ * mod_playerwords\completion\custom_completion::get_state() can evaluate it.
+ *
+ * @param stdClass $coursemodule The raw course_modules row (id, instance, …).
+ * @return cached_cm_info|false A populated info object, or false on failure.
  */
-function playerwords_get_completion_state(
-    stdClass $course,
-    stdClass $cm,
-    int $userid,
-    bool $type
-): bool {
+function playerwords_get_coursemodule_info(stdClass $coursemodule): cached_cm_info|false {
     global $DB;
 
-    $playerwords = $DB->get_record(
-        'playerwords',
-        ['id' => $cm->instance],
-        'id, completionattempts',
-        MUST_EXIST
-    );
-
-    if ((int)$playerwords->completionattempts === 0) {
-        $attemptsok = null;
-    } else {
-        $attemptscount = $DB->count_records(
-            'playerwords_attempts',
-            [
-                'playerwordsid' => $playerwords->id,
-                'userid' => $userid,
-            ]
-        );
-
-        $attemptsok = $attemptscount >= (int)$playerwords->completionattempts;
+    $fields = 'id, name, completionattempts';
+    $playerwords = $DB->get_record('playerwords', ['id' => $coursemodule->instance], $fields);
+    if (!$playerwords) {
+        return false;
     }
 
-    $activeconditions = [];
-    if ($attemptsok !== null) {
-        $activeconditions[] = $attemptsok;
+    $info = new cached_cm_info();
+    $info->name = $playerwords->name;
+
+    if ($coursemodule->completion == COMPLETION_TRACKING_AUTOMATIC) {
+        $info->customdata['customcompletionrules']['completionattempts'] = (int)$playerwords->completionattempts;
     }
 
-    if ($activeconditions === []) {
-        return $type;
+    return $info;
+}
+
+/**
+ * Describes the active custom completion rules.
+ *
+ * @param stdClass|cm_info $cm The course module info.
+ * @return array An array of active completion rule descriptions.
+ */
+function playerwords_get_completion_active_rule_descriptions(stdClass|cm_info $cm): array {
+    $descriptions = [];
+
+    $rules = $cm->customdata['customcompletionrules'] ?? [];
+    if (!empty($rules['completionattempts'])) {
+        $descriptions[] = get_string('completionattempts_desc', 'mod_playerwords', $rules['completionattempts']);
     }
 
-    if ($type) {
-        return !in_array(false, $activeconditions, true);
-    }
-
-    return in_array(
-        true,
-        $activeconditions,
-        true
-    );
+    return $descriptions;
 }

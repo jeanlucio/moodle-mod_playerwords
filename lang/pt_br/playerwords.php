@@ -49,6 +49,7 @@ $string['cell_state_absent'] = '{$a} — não está na palavra';
 $string['cell_state_correct'] = '{$a} — posição correta';
 $string['cell_state_empty'] = 'Célula vazia';
 $string['cell_state_present'] = '{$a} — posição errada';
+$string['completionattempts_desc'] = 'Realizar pelo menos {$a} tentativa(s)';
 $string['completionattemptsgroup'] = 'Exigir tentativas';
 $string['cooldown_label'] = 'Cooldown entre rodadas';
 $string['cooldown_unit'] = 'Unidade';

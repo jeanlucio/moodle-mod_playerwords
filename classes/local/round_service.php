@@ -24,6 +24,7 @@
 
 namespace mod_playerwords\local;
 
+use completion_info;
 use context_module;
 use core_text;
 
@@ -477,6 +478,18 @@ class round_service {
         $event->trigger();
 
         playerwords_update_grades($instance, $userid);
+
+        // Automatic completion (e.g. the "require attempts" custom rule) is only
+        // recomputed and persisted when something explicitly asks for it — Moodle has
+        // no cron sweep for this, unlike grading. Trigger it here so the activity page's
+        // completion badge reflects a finished round immediately, the same way
+        // mod_choice calls update_state() right after recording a response.
+        $cm = get_coursemodule_from_id('playerwords', $cmid, 0, false, MUST_EXIST);
+        $course = get_course($instance->course);
+        $completioninfo = new completion_info($course);
+        if ($completioninfo->is_enabled($cm)) {
+            $completioninfo->update_state($cm, COMPLETION_COMPLETE, $userid);
+        }
 
         return $state;
     }

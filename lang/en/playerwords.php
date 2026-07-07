@@ -49,6 +49,7 @@ $string['cell_state_absent'] = '{$a} — not in the word';
 $string['cell_state_correct'] = '{$a} — correct position';
 $string['cell_state_empty'] = 'Empty cell';
 $string['cell_state_present'] = '{$a} — wrong position';
+$string['completionattempts_desc'] = 'Make at least {$a} attempt(s)';
 $string['completionattemptsgroup'] = 'Require attempts';
 $string['cooldown_label'] = 'Cooldown between rounds';
 $string['cooldown_unit'] = 'Unit';
