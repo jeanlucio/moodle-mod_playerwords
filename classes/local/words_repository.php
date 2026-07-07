@@ -370,10 +370,16 @@ class words_repository {
      *
      * @param int $wordid Word id.
      * @param int $instanceid Activity instance id.
-     * @return bool
+     * @return bool True if a matching record was found and deleted, false otherwise.
      */
     public static function delete_word(int $wordid, int $instanceid): bool {
         global $DB;
+
+        // Moodle's delete_records() always returns true, even when zero rows matched, so an
+        // existence check is required first to give the caller a real found/not-found signal.
+        if (!$DB->record_exists('playerwords_words', ['id' => $wordid, 'playerwordsid' => $instanceid])) {
+            return false;
+        }
         return $DB->delete_records('playerwords_words', ['id' => $wordid, 'playerwordsid' => $instanceid]);
     }
 
