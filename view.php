@@ -50,10 +50,25 @@ $completion->set_module_viewed($cm);
 $PAGE->set_url('/mod/playerwords/view.php', ['id' => $cm->id]);
 $PAGE->set_title($instance->name);
 $PAGE->set_heading($course->fullname);
-$PAGE->set_pagelayout('incourse');
+
+// On mobile, use the embedded layout to drop the Moodle header/navbar so the
+// grid and on-screen keyboard fit the viewport without scrolling between guesses.
+$ismobile = core_useragent::is_ios() || core_useragent::is_webkit_android();
+if ($ismobile) {
+    $PAGE->set_pagelayout('embedded');
+} else {
+    $PAGE->set_pagelayout('incourse');
+}
 $PAGE->requires->css('/mod/playerwords/styles.css');
 
 $pagedata = view_page_service::build_page_data($cm, $instance, $context, (int)$USER->id);
+
+// The embedded layout strips Moodle navigation, so offer an explicit way back.
+if ($ismobile) {
+    $pagedata['templatecontext']['showbacklink'] = true;
+    $pagedata['templatecontext']['backurl'] = (new moodle_url('/course/view.php', ['id' => $course->id]))->out(false);
+    $pagedata['templatecontext']['backlabel'] = get_string('backtocourse', 'mod_playerwords');
+}
 $PAGE->requires->js_call_amd('mod_playerwords/game', 'init', [
     (int)($pagedata['cooldownuntil'] ?? 0),
     (int)($pagedata['timeleft'] ?? 0),

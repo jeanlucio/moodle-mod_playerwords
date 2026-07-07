@@ -23,6 +23,9 @@
     {
         "cmid": 1,
         "sesskey": "abc123",
+        "showbacklink": true,
+        "backurl": "https://example.com/course/view.php?id=2",
+        "backlabel": "Back to course",
         "canmanagewords": true,
         "managewordsbutton": "Manage words",
         "managewordsurl": "https://example.com/mod/playerwords/managewords.php?id=1",
@@ -98,6 +101,11 @@
     }
 }}
 <div class="mod-playerwords-game">
+    {{#showbacklink}}
+        <p class="mb-3">
+            <a href="{{{backurl}}}" class="btn btn-link p-0">&#x2190; {{backlabel}}</a>
+        </p>
+    {{/showbacklink}}
     {{#canmanagewords}}
         <p>
             <a href="{{{managewordsurl}}}" class="btn btn-secondary">{{managewordsbutton}}</a>
