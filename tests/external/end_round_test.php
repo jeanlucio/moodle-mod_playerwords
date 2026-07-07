@@ -165,4 +165,20 @@ final class end_round_test extends \advanced_testcase {
 
         $this->assertTrue($result['error']);
     }
+
+    /**
+     * Tests that a user without the view capability in the module context is rejected.
+     *
+     * @covers \mod_playerwords\external\end_round::execute
+     * @return void
+     */
+    public function test_requires_view_capability(): void {
+        $instance = $this->make_instance();
+        $outsider = $this->getDataGenerator()->create_user();
+        $this->setUser($outsider);
+
+        $result = $this->call_end_round($instance->cmid, 'forfeit');
+
+        $this->assertTrue($result['error']);
+    }
 }

@@ -123,4 +123,45 @@ final class custom_completion_test extends advanced_testcase {
 
         $this->assertSame([], $completion->get_available_custom_rules());
     }
+
+    /**
+     * The module declares exactly one custom completion rule: completionattempts.
+     *
+     * @covers \mod_playerwords\completion\custom_completion::get_defined_custom_rules
+     */
+    public function test_get_defined_custom_rules_returns_completionattempts(): void {
+        $this->assertSame(['completionattempts'], custom_completion::get_defined_custom_rules());
+    }
+
+    /**
+     * The custom rule's human-readable description includes the configured attempt count.
+     */
+    public function test_get_custom_rule_descriptions_includes_required_count(): void {
+        $this->resetAfterTest();
+
+        [$course, $cm] = $this->create_fixture(3);
+        $cminfo = get_fast_modinfo($course)->get_cm($cm->cmid);
+        $completion = new custom_completion($cminfo, 0);
+
+        $descriptions = $completion->get_custom_rule_descriptions();
+
+        $this->assertArrayHasKey('completionattempts', $descriptions);
+        $this->assertStringContainsString('3', $descriptions['completionattempts']);
+    }
+
+    /**
+     * The display order places the custom rule after the two core rules.
+     */
+    public function test_get_sort_order_places_custom_rule_last(): void {
+        $this->resetAfterTest();
+
+        [$course, $cm] = $this->create_fixture(2);
+        $cminfo = get_fast_modinfo($course)->get_cm($cm->cmid);
+        $completion = new custom_completion($cminfo, 0);
+
+        $this->assertSame(
+            ['completionview', 'completionusegrade', 'completionattempts'],
+            $completion->get_sort_order()
+        );
+    }
 }

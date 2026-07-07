@@ -483,4 +483,53 @@ final class round_service_test extends \advanced_testcase {
 
         $this->assertSame(0, round_service::compute_cooldown_until($instance, $this->user->id));
     }
+
+    /**
+     * When the previously picked word is removed or unapproved mid-round (e.g. a
+     * teacher deletes it from the pool), the next ensure_round_state() call discards
+     * the stale reference and picks a fresh word instead of returning an empty target.
+     *
+     * @covers \mod_playerwords\local\round_service::ensure_round_state
+     * @return void
+     */
+    public function test_ensure_round_state_recovers_when_word_removed_mid_round(): void {
+        global $DB;
+
+        $instance = $this->make_instance();
+        $DB->insert_record('playerwords_words', (object)[
+            'playerwordsid' => $instance->id,
+            'word'          => 'mesa',
+            'concept'       => 'mesa',
+            'hint'          => 'dica',
+            'source'        => 'manual',
+            'glossaryid'    => 0,
+            'approved'      => 1,
+            'timecreated'   => time(),
+            'addedby'       => $this->user->id,
+        ]);
+
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state, , $firstwordid] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+        round_service::save_state($instance->cmid, $this->user->id, $state);
+
+        $DB->delete_records('playerwords_words', ['id' => $firstwordid]);
+
+        // The first call after removal only resets the stale state — by design, the
+        // comment in ensure_round_state() says "so the next load picks a fresh word".
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state, $resetword] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+        $this->assertSame('', $resetword);
+        $this->assertSame(0, $state['wordid']);
+
+        [$state, $secondword, $secondwordid] = round_service::ensure_round_state(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id
+        );
+
+        $this->assertNotSame('', $secondword);
+        $this->assertNotSame($firstwordid, $secondwordid);
+        $this->assertSame(0, $state['attemptsused']);
+    }
 }

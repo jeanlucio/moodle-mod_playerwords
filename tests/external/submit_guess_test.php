@@ -197,4 +197,45 @@ final class submit_guess_test extends \advanced_testcase {
 
         $this->assertTrue($result['error']);
     }
+
+    /**
+     * Tests that timeleft reflects seconds actually remaining while the round is
+     * still in progress (timer enabled).
+     *
+     * @covers \mod_playerwords\external\submit_guess::execute
+     * @return void
+     */
+    public function test_timeleft_reflects_remaining_seconds_while_in_progress(): void {
+        $instance = $this->make_instance(['timer_minutes' => 2]);
+        $this->setUser($this->student);
+        $this->start_round_for_student($instance);
+
+        $result = $this->call_submit_guess($instance->cmid, 'casa');
+
+        $this->assertFalse($result['error']);
+        $this->assertFalse($result['data']['finished']);
+        $this->assertGreaterThan(0, $result['data']['timeleft']);
+        $this->assertLessThanOrEqual(120, $result['data']['timeleft']);
+    }
+
+    /**
+     * Tests that timeleft is frozen at the moment the round finished, instead of
+     * continuing to tick down against the wall clock on a later call.
+     *
+     * @covers \mod_playerwords\external\submit_guess::execute
+     * @return void
+     */
+    public function test_timeleft_is_frozen_after_round_finishes(): void {
+        $instance = $this->make_instance(['timer_minutes' => 2]);
+        $this->setUser($this->student);
+        $this->start_round_for_student($instance);
+
+        $first = $this->call_submit_guess($instance->cmid, 'boca');
+        $this->assertTrue($first['data']['finished']);
+
+        sleep(1);
+        $second = $this->call_submit_guess($instance->cmid, 'boca');
+
+        $this->assertSame($first['data']['timeleft'], $second['data']['timeleft']);
+    }
 }

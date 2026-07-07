@@ -339,4 +339,139 @@ final class round_presenter_test extends \advanced_testcase {
         $this->assertFalse($after['cooldownactive']);
         $this->assertSame(0, $after['cooldownuntil']);
     }
+
+    /**
+     * Inserts a block_playerhud_items record, skipping the test if the block is absent.
+     *
+     * @param string $name Item display name.
+     * @return int Item id.
+     */
+    private function make_hud_item(string $name): int {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('block_playerhud_items')) {
+            $this->markTestSkipped('block_playerhud not installed.');
+        }
+        return $DB->insert_record('block_playerhud_items', (object)[
+            'blockinstanceid' => 0,
+            'name'            => $name,
+            'xp'              => 0,
+            'image'           => '',
+            'description'     => '',
+            'enabled'         => 1,
+            'secret'          => 0,
+            'timecreated'     => time(),
+            'timemodified'    => time(),
+        ]);
+    }
+
+    /**
+     * The lobby shows a PlayerHUD cost hint when a valid item is configured and the
+     * round has not started yet.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_lobby_context
+     * @return void
+     */
+    public function test_build_lobby_context_shows_hud_cost_when_item_configured(): void {
+        $itemid = $this->make_hud_item('Chave de Ouro');
+        $instance = $this->make_instance(['hud_round_cost_item' => $itemid, 'hud_round_cost_qty' => 2]);
+        $state = $this->make_state();
+
+        $context = round_presenter::build_lobby_context($instance, $state);
+
+        $this->assertTrue($context['hudstartcost']);
+        $this->assertStringContainsString('Chave de Ouro', $context['hudstartcostlabel']);
+    }
+
+    /**
+     * The lobby hides the PlayerHUD cost hint once the round has already started —
+     * the cost was already charged, so it should not keep being advertised.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_lobby_context
+     * @return void
+     */
+    public function test_build_lobby_context_no_hud_cost_once_round_started(): void {
+        $itemid = $this->make_hud_item('Chave de Ouro');
+        $instance = $this->make_instance(['hud_round_cost_item' => $itemid]);
+        $state = $this->make_state(['roundstarted' => true]);
+
+        $context = round_presenter::build_lobby_context($instance, $state);
+
+        $this->assertFalse($context['hudstartcost']);
+        $this->assertSame('', $context['hudstartcostlabel']);
+    }
+
+    /**
+     * The lobby's timer info text is populated only when the activity timer is enabled.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_lobby_context
+     * @return void
+     */
+    public function test_build_lobby_context_timer_info_only_when_enabled(): void {
+        $withtimer = $this->make_instance(['timer_minutes' => 3]);
+        $withouttimer = $this->make_instance();
+        $state = $this->make_state();
+
+        $enabledctx = round_presenter::build_lobby_context($withtimer, $state);
+        $disabledctx = round_presenter::build_lobby_context($withouttimer, $state);
+
+        $this->assertTrue($enabledctx['timerenabled']);
+        $this->assertNotSame('', $enabledctx['lobbytimerinfo']);
+        $this->assertFalse($disabledctx['timerenabled']);
+        $this->assertSame('', $disabledctx['lobbytimerinfo']);
+    }
+
+    /**
+     * The round panel's hint button label includes the PlayerHUD cost while the hint
+     * has not been revealed yet.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_panel_context
+     * @return void
+     */
+    public function test_build_round_panel_context_hint_button_shows_hud_cost(): void {
+        $itemid = $this->make_hud_item('Lupa');
+        $instance = $this->make_instance(['hud_hint_cost_item' => $itemid, 'hud_hint_cost_qty' => 1]);
+        $cm = (object)['id' => 5];
+        $user = $this->getDataGenerator()->create_user();
+        $state = $this->make_state(['hint' => 'dica', 'hintrevealed' => false]);
+
+        $context = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
+
+        $this->assertStringContainsString('Lupa', $context['hintbuttonlabel']);
+    }
+
+    /**
+     * The round panel's hint button label omits the PlayerHUD cost once the hint has
+     * already been revealed — the cost is never charged twice.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_panel_context
+     * @return void
+     */
+    public function test_build_round_panel_context_hint_button_omits_cost_once_revealed(): void {
+        $itemid = $this->make_hud_item('Lupa');
+        $instance = $this->make_instance(['hud_hint_cost_item' => $itemid]);
+        $cm = (object)['id' => 5];
+        $user = $this->getDataGenerator()->create_user();
+        $state = $this->make_state(['hint' => 'dica', 'hintrevealed' => true]);
+
+        $context = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
+
+        $this->assertStringNotContainsString('Lupa', $context['hintbuttonlabel']);
+    }
+
+    /**
+     * timeleft stays 0 while the round has not started yet, even with a timer configured.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_panel_context
+     * @return void
+     */
+    public function test_build_round_panel_context_timeleft_zero_before_round_started(): void {
+        $instance = $this->make_instance(['timer_minutes' => 2]);
+        $cm = (object)['id' => 5];
+        $user = $this->getDataGenerator()->create_user();
+        $state = $this->make_state(['roundstarted' => false]);
+
+        $context = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
+
+        $this->assertSame(0, $context['timeleft']);
+    }
 }

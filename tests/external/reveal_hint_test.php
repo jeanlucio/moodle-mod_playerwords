@@ -151,4 +151,38 @@ final class reveal_hint_test extends \advanced_testcase {
         $this->assertFalse($result['data']['success']);
         $this->assertSame('', $result['data']['hintvalue']);
     }
+
+    /**
+     * Tests that a user without the view capability in the module context is rejected.
+     *
+     * @covers \mod_playerwords\external\reveal_hint::execute
+     * @return void
+     */
+    public function test_requires_view_capability(): void {
+        $instance = $this->make_instance();
+        $outsider = $this->getDataGenerator()->create_user();
+        $this->setUser($outsider);
+
+        $result = $this->call_reveal_hint($instance->cmid);
+
+        $this->assertTrue($result['error']);
+    }
+
+    /**
+     * Tests that an insufficient PlayerHUD item balance blocks revealing the hint.
+     *
+     * @covers \mod_playerwords\external\reveal_hint::execute
+     * @return void
+     */
+    public function test_hud_insufficient_item_blocks_reveal(): void {
+        $instance = $this->make_instance(['hud_hint_cost_item' => 999, 'hud_hint_cost_qty' => 1]);
+        $this->setUser($this->student);
+
+        $result = $this->call_reveal_hint($instance->cmid);
+
+        $this->assertFalse($result['error']);
+        $this->assertFalse($result['data']['success']);
+        $this->assertSame('', $result['data']['hintvalue']);
+        $this->assertNotEmpty($result['data']['notification']);
+    }
 }

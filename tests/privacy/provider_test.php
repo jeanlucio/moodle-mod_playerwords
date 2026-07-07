@@ -29,6 +29,7 @@ use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\userlist;
+use core_privacy\local\request\writer;
 
 /**
  * Tests for the Privacy API provider.
@@ -223,5 +224,151 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
 
         $this->assertSame(0, $DB->count_records('playerwords_attempts', ['userid' => $user1->id]));
         $this->assertSame(1, $DB->count_records('playerwords_attempts', ['userid' => $user2->id]));
+    }
+
+    /**
+     * Tests that export_user_data writes both attempts and added-word data for the user.
+     *
+     * @covers \mod_playerwords\privacy\provider::export_user_data
+     * @return void
+     */
+    public function test_export_user_data(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $cm     = $this->make_cm($course);
+        $user   = $this->getDataGenerator()->create_user();
+        $wordid = $this->make_word($user->id, (int)$cm->id);
+        $this->make_attempt($user->id, (int)$cm->id, $wordid);
+
+        $context     = \context_module::instance($cm->cmid);
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', [$context->id]);
+        provider::export_user_data($contextlist);
+
+        $attemptsdata = writer::with_context($context)->get_data([
+            get_string('pluginname', 'mod_playerwords'),
+            get_string('privacy:attempts', 'mod_playerwords'),
+        ]);
+        $this->assertNotEmpty($attemptsdata->attempts);
+        $this->assertSame($wordid, (int)$attemptsdata->attempts[0]['wordid']);
+
+        $wordsdata = writer::with_context($context)->get_data([
+            get_string('pluginname', 'mod_playerwords'),
+            get_string('privacy:words', 'mod_playerwords'),
+        ]);
+        $this->assertNotEmpty($wordsdata->words);
+        $this->assertSame('gato', $wordsdata->words[0]['word']);
+    }
+
+    /**
+     * Tests that export_user_data is a no-op for an empty approved contextlist.
+     *
+     * @covers \mod_playerwords\privacy\provider::export_user_data
+     * @return void
+     */
+    public function test_export_user_data_empty_contextlist_is_noop(): void {
+        $user = $this->getDataGenerator()->create_user();
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', []);
+
+        provider::export_user_data($contextlist);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Tests that delete_data_for_user clears attempts and anonymises word authorship
+     * across every context in the approved list, not just the first one.
+     *
+     * @covers \mod_playerwords\privacy\provider::delete_data_for_user
+     * @return void
+     */
+    public function test_delete_data_for_user_across_multiple_contexts(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $cm1    = $this->make_cm($course);
+        $cm2    = $this->make_cm($course);
+        $user   = $this->getDataGenerator()->create_user();
+
+        $wordid1 = $this->make_word($user->id, (int)$cm1->id);
+        $this->make_attempt($user->id, (int)$cm1->id, $wordid1);
+        $wordid2 = $this->make_word($user->id, (int)$cm2->id);
+        $this->make_attempt($user->id, (int)$cm2->id, $wordid2);
+
+        $context1    = \context_module::instance($cm1->cmid);
+        $context2    = \context_module::instance($cm2->cmid);
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', [$context1->id, $context2->id]);
+
+        provider::delete_data_for_user($contextlist);
+
+        $this->assertSame(0, $DB->count_records('playerwords_attempts', ['userid' => $user->id]));
+        $this->assertSame('0', (string)$DB->get_field('playerwords_words', 'addedby', ['id' => $wordid1]));
+        $this->assertSame('0', (string)$DB->get_field('playerwords_words', 'addedby', ['id' => $wordid2]));
+    }
+
+    /**
+     * Tests that delete_data_for_all_users_in_context clears every user's attempts and
+     * anonymises every word author within that context only, leaving another activity's
+     * data untouched.
+     *
+     * @covers \mod_playerwords\privacy\provider::delete_data_for_all_users_in_context
+     * @return void
+     */
+    public function test_delete_data_for_all_users_in_context(): void {
+        global $DB;
+
+        $course   = $this->getDataGenerator()->create_course();
+        $cmtarget = $this->make_cm($course);
+        $cmother  = $this->make_cm($course);
+        $user1    = $this->getDataGenerator()->create_user();
+        $user2    = $this->getDataGenerator()->create_user();
+
+        $wordid = $this->make_word($user1->id, (int)$cmtarget->id);
+        $this->make_attempt($user1->id, (int)$cmtarget->id, $wordid);
+        $this->make_attempt($user2->id, (int)$cmtarget->id, $wordid);
+
+        $otherwordid = $this->make_word($user1->id, (int)$cmother->id);
+        $this->make_attempt($user1->id, (int)$cmother->id, $otherwordid);
+
+        provider::delete_data_for_all_users_in_context(\context_module::instance($cmtarget->cmid));
+
+        $this->assertSame(0, $DB->count_records('playerwords_attempts', ['playerwordsid' => (int)$cmtarget->id]));
+        $this->assertSame('0', (string)$DB->get_field('playerwords_words', 'addedby', ['id' => $wordid]));
+
+        $this->assertSame(1, $DB->count_records('playerwords_attempts', ['playerwordsid' => (int)$cmother->id]));
+        $this->assertEquals($user1->id, $DB->get_field('playerwords_words', 'addedby', ['id' => $otherwordid]));
+    }
+
+    /**
+     * Tests that delete_data_for_all_users_in_context is a silent no-op for a
+     * non-module context.
+     *
+     * @covers \mod_playerwords\privacy\provider::delete_data_for_all_users_in_context
+     * @return void
+     */
+    public function test_delete_data_for_all_users_in_context_ignores_non_module_context(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $cm     = $this->make_cm($course);
+        $user   = $this->getDataGenerator()->create_user();
+        $wordid = $this->make_word($user->id, (int)$cm->id);
+        $this->make_attempt($user->id, (int)$cm->id, $wordid);
+
+        provider::delete_data_for_all_users_in_context(\context_system::instance());
+
+        $this->assertSame(1, $DB->count_records('playerwords_attempts', ['playerwordsid' => (int)$cm->id]));
+    }
+
+    /**
+     * Tests that get_users_in_context is a silent no-op for a non-module context.
+     *
+     * @covers \mod_playerwords\privacy\provider::get_users_in_context
+     * @return void
+     */
+    public function test_get_users_in_context_ignores_non_module_context(): void {
+        $userlist = new userlist(\context_system::instance(), 'mod_playerwords');
+
+        provider::get_users_in_context($userlist);
+
+        $this->assertSame([], $userlist->get_userids());
     }
 }

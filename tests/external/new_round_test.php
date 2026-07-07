@@ -148,4 +148,20 @@ final class new_round_test extends \advanced_testcase {
         $this->assertFalse($result['data']['hastargetword']);
         $this->assertNotEmpty($result['data']['notification']);
     }
+
+    /**
+     * Tests that a user without the view capability in the module context is rejected.
+     *
+     * @covers \mod_playerwords\external\new_round::execute
+     * @return void
+     */
+    public function test_requires_view_capability(): void {
+        $instance = $this->make_instance();
+        $outsider = $this->getDataGenerator()->create_user();
+        $this->setUser($outsider);
+
+        $result = $this->call_new_round($instance->cmid);
+
+        $this->assertTrue($result['error']);
+    }
 }

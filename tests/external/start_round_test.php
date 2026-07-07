@@ -133,4 +133,40 @@ final class start_round_test extends \advanced_testcase {
         $this->assertFalse($second['error']);
         $this->assertFalse($second['data']['success']);
     }
+
+    /**
+     * Tests that a user without the view capability in the module context is rejected.
+     *
+     * @covers \mod_playerwords\external\start_round::execute
+     * @return void
+     */
+    public function test_requires_view_capability(): void {
+        $instance = $this->make_instance();
+        $outsider = $this->getDataGenerator()->create_user();
+        $this->setUser($outsider);
+
+        $result = $this->call_start_round($instance->cmid);
+
+        $this->assertTrue($result['error']);
+    }
+
+    /**
+     * Tests that an insufficient PlayerHUD item balance blocks starting the round.
+     *
+     * @covers \mod_playerwords\external\start_round::execute
+     * @return void
+     */
+    public function test_hud_insufficient_item_blocks_start(): void {
+        $instance = $this->make_instance(['hud_round_cost_item' => 999, 'hud_round_cost_qty' => 1]);
+        $this->setUser($this->student);
+
+        $result = $this->call_start_round($instance->cmid);
+
+        $this->assertFalse($result['error']);
+        $this->assertFalse($result['data']['success']);
+        $this->assertNotEmpty($result['data']['notification']);
+
+        $state = round_service::load_state($instance->cmid, $this->student->id);
+        $this->assertFalse($state['roundstarted']);
+    }
 }
