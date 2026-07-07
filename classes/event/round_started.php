@@ -25,7 +25,7 @@
 namespace mod_playerwords\event;
 
 /**
- * Fired by start_new_round when a word is successfully picked and the session is reset.
+ * Fired by round_service::ensure_round_state() when a fresh word is picked for a round.
  *
  * Expected data:
  *   objectid  — id of the playerwords_words record being played

@@ -25,7 +25,8 @@
 namespace mod_playerwords\event;
 
 /**
- * Fired by submit_guess when a round ends and a playerwords_attempts record is persisted.
+ * Fired by round_service::finish_round() whenever a round ends — by a winning or losing
+ * guess, a forfeit, or a timeout — and a playerwords_attempts record is persisted.
  *
  * Expected data:
  *   objectid  — id of the playerwords_attempts record just created
