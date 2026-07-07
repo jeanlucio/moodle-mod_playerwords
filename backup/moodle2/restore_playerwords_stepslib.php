@@ -48,7 +48,14 @@ class restore_playerwords_activity_structure_step extends restore_activity_struc
             );
         }
 
-        return $paths;
+        // Wrap with the generic '/activity' path so the base class's process_activity()
+        // runs: it registers the old-to-new context mapping and the old activity id.
+        // Without this, restore_calendarevents_structure_step::after_execute() (a generic
+        // step that runs for every activity) fails with unknown_context_mapping, and
+        // course_format\local\cmactions::duplicate() never reaches its post-restore
+        // cleanup (renaming to "(copy)", moving to the target section, rebuilding the
+        // course cache) since the exception aborts the restore plan first.
+        return $this->prepare_activity_structure($paths);
     }
 
     /**
@@ -131,18 +138,16 @@ class restore_playerwords_activity_structure_step extends restore_activity_struc
     }
 
     /**
-     * Re-calculates grades after all records have been restored.
+     * Restores files embedded in the activity's intro editor field.
+     *
+     * The grade item itself is not touched here: restore_activity_grades_structure_step
+     * (added generically by restore_activity_task for every gradable module) already
+     * restores it. Calling playerwords_grade_item_update() again here raced against that
+     * generic step and left two grade_items for the same instance.
      *
      * @return void
      */
     protected function after_execute(): void {
-        global $CFG, $DB;
-        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
-
-        $instanceid = $this->get_task()->get_activityid();
-        $instance = $DB->get_record('playerwords', ['id' => $instanceid]);
-        if ($instance) {
-            playerwords_update_grades($instance);
-        }
+        $this->add_related_files('mod_playerwords', 'intro', null);
     }
 }

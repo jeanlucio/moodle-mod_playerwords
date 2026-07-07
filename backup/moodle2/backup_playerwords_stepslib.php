@@ -106,6 +106,9 @@ class backup_playerwords_activity_structure_step extends backup_activity_structu
             );
         }
 
+        // Annotate files embedded in the intro editor field, if any.
+        $playerwords->annotate_files('mod_playerwords', 'intro', null);
+
         // Annotate IDs that reference other tables so they are remapped on restore.
         $playerwords->annotate_ids('glossary', 'glossaryid');
 
