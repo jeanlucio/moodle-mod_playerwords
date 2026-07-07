@@ -36,7 +36,6 @@ $string['aigeneratetopic'] = 'Tema';
 $string['aiusage'] = 'Geração de palavras - {$a}';
 $string['approvedstatus'] = 'Aprovada';
 $string['attemptslabel'] = 'Tentativas';
-$string['backtocourse'] = 'Voltar ao curso';
 $string['backtogamebutton'] = 'Voltar ao jogo';
 $string['bulkapprovebutton'] = 'Aprovar selecionadas';
 $string['bulkapprovebuttontitle'] = 'Aprovar palavras selecionadas';
