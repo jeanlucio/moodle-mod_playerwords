@@ -165,6 +165,7 @@ $string['ranking_position'] = '#';
 $string['ranking_title'] = 'Ranking';
 $string['ranking_viewfull'] = 'Full ranking';
 $string['recentwordslabel'] = 'Word pool';
+$string['resetplayerwordsattempts'] = 'Delete PlayerWords round attempts';
 $string['revealconceptlabel'] = 'Full term:';
 $string['revealdefinitionlabel'] = 'Definition:';
 $string['revealwordlabel'] = 'The word was:';

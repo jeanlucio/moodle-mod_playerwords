@@ -165,6 +165,7 @@ $string['ranking_position'] = '#';
 $string['ranking_title'] = 'Ranking';
 $string['ranking_viewfull'] = 'Ranking completo';
 $string['recentwordslabel'] = 'Banco de palavras';
+$string['resetplayerwordsattempts'] = 'Excluir tentativas de rodada do PlayerWords';
 $string['revealconceptlabel'] = 'Termo completo:';
 $string['revealdefinitionlabel'] = 'Definição:';
 $string['revealwordlabel'] = 'A palavra era:';

@@ -184,6 +184,7 @@ class words_repository {
             'source' => 'manual',
             'approved' => 1,
             'timecreated' => time(),
+            'timemodified' => time(),
             'addedby' => $userid,
         ];
         $DB->insert_record('playerwords_words', $record);
@@ -255,10 +256,11 @@ class words_repository {
                 if (isset($existingmap[$key])) {
                     if ($existingmap[$key] !== true) {
                         $DB->update_record('playerwords_words', (object)[
-                            'id'         => $existingmap[$key],
-                            'hint'       => $hint,
-                            'concept'    => $concept,
-                            'glossaryid' => (int)$entry->glossaryid,
+                            'id'           => $existingmap[$key],
+                            'hint'         => $hint,
+                            'concept'      => $concept,
+                            'glossaryid'   => (int)$entry->glossaryid,
+                            'timemodified' => time(),
                         ]);
                         $existingmap[$key] = true;
                     }
@@ -272,6 +274,7 @@ class words_repository {
                         'glossaryid'    => (int)$entry->glossaryid,
                         'approved'      => 1,
                         'timecreated'   => time(),
+                        'timemodified'  => time(),
                         'addedby'       => 0,
                     ]);
                     $existingmap[$key] = true;
@@ -333,10 +336,11 @@ class words_repository {
             return false;
         }
         return $DB->update_record('playerwords_words', (object)[
-            'id'      => $wordid,
-            'word'    => trim($word),
-            'concept' => trim($word),
-            'hint'    => trim($hint),
+            'id'           => $wordid,
+            'word'         => trim($word),
+            'concept'      => trim($word),
+            'hint'         => trim($hint),
+            'timemodified' => time(),
         ]);
     }
 
@@ -393,6 +397,7 @@ class words_repository {
             'source' => 'ai',
             'approved' => 0,
             'timecreated' => time(),
+            'timemodified' => time(),
             'addedby' => $userid,
         ];
         $DB->insert_record('playerwords_words', $record);
@@ -412,13 +417,9 @@ class words_repository {
         }
         [$insql, $inparams] = $DB->get_in_or_equal($wordids, SQL_PARAMS_NAMED, 'wid');
         $inparams['instanceid'] = $instanceid;
-        $DB->set_field_select(
-            'playerwords_words',
-            'approved',
-            1,
-            "id $insql AND playerwordsid = :instanceid",
-            $inparams
-        );
+        $condition = "id $insql AND playerwordsid = :instanceid";
+        $DB->set_field_select('playerwords_words', 'approved', 1, $condition, $inparams);
+        $DB->set_field_select('playerwords_words', 'timemodified', time(), $condition, $inparams);
     }
 
     /**

@@ -373,3 +373,59 @@ function playerwords_get_completion_active_rule_descriptions(stdClass|cm_info $c
 
     return $descriptions;
 }
+
+/**
+ * Adds the PlayerWords section to the course reset form.
+ *
+ * @param MoodleQuickForm $mform The course reset form.
+ * @return void
+ */
+function playerwords_reset_course_form_definition(MoodleQuickForm $mform): void {
+    $mform->addElement('header', 'playerwordsheader', get_string('modulenameplural', 'mod_playerwords'));
+    $mform->addElement('advcheckbox', 'reset_playerwords_attempts', get_string('resetplayerwordsattempts', 'mod_playerwords'));
+}
+
+/**
+ * Returns the default values for the PlayerWords course reset form.
+ *
+ * @param stdClass $course The course being reset.
+ * @return array
+ */
+function playerwords_reset_course_form_defaults(stdClass $course): array {
+    return ['reset_playerwords_attempts' => 1];
+}
+
+/**
+ * Removes student round attempts and recalculates grades when a course is reset.
+ *
+ * @param stdClass $data Reset form data, must contain courseid.
+ * @return array Status messages for the course reset report.
+ */
+function playerwords_reset_userdata(stdClass $data): array {
+    global $DB;
+
+    $status = [];
+    if (empty($data->reset_playerwords_attempts)) {
+        return $status;
+    }
+
+    $instances = $DB->get_records('playerwords', ['course' => $data->courseid]);
+    if (empty($instances)) {
+        return $status;
+    }
+
+    [$insql, $inparams] = $DB->get_in_or_equal(array_keys($instances), SQL_PARAMS_NAMED, 'pid');
+    $DB->delete_records_select('playerwords_attempts', "playerwordsid $insql", $inparams);
+
+    foreach ($instances as $instance) {
+        playerwords_grade_item_update($instance, 'reset');
+    }
+
+    $status[] = [
+        'component' => get_string('modulenameplural', 'mod_playerwords'),
+        'item'      => get_string('resetplayerwordsattempts', 'mod_playerwords'),
+        'error'     => false,
+    ];
+
+    return $status;
+}

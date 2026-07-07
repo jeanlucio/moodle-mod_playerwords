@@ -12,7 +12,7 @@
         <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Activity description"/>
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="sources" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
-            COMMENT="Bitmask for enabled sources: manual, glossary, ai"/>
+            COMMENT="Bitmask for enabled sources: 1=manual, 2=glossary. AI words are not gated by this bitmask; they are always saved as pending regardless of its value"/>
 <FIELD NAME="glossaryid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
             COMMENT="Glossary to sync words from; 0 means all glossaries in the course"/>
         <FIELD NAME="min_length" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="4" SEQUENCE="false"
@@ -72,6 +72,7 @@
             COMMENT="ID of the glossary this word was imported from; 0 for manual/ai words"/>
         <FIELD NAME="approved" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="addedby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>

@@ -15,18 +15,34 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Version details.
+ * Upgrade steps for mod_playerwords.
  *
  * @package mod_playerwords
  * @copyright  2026 Jean Lúcio
  * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Runs the mod_playerwords upgrade steps.
+ *
+ * @param int $oldversion The version being upgraded from.
+ * @return bool True on success.
+ */
+function xmldb_playerwords_upgrade(int $oldversion): bool {
+    global $DB;
 
-$plugin->component = 'mod_playerwords';
-$plugin->version   = 2026070701;
-$plugin->requires  = 2024100700; // Moodle 4.5+.
-$plugin->supported = [405, 502];
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = 'v0.14.1';
+    $dbman = $DB->get_manager();
+
+    if ($oldversion < 2026070701) {
+        $table = new xmldb_table('playerwords_words');
+        $field = new xmldb_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timecreated');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026070701, 'playerwords');
+    }
+
+    return true;
+}
