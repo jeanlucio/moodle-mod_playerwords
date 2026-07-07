@@ -78,8 +78,5 @@ $PAGE->requires->js_call_amd('mod_playerwords/game', 'init', [
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($instance->name, true, ['context' => $context]));
-if (!empty($pagedata['notification'])) {
-    echo $OUTPUT->notification($pagedata['notification'], $pagedata['notificationtype']);
-}
 echo $OUTPUT->render_from_template('mod_playerwords/game', $pagedata['templatecontext']);
 echo $OUTPUT->footer();

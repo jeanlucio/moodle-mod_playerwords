@@ -1,0 +1,103 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_playerwords/round_play
+
+    Guess input, forfeit/timeout triggers and the on-screen keyboard for an active round.
+
+    Example context (json):
+    {
+        "guesslabel": "Your guess",
+        "guessplaceholder": "Type a word",
+        "guessmaxlength": 7,
+        "submitguess": "Submit guess",
+        "forfeitlabel": "Give up",
+        "forfeitconfirm": "Are you sure you want to give up?",
+        "keyboardlabel": "On-screen keyboard",
+        "keyboardenterlabel": "Enter",
+        "keyboardbackspacelabel": "Backspace"
+    }
+}}
+<div id="playerwords-round-play">
+    <form id="playerwords-guess-form" class="mod-playerwords-form">
+        <label for="playerwords-guess" class="form-label">{{guesslabel}}</label>
+        <input
+            type="text"
+            id="playerwords-guess"
+            name="guess"
+            maxlength="{{guessmaxlength}}"
+            class="form-control"
+            placeholder="{{guessplaceholder}}"
+            inputmode="none"
+            autocomplete="off"
+            required
+        >
+    </form>
+    <div class="d-flex gap-2 mt-2 mod-playerwords-actions">
+        <button type="submit" form="playerwords-guess-form" class="btn btn-primary flex-grow-1">{{submitguess}}</button>
+        <button type="button"
+                id="playerwords-forfeit-button"
+                class="btn btn-outline-danger flex-grow-1"
+                data-title="{{forfeitlabel}}"
+                data-confirm="{{forfeitconfirm}}">{{forfeitlabel}}</button>
+    </div>
+    <div id="playerwords-keyboard" class="mod-playerwords-keyboard" role="group" aria-label="{{keyboardlabel}}">
+        <div class="mod-playerwords-keyboard-row">
+            <button type="button" class="pw-key" data-key="Q" tabindex="-1">Q</button>
+            <button type="button" class="pw-key" data-key="W" tabindex="-1">W</button>
+            <button type="button" class="pw-key" data-key="E" tabindex="-1">E</button>
+            <button type="button" class="pw-key" data-key="R" tabindex="-1">R</button>
+            <button type="button" class="pw-key" data-key="T" tabindex="-1">T</button>
+            <button type="button" class="pw-key" data-key="Y" tabindex="-1">Y</button>
+            <button type="button" class="pw-key" data-key="U" tabindex="-1">U</button>
+            <button type="button" class="pw-key" data-key="I" tabindex="-1">I</button>
+            <button type="button" class="pw-key" data-key="O" tabindex="-1">O</button>
+            <button type="button" class="pw-key" data-key="P" tabindex="-1">P</button>
+        </div>
+        <div class="mod-playerwords-keyboard-row">
+            <button type="button" class="pw-key" data-key="A" tabindex="-1">A</button>
+            <button type="button" class="pw-key" data-key="S" tabindex="-1">S</button>
+            <button type="button" class="pw-key" data-key="D" tabindex="-1">D</button>
+            <button type="button" class="pw-key" data-key="F" tabindex="-1">F</button>
+            <button type="button" class="pw-key" data-key="G" tabindex="-1">G</button>
+            <button type="button" class="pw-key" data-key="H" tabindex="-1">H</button>
+            <button type="button" class="pw-key" data-key="J" tabindex="-1">J</button>
+            <button type="button" class="pw-key" data-key="K" tabindex="-1">K</button>
+            <button type="button" class="pw-key" data-key="L" tabindex="-1">L</button>
+            <button type="button" class="pw-key" data-key="Ç" tabindex="-1">Ç</button>
+        </div>
+        <div class="mod-playerwords-keyboard-row">
+            <button type="button"
+                    class="pw-key pw-key-wide"
+                    data-key="ENTER"
+                    tabindex="-1"
+                    aria-label="{{keyboardenterlabel}}">&#x21b5;</button>
+            <button type="button" class="pw-key" data-key="Z" tabindex="-1">Z</button>
+            <button type="button" class="pw-key" data-key="X" tabindex="-1">X</button>
+            <button type="button" class="pw-key" data-key="C" tabindex="-1">C</button>
+            <button type="button" class="pw-key" data-key="V" tabindex="-1">V</button>
+            <button type="button" class="pw-key" data-key="B" tabindex="-1">B</button>
+            <button type="button" class="pw-key" data-key="N" tabindex="-1">N</button>
+            <button type="button" class="pw-key" data-key="M" tabindex="-1">M</button>
+            <button type="button"
+                    class="pw-key pw-key-wide"
+                    data-key="BACKSPACE"
+                    tabindex="-1"
+                    aria-label="{{keyboardbackspacelabel}}">&#x232b;</button>
+        </div>
+    </div>
+</div>

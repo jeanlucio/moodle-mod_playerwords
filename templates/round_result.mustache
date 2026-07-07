@@ -1,0 +1,120 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_playerwords/round_result
+
+    Post-round panel: feedback message, word/definition reveal, cooldown countdown,
+    inline ranking and the new-round action.
+
+    Example context (json):
+    {
+        "feedbackmessage": "Impressive!",
+        "showreveal": true,
+        "revealwordlabel": "The word was:",
+        "revealword": "Militar",
+        "showrevealconcept": true,
+        "revealconcept": "Ditadura Militar",
+        "showdefinition": true,
+        "revealdefinition": "Regime autoritário que durou de 1964 a 1985.",
+        "cooldowntext": "23h 59m 45s",
+        "cooldowncountdownlabel": "Next round in",
+        "cooldownactive": false,
+        "newroundlabel": "Start a new round",
+        "showranking": true,
+        "rankingtitle": "Ranking",
+        "rankingemptylabel": "No rounds completed yet.",
+        "rankingempty": false,
+        "rankingpositionlabel": "#",
+        "rankingplayerlabel": "Player",
+        "rankingpointslabel": "Points",
+        "rankingrows": [
+            {"position": 1, "fullname": "Ana Silva", "totalscore": 300, "iscurrentuser": false},
+            {"position": 2, "fullname": "You", "totalscore": 200, "iscurrentuser": true}
+        ],
+        "rankinghasoutsider": false,
+        "rankingoutsiderrow": {"position": 0, "fullname": "", "totalscore": 0, "iscurrentuser": false}
+    }
+}}
+<div id="playerwords-round-result" tabindex="-1">
+    {{#feedbackmessage}}
+        <p class="mod-playerwords-feedback fw-bold mt-3">{{feedbackmessage}}</p>
+    {{/feedbackmessage}}
+    {{#showreveal}}
+        <div class="mod-playerwords-reveal alert alert-secondary mt-3">
+            <p class="mb-1"><strong>{{revealwordlabel}}</strong> {{revealword}}</p>
+            {{#showrevealconcept}}
+                <p class="mb-0">
+                    <strong>{{revealconcept}}</strong>{{#showdefinition}}: {{revealdefinition}}{{/showdefinition}}
+                </p>
+            {{/showrevealconcept}}
+            {{^showrevealconcept}}
+                {{#showdefinition}}
+                    <p class="mb-0 mt-1">{{revealdefinition}}</p>
+                {{/showdefinition}}
+            {{/showrevealconcept}}
+        </div>
+    {{/showreveal}}
+    {{#cooldowntext}}
+        <p class="text-muted mt-2">
+            {{cooldowncountdownlabel}}
+            <strong>
+                <span id="playerwords-cooldown-countdown">{{cooldowntext}}</span>
+            </strong>
+        </p>
+    {{/cooldowntext}}
+    {{#showranking}}
+        <div class="mod-playerwords-ranking-inline mt-3">
+            <h6 class="mb-2">{{rankingtitle}}</h6>
+            {{#rankingempty}}
+                <p class="text-muted small">{{rankingemptylabel}}</p>
+            {{/rankingempty}}
+            {{^rankingempty}}
+                <table class="table table-sm mod-playerwords-ranking-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">{{rankingpositionlabel}}</th>
+                            <th scope="col">{{rankingplayerlabel}}</th>
+                            <th scope="col" class="text-end">{{rankingpointslabel}}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#rankingrows}}
+                            <tr class="{{#iscurrentuser}}pw-ranking-you{{/iscurrentuser}}">
+                                <td>{{position}}</td>
+                                <td>{{fullname}}</td>
+                                <td class="text-end">{{totalscore}}</td>
+                            </tr>
+                        {{/rankingrows}}
+                        {{#rankinghasoutsider}}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted pw-ranking-sep">&hellip;</td>
+                            </tr>
+                            <tr class="pw-ranking-you">
+                                <td>{{rankingoutsiderrow.position}}</td>
+                                <td>{{rankingoutsiderrow.fullname}}</td>
+                                <td class="text-end">{{rankingoutsiderrow.totalscore}}</td>
+                            </tr>
+                        {{/rankinghasoutsider}}
+                    </tbody>
+                </table>
+            {{/rankingempty}}
+        </div>
+    {{/showranking}}
+    {{^cooldownactive}}
+    <button type="button" id="playerwords-new-round-button" class="btn btn-secondary mt-2">{{newroundlabel}}</button>
+    {{/cooldownactive}}
+</div>
