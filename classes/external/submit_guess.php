@@ -30,13 +30,14 @@ use core_external\external_function_parameters;
 use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 use core_external\external_value;
-use core_text;
-use mod_playerwords\local\gameplay_service;
-use mod_playerwords\local\word_normalizer;
-use mod_playerwords\local\words_repository;
+use mod_playerwords\local\round_presenter;
+use mod_playerwords\local\round_service;
 
 /**
  * Validates a player guess and returns per-letter Wordle-style feedback.
+ *
+ * All state mutation is delegated to round_service so this stays the single
+ * implementation shared with the classic page render in view_page_service.
  */
 class submit_guess extends external_api {
     /**
@@ -59,8 +60,7 @@ class submit_guess extends external_api {
      * @return array
      */
     public static function execute(int $cmid, string $guess): array {
-        global $CFG, $DB, $SESSION, $USER;
-        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+        global $DB, $USER;
 
         [
             'cmid'  => $cmid,
@@ -77,141 +77,46 @@ class submit_guess extends external_api {
 
         $instance = $DB->get_record('playerwords', ['id' => $cm->instance], '*', MUST_EXIST);
         $userid = (int)$USER->id;
-        $sessionkey = gameplay_service::build_session_key($cmid, $userid);
 
-        if (!isset($SESSION->mod_playerwords[$sessionkey])) {
-            return self::build_error_result(
-                get_string('nogamewords', 'mod_playerwords'),
-                'warning',
-                0,
-                false
-            );
-        }
+        $state = round_service::load_state($cmid, $userid);
+        [$state, $targetword, $roundwordid] = round_service::ensure_round_state($state, $instance, $cmid, $userid);
 
-        $state = $SESSION->mod_playerwords[$sessionkey];
-
-        if (!empty($state['finished']) || (int)$state['attemptsused'] >= (int)$instance->max_attempts) {
-            return self::build_error_result(
-                get_string('roundfinished', 'mod_playerwords'),
-                'warning',
-                (int)$state['attemptsused'],
-                !empty($state['finished'])
-            );
-        }
-
-        $wordrecord = words_repository::get_approved_word_by_id(
-            (int)$state['wordid'],
-            (int)$instance->id
+        [$state, $feedback, $notification, $notificationtype] = round_service::submit_guess(
+            $state,
+            $instance,
+            $cmid,
+            $userid,
+            $roundwordid,
+            $targetword,
+            $guess
         );
-        if (!$wordrecord) {
-            return self::build_error_result(
-                get_string('nogamewords', 'mod_playerwords'),
-                'warning',
-                0,
-                false
-            );
-        }
 
-        $targetword = word_normalizer::normalize($wordrecord->word);
-        $normalizedguess = word_normalizer::normalize($guess);
-        $targetlength = core_text::strlen($targetword);
-
-        if (!preg_match('/^[\p{L}]+$/u', $normalizedguess)) {
-            return self::build_error_result(
-                get_string('error_invalidchars', 'mod_playerwords'),
-                'warning',
-                (int)$state['attemptsused'],
-                false
-            );
-        }
-
-        if (core_text::strlen($normalizedguess) !== $targetlength) {
-            return self::build_error_result(
-                get_string('guesslengthmismatch', 'mod_playerwords', $targetlength),
-                'warning',
-                (int)$state['attemptsused'],
-                false
-            );
-        }
-
-        $state['attemptsused']++;
-        $feedback = gameplay_service::build_letter_feedback($normalizedguess, $targetword);
+        round_service::save_state($cmid, $userid, $state);
 
         $feedbackresult = [];
-        foreach (preg_split('//u', $normalizedguess, -1, PREG_SPLIT_NO_EMPTY) as $index => $letter) {
-            $feedbackresult[] = [
-                'letter' => core_text::strtoupper($letter),
-                'state'  => $feedback[$index] ?? 'absent',
-            ];
+        if ($feedback !== null) {
+            $lastrow = end($state['rows']);
+            $feedbackresult = round_presenter::build_row_letters($lastrow['word'], $lastrow['feedback']);
         }
-
-        $state['rows'][] = ['word' => $normalizedguess, 'feedback' => $feedback];
-
-        $iscompleted = ($normalizedguess === $targetword);
-        $outofattempts = ((int)$state['attemptsused'] >= (int)$instance->max_attempts);
-        $outoftime = false;
-        if ((int)$instance->timer_seconds > 0) {
-            $elapsed = time() - (int)$state['starttime'];
-            $outoftime = $elapsed >= (int)$instance->timer_seconds;
-        }
-
-        $score = 0.0;
-        $notification = '';
-        $notificationtype = '';
-
-        if ($iscompleted || $outofattempts || $outoftime) {
-            $state['finished'] = true;
-            $state['endtime'] = time();
-            $timeused = max(0, time() - (int)$state['starttime']);
-            $score = gameplay_service::calculate_round_score(
-                $instance,
-                (int)$state['attemptsused'],
-                $timeused,
-                $iscompleted
-            );
-            $attemptid = $DB->insert_record('playerwords_attempts', (object)[
-                'playerwordsid' => $instance->id,
-                'userid'        => $userid,
-                'wordid'        => (int)$state['wordid'],
-                'attempts_used' => (int)$state['attemptsused'],
-                'time_used'     => $timeused,
-                'completed'     => $iscompleted ? 1 : 0,
-                'score'         => $score,
-                'timecreated'   => time(),
-            ]);
-            $event = \mod_playerwords\event\round_completed::create([
-                'objectid' => $attemptid,
-                'context'  => $context,
-                'other'    => [
-                    'completed'    => $iscompleted,
-                    'score'        => $score,
-                    'attemptsused' => (int)$state['attemptsused'],
-                    'timeused'     => $timeused,
-                    'wordid'       => (int)$state['wordid'],
-                ],
-            ]);
-            $event->trigger();
-            playerwords_update_grades($instance, $userid);
-            $notification = $iscompleted
-                ? get_string('roundwon', 'mod_playerwords')
-                : get_string('roundlost', 'mod_playerwords');
-            $notificationtype = $iscompleted ? 'success' : 'warning';
-        }
-
-        $SESSION->mod_playerwords[$sessionkey] = $state;
 
         $roundfinished = !empty($state['finished']);
+
         return [
-            'feedback'             => $feedbackresult,
-            'attemptsused'         => (int)$state['attemptsused'],
-            'finished'             => $roundfinished,
-            'won'                  => $iscompleted,
-            'score'                => $score,
-            'timeleft'             => self::compute_timeleft($instance, $state),
-            'notification'         => $notification,
-            'notificationtype'     => $notificationtype,
-            'revealword'           => $roundfinished ? ($wordrecord->word ?? '') : '',
-            'revealdefinition'     => $roundfinished ? ($wordrecord->hint ?? '') : '',
+            'feedback'         => $feedbackresult,
+            'attemptsused'     => (int)$state['attemptsused'],
+            'maxattempts'      => (int)$instance->max_attempts,
+            'finished'         => $roundfinished,
+            'won'              => !empty($state['won']),
+            'timeleft'         => self::compute_timeleft($instance, $state),
+            'notification'     => $notification ?? '',
+            'notificationtype' => $notificationtype ?? '',
+            'roundresult'      => round_presenter::build_round_result_context(
+                $instance,
+                $cm,
+                $state,
+                $userid,
+                $roundfinished
+            ),
         ];
     }
 
@@ -226,28 +131,78 @@ class submit_guess extends external_api {
                 new external_single_structure([
                     'letter' => new external_value(PARAM_TEXT, 'Uppercase letter'),
                     'state'  => new external_value(PARAM_ALPHA, 'Cell state: correct, present or absent'),
+                    'arialabel' => new external_value(PARAM_TEXT, 'Accessible label for this cell'),
                 ]),
-                'Per-letter feedback'
+                'Per-letter feedback for the guess just submitted, empty when rejected'
             ),
             'attemptsused'     => new external_value(PARAM_INT, 'Attempts used in this round'),
+            'maxattempts'      => new external_value(PARAM_INT, 'Configured maximum attempts'),
             'finished'         => new external_value(PARAM_BOOL, 'Whether the round has ended'),
             'won'              => new external_value(PARAM_BOOL, 'Whether the player guessed correctly'),
-            'score'            => new external_value(PARAM_FLOAT, 'Score for this round'),
             'timeleft'         => new external_value(PARAM_INT, 'Seconds remaining, 0 if timer is disabled'),
-            'notification'         => new external_value(PARAM_TEXT, 'User-facing feedback message'),
-            'notificationtype'     => new external_value(
+            'notification'     => new external_value(PARAM_TEXT, 'User-facing feedback message', VALUE_DEFAULT, ''),
+            'notificationtype' => new external_value(
                 PARAM_ALPHA,
                 'Notification type: success or warning',
                 VALUE_DEFAULT,
                 ''
             ),
-            'revealword'       => new external_value(PARAM_TEXT, 'Correct word, set when round finishes'),
-            'revealdefinition' => new external_value(
-                PARAM_RAW,
-                'Word definition or hint, set when round finishes',
-                VALUE_DEFAULT,
-                ''
+            'roundresult' => self::roundresult_structure(),
+        ]);
+    }
+
+    /**
+     * Returns the structure shared by every response's post-round result fields.
+     *
+     * Always present, but only meaningful when the response's "finished" field is true —
+     * see round_presenter::build_round_result_context() for the security invariant this
+     * structure exists to make explicit and testable: the target word/definition are never
+     * populated in the returned array until the round has actually finished server-side.
+     *
+     * @return external_single_structure
+     */
+    public static function roundresult_structure(): external_single_structure {
+        return new external_single_structure([
+            'feedbackmessage'        => new external_value(PARAM_TEXT, 'End-of-round flavour message'),
+            'showreveal'             => new external_value(PARAM_BOOL, 'Whether to show the revealed word'),
+            'revealword'             => new external_value(PARAM_TEXT, 'The correct word, empty until finished'),
+            'revealwordlabel'        => new external_value(PARAM_TEXT, 'Label for the revealed word'),
+            'showrevealconcept'      => new external_value(PARAM_BOOL, 'Whether to show the glossary concept'),
+            'revealconcept'          => new external_value(PARAM_TEXT, 'Glossary concept, empty until finished'),
+            'revealconceptlabel'     => new external_value(PARAM_TEXT, 'Label for the revealed concept'),
+            'showdefinition'         => new external_value(PARAM_BOOL, 'Whether to show the definition/hint'),
+            'revealdefinition'       => new external_value(PARAM_RAW, 'Definition or hint, empty until finished'),
+            'revealdefinitionlabel'  => new external_value(PARAM_TEXT, 'Label for the revealed definition'),
+            'cooldownuntil'          => new external_value(PARAM_INT, 'Cooldown expiry epoch, 0 if inactive'),
+            'cooldowntext'           => new external_value(PARAM_TEXT, 'Formatted cooldown countdown text'),
+            'cooldowncountdownlabel' => new external_value(PARAM_TEXT, 'Label for the cooldown countdown'),
+            'cooldownactive'         => new external_value(PARAM_BOOL, 'Whether a cooldown is currently active'),
+            'newroundlabel'          => new external_value(PARAM_TEXT, 'Label for the new-round action'),
+            'showranking'            => new external_value(PARAM_BOOL, 'Whether ranking is enabled'),
+            'rankingurl'             => new external_value(PARAM_URL, 'Full ranking page URL'),
+            'rankingviewfulllabel'   => new external_value(PARAM_TEXT, 'Label for the full ranking link'),
+            'rankingtitle'           => new external_value(PARAM_TEXT, 'Ranking panel title'),
+            'rankingpositionlabel'   => new external_value(PARAM_TEXT, 'Ranking position column label'),
+            'rankingplayerlabel'     => new external_value(PARAM_TEXT, 'Ranking player column label'),
+            'rankingpointslabel'     => new external_value(PARAM_TEXT, 'Ranking points column label'),
+            'rankingemptylabel'      => new external_value(PARAM_TEXT, 'Label shown when ranking has no rows'),
+            'rankingrows' => new external_multiple_structure(
+                new external_single_structure([
+                    'position'      => new external_value(PARAM_INT, 'Rank position'),
+                    'fullname'      => new external_value(PARAM_TEXT, 'Player full name'),
+                    'totalscore'    => new external_value(PARAM_INT, 'Total score'),
+                    'iscurrentuser' => new external_value(PARAM_BOOL, 'Whether this row is the current user'),
+                ]),
+                'Top ranking rows'
             ),
+            'rankinghasoutsider' => new external_value(PARAM_BOOL, 'Whether an outsider row is present'),
+            'rankingoutsiderrow' => new external_single_structure([
+                'position'      => new external_value(PARAM_INT, 'Rank position'),
+                'fullname'      => new external_value(PARAM_TEXT, 'Player full name'),
+                'totalscore'    => new external_value(PARAM_INT, 'Total score'),
+                'iscurrentuser' => new external_value(PARAM_BOOL, 'Whether this row is the current user'),
+            ], 'Current user row when outside the top ranking'),
+            'rankingempty' => new external_value(PARAM_BOOL, 'Whether the ranking has no rows at all'),
         ]);
     }
 
@@ -266,34 +221,5 @@ class submit_guess extends external_api {
             ? (int)$state['endtime']
             : time();
         return max(0, (int)$instance->timer_seconds - ($reference - (int)$state['starttime']));
-    }
-
-    /**
-     * Builds an error response without modifying session state.
-     *
-     * @param string $message Notification message.
-     * @param string $type Notification type.
-     * @param int $attemptsused Current attempts used.
-     * @param bool $finished Whether the round is already finished.
-     * @return array
-     */
-    private static function build_error_result(
-        string $message,
-        string $type,
-        int $attemptsused,
-        bool $finished
-    ): array {
-        return [
-            'feedback'         => [],
-            'attemptsused'     => $attemptsused,
-            'finished'         => $finished,
-            'won'              => false,
-            'score'            => 0.0,
-            'timeleft'         => 0,
-            'notification'     => $message,
-            'notificationtype' => $type,
-            'revealword'       => '',
-            'revealdefinition' => '',
-        ];
     }
 }
