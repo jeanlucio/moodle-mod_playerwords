@@ -85,16 +85,7 @@ class ai_word_generator {
             $term = trim($item['term'] ?? '');
             $hint = trim($item['hint'] ?? '');
 
-            if ($term === '') {
-                continue;
-            }
-
-            $tokens = preg_split('/\s+/u', $term, -1, PREG_SPLIT_NO_EMPTY);
-            if (count($tokens) !== 1) {
-                continue;
-            }
-
-            if (!preg_match('/^[\p{L}]+$/u', $term)) {
+            if (!self::is_valid_term($term)) {
                 continue;
             }
 
@@ -103,6 +94,28 @@ class ai_word_generator {
         }
 
         return $saved;
+    }
+
+    /**
+     * Checks whether a candidate term from the AI response is safe to save.
+     *
+     * The AI response is untrusted input: only a single-token, purely alphabetic
+     * term is accepted. Multi-word phrases, numbers and punctuation are rejected.
+     *
+     * @param string $term Trimmed candidate term.
+     * @return bool
+     */
+    protected static function is_valid_term(string $term): bool {
+        if ($term === '') {
+            return false;
+        }
+
+        $tokens = preg_split('/\s+/u', $term, -1, PREG_SPLIT_NO_EMPTY);
+        if (count($tokens) !== 1) {
+            return false;
+        }
+
+        return (bool)preg_match('/^[\p{L}]+$/u', $term);
     }
 
     /**
