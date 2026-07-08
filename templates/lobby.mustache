@@ -28,13 +28,17 @@
         "canstart": false,
         "startlabel": "Start round",
         "showgradingmethodinfo": true,
-        "gradingmethodinfo": "Grading method: Average grade"
+        "gradingmethodinfo": "Grading method: Average grade",
+        "roundsplayedlabel": "Rounds played: 0 / 10."
     }
 }}
 <div id="playerwords-lobby-body" class="mod-playerwords-lobby text-center my-3">
     {{#timerenabled}}
         <p class="text-muted">{{lobbytimerinfo}}</p>
     {{/timerenabled}}
+    {{#roundsplayedlabel}}
+        <p class="text-muted small">{{roundsplayedlabel}}</p>
+    {{/roundsplayedlabel}}
     {{#hudstartcost}}
         <p class="mb-2">{{hudstartcostlabel}}</p>
     {{/hudstartcost}}

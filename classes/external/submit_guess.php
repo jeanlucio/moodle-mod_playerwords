@@ -208,6 +208,10 @@ class submit_guess extends external_api {
                 PARAM_TEXT,
                 'Grading method and current computed grade, empty when not applicable'
             ),
+            'roundsplayedlabel' => new external_value(
+                PARAM_TEXT,
+                'Rounds played counter, e.g. "3 / 10", empty until finished'
+            ),
         ]);
     }
 

@@ -48,7 +48,8 @@
         "rankinghasoutsider": false,
         "rankingoutsiderrow": {"position": 0, "fullname": "", "totalscore": 0, "iscurrentuser": false},
         "showgradesofar": true,
-        "gradesofarmessage": "Average grade: 6.50 / 10.00."
+        "gradesofarmessage": "Average grade: 6.50 / 10.00.",
+        "roundsplayedlabel": "Rounds played: 3 / 10."
     }
 }}
 <div id="playerwords-round-result" tabindex="-1">
@@ -58,6 +59,9 @@
     {{#showgradesofar}}
         <p class="mt-2">{{gradesofarmessage}}</p>
     {{/showgradesofar}}
+    {{#roundsplayedlabel}}
+        <p class="text-muted small mt-1">{{roundsplayedlabel}}</p>
+    {{/roundsplayedlabel}}
     {{#showreveal}}
         <div class="mod-playerwords-reveal alert alert-secondary mt-3">
             <p class="mb-1"><strong>{{revealwordlabel}}</strong> {{revealword}}</p>

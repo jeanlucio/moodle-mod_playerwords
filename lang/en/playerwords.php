@@ -195,6 +195,7 @@ $string['roundforfeited'] = 'You gave up. The round is over.';
 $string['roundlimitreached'] = 'You have reached the maximum number of rounds ({$a}) for this activity.';
 $string['roundlost'] = 'Round over.';
 $string['roundnottimedout'] = 'The timer has not run out yet.';
+$string['roundsplayed'] = 'Rounds played: {$a->played} / {$a->max}.';
 $string['roundtimeout'] = 'Time is up. The round is over.';
 $string['roundwon'] = 'Congratulations! You guessed the word.';
 $string['savewordbutton'] = 'Save';

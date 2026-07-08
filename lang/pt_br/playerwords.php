@@ -195,6 +195,7 @@ $string['roundforfeited'] = 'Você desistiu. A rodada foi encerrada.';
 $string['roundlimitreached'] = 'Você atingiu o número máximo de rodadas ({$a}) para esta atividade.';
 $string['roundlost'] = 'Rodada encerrada.';
 $string['roundnottimedout'] = 'O tempo ainda não acabou.';
+$string['roundsplayed'] = 'Rodadas jogadas: {$a->played} / {$a->max}.';
 $string['roundtimeout'] = 'O tempo acabou. A rodada foi encerrada.';
 $string['roundwon'] = 'Parabéns! Você acertou a palavra.';
 $string['savewordbutton'] = 'Salvar';

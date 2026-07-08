@@ -252,6 +252,7 @@ final class round_presenter_test extends \advanced_testcase {
         $this->assertFalse($context['showdefinition']);
         $this->assertSame('', $context['revealdefinition']);
         $this->assertSame(0, $context['cooldownuntil']);
+        $this->assertSame('', $context['roundsplayedlabel']);
     }
 
     /**
@@ -298,6 +299,42 @@ final class round_presenter_test extends \advanced_testcase {
         $this->assertSame('segredo', $context['revealdefinition']);
         $this->assertGreaterThan(time(), $context['cooldownuntil']);
         $this->assertTrue($context['cooldownactive']);
+        // Default max_rounds is 0 (unlimited), rendered as the infinity symbol.
+        $this->assertSame("Rounds played: 1 / \u{221E}.", $context['roundsplayedlabel']);
+    }
+
+    /**
+     * Tests that the round-result context reports the played/max rounds counter using
+     * the configured limit once one is set, instead of the infinity symbol.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_result_context
+     * @return void
+     */
+    public function test_build_round_result_context_rounds_played_label_with_limit(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['max_rounds' => 10]);
+        $user = $this->getDataGenerator()->create_user();
+        $cm = (object)['id' => 5];
+        $state = $this->make_state(['finished' => true, 'won' => true]);
+
+        for ($i = 0; $i < 3; $i++) {
+            $DB->insert_record('playerwords_attempts', (object)[
+                'playerwordsid' => $instance->id,
+                'userid'        => $user->id,
+                'wordid'        => 1,
+                'attempts_used' => 1,
+                'time_used'     => 5,
+                'completed'     => 1,
+                'score'         => 100,
+                'timecreated'   => time(),
+                'timefinished'  => time(),
+            ]);
+        }
+
+        $context = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
+
+        $this->assertSame('Rounds played: 3 / 10.', $context['roundsplayedlabel']);
     }
 
     /**
@@ -581,6 +618,53 @@ final class round_presenter_test extends \advanced_testcase {
         $this->assertNotSame('', $enabledctx['lobbytimerinfo']);
         $this->assertFalse($disabledctx['timerenabled']);
         $this->assertSame('', $disabledctx['lobbytimerinfo']);
+    }
+
+    /**
+     * The lobby always shows the played/max rounds counter, using the infinity symbol
+     * when the activity allows unlimited rounds (max_rounds = 0, the default).
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_lobby_context
+     * @return void
+     */
+    public function test_build_lobby_context_rounds_played_label_unlimited(): void {
+        $instance = $this->make_instance();
+        $state = $this->make_state();
+        $user = $this->getDataGenerator()->create_user();
+
+        $context = round_presenter::build_lobby_context($instance, $state, $user->id);
+
+        $this->assertSame("Rounds played: 0 / \u{221E}.", $context['roundsplayedlabel']);
+    }
+
+    /**
+     * The lobby's rounds-played counter reflects both the configured limit and the
+     * rounds the user has already completed for this instance.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_lobby_context
+     * @return void
+     */
+    public function test_build_lobby_context_rounds_played_label_with_limit(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['max_rounds' => 10]);
+        $state = $this->make_state();
+        $user = $this->getDataGenerator()->create_user();
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $user->id,
+            'wordid'        => 1,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+
+        $context = round_presenter::build_lobby_context($instance, $state, $user->id);
+
+        $this->assertSame('Rounds played: 1 / 10.', $context['roundsplayedlabel']);
     }
 
     /**

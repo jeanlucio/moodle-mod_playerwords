@@ -124,6 +124,7 @@ class new_round extends external_api {
                     PARAM_TEXT,
                     'Grading method info line, empty when not applicable'
                 ),
+                'roundsplayedlabel' => new external_value(PARAM_TEXT, 'Rounds played counter, e.g. "3 / 10"'),
             ]),
         ]);
     }

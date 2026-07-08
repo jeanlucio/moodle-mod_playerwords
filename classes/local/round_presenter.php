@@ -313,6 +313,7 @@ class round_presenter {
             'newroundlabel'         => get_string('newroundlabel', 'mod_playerwords'),
             'showgradesofar'        => false,
             'gradesofarmessage'     => '',
+            'roundsplayedlabel'     => '',
         ] + self::build_ranking_context($instance, $cm, $userid, false);
 
         if (!$roundfinished) {
@@ -347,6 +348,7 @@ class round_presenter {
             // cooldown, or the round limit having been reached.
             'cooldownactive'        => $restricted,
             'newroundlabel'         => $blank['newroundlabel'],
+            'roundsplayedlabel'     => self::build_rounds_played_label($instance, $userid),
         ] + self::build_grade_so_far($instance, $userid)
           + self::build_ranking_context($instance, $cm, $userid, true);
     }
@@ -391,6 +393,25 @@ class round_presenter {
     }
 
     /**
+     * Builds the "rounds played" counter text (e.g. "3 / 10" or "3 / ∞"), shown in the
+     * lobby before starting and again in the post-round report, so students always know
+     * how many rounds they have used against the activity's configured round limit.
+     *
+     * @param \stdClass $instance Activity instance record.
+     * @param int $userid Current user id.
+     * @return string
+     */
+    private static function build_rounds_played_label(\stdClass $instance, int $userid): string {
+        $maxrounds = (int)$instance->max_rounds;
+        $maxlabel = $maxrounds > 0 ? (string)$maxrounds : "\u{221E}";
+
+        return get_string('roundsplayed', 'mod_playerwords', (object)[
+            'played' => round_service::count_rounds_played($instance, $userid),
+            'max'    => $maxlabel,
+        ]);
+    }
+
+    /**
      * Builds the pre-round lobby context.
      *
      * @param \stdClass $instance Activity instance record.
@@ -421,6 +442,7 @@ class round_presenter {
             'hudstartcostlabel' => $hudstartcostlabel,
             'canstart' => $canstart,
             'startlabel' => get_string('startround', 'mod_playerwords'),
+            'roundsplayedlabel' => self::build_rounds_played_label($instance, $userid),
         ] + self::build_grading_method_info($instance);
     }
 

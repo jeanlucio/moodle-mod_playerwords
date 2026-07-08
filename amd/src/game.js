@@ -527,6 +527,7 @@ const wireRoundPanel = (cmid, timertotal) => {
  */
 const showRoundResult = async(roundresult, cmid, timertotal) => {
     stopTimer();
+    setTimerBadgeVisible(false);
     setForfeitButtonVisible(false);
     const playNode = document.getElementById('playerwords-round-play');
     if (!playNode) {
