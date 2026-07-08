@@ -50,15 +50,6 @@
     }
 }}
 <div id="playerwords-round-panel">
-    <div class="mod-playerwords-status">
-        <span><strong>{{attemptslabel}}</strong> <span id="playerwords-attempts-count">{{attemptsused}}</span> / {{maxattempts}}</span>
-        {{#timerenabled}}
-            <span class="ms-3">
-                <strong>{{timerlabel}}</strong>
-                <span id="playerwords-timer-countdown">{{timeleft}}</span>
-            </span>
-        {{/timerenabled}}
-    </div>
     {{#canhint}}
         <button type="button"
                 id="playerwords-hint-button"

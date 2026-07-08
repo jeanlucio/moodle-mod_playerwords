@@ -432,14 +432,15 @@ const paintGuessRow = (attemptsused, feedback) => {
 };
 
 /**
- * Updates the visible attempts-used counter.
+ * Shows or hides the header timer badge, which lives outside #playerwords-stage so it
+ * survives the lobby/round-panel swap instead of being re-rendered on every transition.
  *
- * @param {number} attemptsused Attempts used so far.
+ * @param {boolean} visible Whether the timer badge should be shown.
  */
-const updateAttemptsCount = (attemptsused) => {
-    const el = document.getElementById('playerwords-attempts-count');
-    if (el) {
-        el.textContent = attemptsused;
+const setTimerBadgeVisible = (visible) => {
+    const wrapper = document.getElementById('playerwords-timer-wrapper');
+    if (wrapper) {
+        wrapper.hidden = !visible;
     }
 };
 
@@ -502,6 +503,7 @@ const showRoundPanel = async(panelcontext, cmid, timertotal) => {
     const {html, js} = await Templates.renderForPromise('mod_playerwords/round_panel', panelcontext);
     await Templates.replaceNodeContents(stage, html, js);
     wireRoundPanel(cmid, timertotal);
+    setTimerBadgeVisible(true);
     if (panelcontext.timerenabled && panelcontext.timeleft > 0) {
         startTimer(panelcontext.timeleft, timertotal, cmid);
     }
@@ -525,6 +527,7 @@ const showLobby = async(lobbycontext, cmid, timertotal) => {
     }
     const {html, js} = await Templates.renderForPromise('mod_playerwords/lobby', lobbycontext);
     await Templates.replaceNodeContents(stage, html, js);
+    setTimerBadgeVisible(false);
     initStartRound(cmid, timertotal);
     const startButton = document.getElementById('playerwords-start-round-button');
     if (startButton) {
@@ -677,7 +680,6 @@ const initGuessForm = (cmid, timertotal) => {
 
         const row = paintGuessRow(payload.attemptsused, payload.feedback);
         recolorKeyboard();
-        updateAttemptsCount(payload.attemptsused);
         // Move the live-preview marker to the next empty row BEFORE clearing the input,
         // otherwise the input-clear below would mirror an empty value into the row we
         // just painted (the old active row) and wipe out the letters we just drew.

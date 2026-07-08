@@ -106,7 +106,15 @@
     }
 }}
 <div class="mod-playerwords-game">
-    {{> mod_playerwords/toolbar}}
+    <div class="pw-header">
+        {{> mod_playerwords/toolbar}}
+        {{#timerenabled}}
+            <span id="playerwords-timer-wrapper" class="pw-header-timer"{{#showlobby}} hidden{{/showlobby}}>
+                <i class="fa fa-clock-o" aria-hidden="true"></i>
+                <span id="playerwords-timer-countdown" aria-label="{{timerlabel}}">{{timeleft}}</span>
+            </span>
+        {{/timerenabled}}
+    </div>
 
     {{^hastargetword}}
         <div class="alert alert-warning">{{nogamewords}}</div>
