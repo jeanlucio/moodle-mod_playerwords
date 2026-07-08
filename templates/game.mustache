@@ -26,6 +26,10 @@
         "canmanagewords": true,
         "managewordsbutton": "Manage words",
         "managewordsurl": "https://example.com/mod/playerwords/managewords.php?id=1",
+        "toolbarhelp": "Help",
+        "helpurl": "https://example.com/mod/playerwords/help.php?id=1",
+        "toolbarmyattempts": "Attempt history",
+        "myattemptsurl": "https://example.com/mod/playerwords/myattempts.php?id=1",
         "hastargetword": true,
         "nogamewords": "No approved words are available for this activity yet.",
         "attemptslabel": "Attempts",
@@ -102,16 +106,7 @@
     }
 }}
 <div class="mod-playerwords-game">
-    {{#canmanagewords}}
-        <p>
-            <a href="{{{managewordsurl}}}" class="btn btn-secondary">{{managewordsbutton}}</a>
-        </p>
-    {{/canmanagewords}}
-    {{#showranking}}
-        <p class="text-end">
-            <a href="{{{rankingurl}}}" class="btn btn-outline-secondary btn-sm">{{rankingviewfulllabel}}</a>
-        </p>
-    {{/showranking}}
+    {{> mod_playerwords/toolbar}}
 
     {{^hastargetword}}
         <div class="alert alert-warning">{{nogamewords}}</div>

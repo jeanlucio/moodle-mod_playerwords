@@ -1,0 +1,55 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_playerwords/help
+
+    How-to-play help page for a PlayerWords activity.
+
+    Example context (json):
+    {
+        "activityurl": "https://example.com/mod/playerwords/view.php?id=1",
+        "backlabel": "Back to game",
+        "helptitle": "How to play",
+        "introtext": "Guess the hidden word within the allowed attempts.",
+        "legendcorrectlabel": "Correct: the letter is correct and in the right position.",
+        "legendpresentlabel": "Present: the letter is in the word but in the wrong position.",
+        "legendabsentlabel": "Absent: the letter is not in the word.",
+        "attemptstext": "You have a limited number of attempts per round.",
+        "hinttext": "A hint may be available, depending on how the teacher configured the activity.",
+        "timertext": "Some activities have a time limit per round.",
+        "showgrading": true,
+        "gradingtext": "Grading method: Highest grade."
+    }
+}}
+<div class="mod-playerwords-help-page">
+    <p>
+        <a href="{{activityurl}}" class="btn btn-secondary btn-sm">{{backlabel}}</a>
+    </p>
+    <h2>{{helptitle}}</h2>
+    <p>{{introtext}}</p>
+    <ul class="mod-playerwords-help-legend">
+        <li><span class="pw-legend-swatch is-correct" aria-hidden="true">A</span> {{legendcorrectlabel}}</li>
+        <li><span class="pw-legend-swatch is-present" aria-hidden="true">A</span> {{legendpresentlabel}}</li>
+        <li><span class="pw-legend-swatch is-absent" aria-hidden="true">A</span> {{legendabsentlabel}}</li>
+    </ul>
+    <p>{{attemptstext}}</p>
+    <p>{{hinttext}}</p>
+    <p>{{timertext}}</p>
+    {{#showgrading}}
+        <p>{{gradingtext}}</p>
+    {{/showgrading}}
+</div>

@@ -28,7 +28,35 @@
     margin-inline: auto;
     border: 1px solid var(--gray-300, #dee2e6);
     border-radius: 0.5rem;
-    padding: 1.25rem 1.5rem;
+    padding: 1rem 1.25rem;
+}
+
+.path-mod-playerwords .pw-toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.path-mod-playerwords .pw-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--gray-300, #dee2e6);
+    border-radius: 0.375rem;
+    color: var(--body-color, #212529);
+    text-decoration: none;
+    font-size: 1.1rem;
+}
+
+.path-mod-playerwords .pw-toolbar-btn:hover,
+.path-mod-playerwords .pw-toolbar-btn:focus-visible {
+    background-color: var(--gray-100, #f8f9fa);
+    color: var(--primary, #0f6cbf);
+    outline: 2px solid var(--primary, #0f6cbf);
+    outline-offset: 2px;
 }
 
 .path-mod-playerwords .mod-playerwords-game > p {
@@ -118,7 +146,52 @@
     background-color: var(--gray-100, #f8f9fa);
     width: fit-content;
     margin-inline: auto;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.path-mod-playerwords .mod-playerwords-game .alert {
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.path-mod-playerwords .mod-playerwords-help-legend {
+    list-style: none;
+    padding-inline-start: 0;
+}
+
+.path-mod-playerwords .mod-playerwords-help-legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.path-mod-playerwords .pw-legend-swatch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    font-weight: 700;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--gray-400, #ced4da);
+}
+
+.path-mod-playerwords .pw-legend-swatch.is-absent {
+    color: var(--white, #fff);
+    background-color: #495057;
+}
+
+.path-mod-playerwords .pw-legend-swatch.is-present {
+    color: var(--black, #000);
+    background-color: var(--warning, #ffc107);
+}
+
+.path-mod-playerwords .pw-legend-swatch.is-correct {
+    color: var(--white, #fff);
+    background-color: var(--primary, #0f6cbf);
 }
 
 .path-mod-playerwords .mod-playerwords-game .mod-playerwords-form {

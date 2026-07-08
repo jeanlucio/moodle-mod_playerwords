@@ -142,10 +142,13 @@ class round_presenter {
     /**
      * Resolves the localized name of the instance's configured grading method.
      *
+     * Public so attempts_history_service can reuse it for the "my attempts" summary,
+     * without duplicating the lookup against playerwords_get_grademethod_options().
+     *
      * @param \stdClass $instance Activity instance.
      * @return string
      */
-    private static function grademethod_name(\stdClass $instance): string {
+    public static function grademethod_name(\stdClass $instance): string {
         global $CFG;
         require_once($CFG->dirroot . '/mod/playerwords/lib.php');
 

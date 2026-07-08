@@ -25,6 +25,7 @@
 
 namespace mod_playerwords;
 
+use mod_playerwords\local\attempts_history_service;
 use mod_playerwords\local\round_service;
 use mod_playerwords\local\words_repository;
 
@@ -165,5 +166,65 @@ final class cross_instance_security_test extends \advanced_testcase {
 
         $this->assertSame(1, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instancea->id]));
         $this->assertSame(0, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instanceb->id]));
+    }
+
+    /**
+     * The "my attempts" history must never surface another activity's rounds, nor
+     * another student's rounds within the same activity — both are filtered directly
+     * in the SQL, not merely by capability, so this proves the query itself is safe.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_history
+     * @return void
+     */
+    public function test_attempts_history_is_scoped_to_activity_and_user(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $usera = $this->getDataGenerator()->create_user();
+        $userb = $this->getDataGenerator()->create_user();
+
+        $instancea = $this->make_instance($course, $usera, 'boca');
+        $instanceb = $this->make_instance($course, $usera, 'gato');
+        $instancea->grade = 100;
+
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instancea->id,
+            'userid'        => $usera->id,
+            'wordid'        => 0,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+        // Another activity, same student — must not leak into instancea's history.
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instanceb->id,
+            'userid'        => $usera->id,
+            'wordid'        => 0,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+        // Same activity, another student — must not leak into usera's history.
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instancea->id,
+            'userid'        => $userb->id,
+            'wordid'        => 0,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+
+        $history = attempts_history_service::get_history($instancea, $usera->id);
+
+        $this->assertCount(1, $history['rows']);
     }
 }

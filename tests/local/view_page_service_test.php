@@ -162,6 +162,24 @@ final class view_page_service_test extends \advanced_testcase {
     }
 
     /**
+     * The template context always carries the toolbar URLs for the help and
+     * attempt-history pages, mirroring how managewordsurl/rankingurl are always
+     * present regardless of round state.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_includes_toolbar_urls(): void {
+        [$instance, $cm, $context] = $this->make_instance();
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $ctx = $pagedata['templatecontext'];
+
+        $this->assertStringContainsString('help.php', $ctx['helpurl']);
+        $this->assertStringContainsString('myattempts.php', $ctx['myattemptsurl']);
+    }
+
+    /**
      * When the round limit is reached before a word is even picked, the
      * restriction notice is surfaced instead of a target word.
      *

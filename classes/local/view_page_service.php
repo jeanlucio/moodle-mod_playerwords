@@ -128,6 +128,10 @@ class view_page_service {
             'canmanagewords' => $canmanagewords,
             'managewordsbutton' => get_string('managewordsbutton', 'mod_playerwords'),
             'managewordsurl' => (new moodle_url('/mod/playerwords/managewords.php', ['id' => $cm->id]))->out(false),
+            'toolbarhelp' => get_string('toolbarhelp', 'mod_playerwords'),
+            'helpurl' => (new moodle_url('/mod/playerwords/help.php', ['id' => $cm->id]))->out(false),
+            'toolbarmyattempts' => get_string('toolbarmyattempts', 'mod_playerwords'),
+            'myattemptsurl' => (new moodle_url('/mod/playerwords/myattempts.php', ['id' => $cm->id]))->out(false),
             'showlobby' => $showlobby,
             'roundstarted' => !empty($state['roundstarted']),
         ]
