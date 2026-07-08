@@ -56,6 +56,19 @@ const announce = (message) => {
 };
 
 /**
+ * Shows a visible Moodle notification for a server-side rejection message (e.g. an
+ * insufficient PlayerHUD item balance, or a stale action on an already-finished
+ * round). Without this, the message only ever reached the aria-live region — silent
+ * for sighted users, who would just see the button do nothing.
+ *
+ * @param {string} message Notification text.
+ * @param {string} type Notification type: success, info, warning or error.
+ */
+const notify = (message, type) => {
+    Notification.addNotification({message, type: type || 'info'});
+};
+
+/**
  * Strips non-letter characters from the guess input as the user types.
  *
  * Handles physical keyboard input; the on-screen keyboard only sends letters by design.
@@ -125,7 +138,7 @@ const initHintButton = (cmid) => {
             return;
         }
         if (payload.notification) {
-            announce(payload.notification);
+            notify(payload.notification, payload.notificationtype);
         }
         if (!payload.success) {
             return;
@@ -571,7 +584,7 @@ const initStartRound = (cmid, timertotal) => {
             return;
         }
         if (payload.notification) {
-            announce(payload.notification);
+            notify(payload.notification, payload.notificationtype);
         }
         if (!payload.success) {
             return;
@@ -600,7 +613,7 @@ const initNewRound = (cmid, timertotal) => {
             return;
         }
         if (payload.notification) {
-            announce(payload.notification);
+            notify(payload.notification, payload.notificationtype);
         }
         if (!payload.hastargetword) {
             // Round-limit or lingering cooldown restriction: mirror the classic
@@ -639,7 +652,7 @@ const endRound = async(cmid, reason, timertotal) => {
         return;
     }
     if (payload.notification) {
-        announce(payload.notification);
+        notify(payload.notification, payload.notificationtype);
     }
     if (payload.finished) {
         await showRoundResult(payload.roundresult, cmid, timertotal);
@@ -679,7 +692,7 @@ const initGuessForm = (cmid, timertotal) => {
         }
 
         if (payload.notification) {
-            announce(payload.notification);
+            notify(payload.notification, payload.notificationtype);
         }
 
         if (!payload.feedback.length) {
