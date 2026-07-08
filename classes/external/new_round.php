@@ -111,6 +111,14 @@ class new_round extends external_api {
                 'hudstartcost'      => new external_value(PARAM_BOOL, 'Whether starting costs a PlayerHUD item'),
                 'hudstartcostlabel' => new external_value(PARAM_TEXT, 'PlayerHUD cost label'),
                 'startlabel'        => new external_value(PARAM_TEXT, 'Start-round button label'),
+                'showgradingmethodinfo' => new external_value(
+                    PARAM_BOOL,
+                    'Whether the grading method info line is shown'
+                ),
+                'gradingmethodinfo' => new external_value(
+                    PARAM_TEXT,
+                    'Grading method info line, empty when not applicable'
+                ),
             ]),
         ]);
     }

@@ -394,6 +394,36 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
+     * Tests that count_rounds_played counts only this instance's attempts for this user.
+     *
+     * @covers \mod_playerwords\local\round_service::count_rounds_played
+     * @return void
+     */
+    public function test_count_rounds_played(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['max_rounds' => 0, 'cooldown_amount' => 0]);
+        $otheruser = $this->getDataGenerator()->create_user();
+
+        $this->assertSame(0, round_service::count_rounds_played($instance, $this->user->id));
+
+        foreach ([$this->user->id, $this->user->id, $otheruser->id] as $userid) {
+            $DB->insert_record('playerwords_attempts', (object)[
+                'playerwordsid' => $instance->id,
+                'userid'        => $userid,
+                'wordid'        => 0,
+                'attempts_used' => 1,
+                'time_used'     => 5,
+                'completed'     => 1,
+                'score'         => 100,
+                'timecreated'   => time(),
+            ]);
+        }
+
+        $this->assertSame(2, round_service::count_rounds_played($instance, $this->user->id));
+    }
+
+    /**
      * Tests that no cooldown applies when the setting is disabled, even with a recent attempt.
      *
      * @covers \mod_playerwords\local\round_service::compute_cooldown_until

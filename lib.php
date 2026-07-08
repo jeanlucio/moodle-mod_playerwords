@@ -125,6 +125,24 @@ function playerwords_grade_item_update(stdClass $instance, mixed $grades = null)
 }
 
 /**
+ * Returns the available grading method options, keyed by their PLAYERWORDS_GRADE_* constant.
+ *
+ * Single source of truth shared by the settings form dropdown and the student-facing
+ * grading method label, so both always describe the same five methods identically.
+ *
+ * @return array<int, string>
+ */
+function playerwords_get_grademethod_options(): array {
+    return [
+        PLAYERWORDS_GRADE_HIGHEST     => get_string('grademethod_highest', 'mod_playerwords'),
+        PLAYERWORDS_GRADE_AVERAGE     => get_string('grademethod_average', 'mod_playerwords'),
+        PLAYERWORDS_GRADE_FIRST       => get_string('grademethod_first', 'mod_playerwords'),
+        PLAYERWORDS_GRADE_LAST        => get_string('grademethod_last', 'mod_playerwords'),
+        PLAYERWORDS_GRADE_AVERAGE_ALL => get_string('grademethod_average_all', 'mod_playerwords'),
+    ];
+}
+
+/**
  * Calculates a single user's final grade from their round attempts.
  *
  * @param stdClass $instance Activity instance.

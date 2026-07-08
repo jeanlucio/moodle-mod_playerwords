@@ -46,13 +46,18 @@
             {"position": 2, "fullname": "You", "totalscore": 200, "iscurrentuser": true}
         ],
         "rankinghasoutsider": false,
-        "rankingoutsiderrow": {"position": 0, "fullname": "", "totalscore": 0, "iscurrentuser": false}
+        "rankingoutsiderrow": {"position": 0, "fullname": "", "totalscore": 0, "iscurrentuser": false},
+        "showgradesofar": true,
+        "gradesofarmessage": "Average grade: 6.50 / 10.00."
     }
 }}
 <div id="playerwords-round-result" tabindex="-1">
     {{#feedbackmessage}}
         <p class="mod-playerwords-feedback fw-bold mt-3">{{feedbackmessage}}</p>
     {{/feedbackmessage}}
+    {{#showgradesofar}}
+        <p class="text-muted small mt-2">{{gradesofarmessage}}</p>
+    {{/showgradesofar}}
     {{#showreveal}}
         <div class="mod-playerwords-reveal alert alert-secondary mt-3">
             <p class="mb-1"><strong>{{revealwordlabel}}</strong> {{revealword}}</p>

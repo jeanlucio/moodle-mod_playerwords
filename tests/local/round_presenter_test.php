@@ -300,6 +300,81 @@ final class round_presenter_test extends \advanced_testcase {
     }
 
     /**
+     * Tests that the grade-so-far summary is absent before the round finishes.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_result_context
+     * @return void
+     */
+    public function test_build_round_result_context_no_grade_so_far_when_not_finished(): void {
+        $instance = $this->make_instance();
+        $cm = (object)['id' => 5];
+        $state = $this->make_state();
+
+        $context = round_presenter::build_round_result_context($instance, $cm, $state, 1, false);
+
+        $this->assertFalse($context['showgradesofar']);
+        $this->assertSame('', $context['gradesofarmessage']);
+    }
+
+    /**
+     * Tests that the grade-so-far summary stays hidden for an ungraded instance, even
+     * once a round has finished — there is no gradebook item to read a value from.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_result_context
+     * @return void
+     */
+    public function test_build_round_result_context_no_grade_so_far_when_ungraded(): void {
+        $instance = $this->make_instance(['grade' => 0]);
+        $user = $this->getDataGenerator()->create_user();
+        $cm = (object)['id' => 5];
+        $state = $this->make_state(['finished' => true, 'won' => true]);
+
+        $context = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
+
+        $this->assertFalse($context['showgradesofar']);
+    }
+
+    /**
+     * Tests that the round-result context surfaces the student's current computed grade
+     * once a round has finished, matching the value round_service::finish_round() writes
+     * to the gradebook via playerwords_update_grades().
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_result_context
+     * @return void
+     */
+    public function test_build_round_result_context_shows_grade_so_far(): void {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        $instance = $this->make_instance([
+            'grade'       => 100,
+            'max_rounds'  => 0,
+            'grademethod' => PLAYERWORDS_GRADE_HIGHEST,
+        ]);
+        $user = $this->getDataGenerator()->create_user();
+        $cm = (object)['id' => 5];
+        $state = $this->make_state(['finished' => true, 'won' => true]);
+
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $user->id,
+            'wordid'        => 1,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 80,
+            'timecreated'   => time(),
+        ]);
+        playerwords_update_grades($instance, $user->id);
+
+        $context = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
+
+        $this->assertTrue($context['showgradesofar']);
+        $this->assertStringContainsString('Highest grade', $context['gradesofarmessage']);
+        $this->assertStringContainsString('80', $context['gradesofarmessage']);
+    }
+
+    /**
      * Tests that changing cooldown_seconds after a round finished takes effect immediately —
      * the specific behaviour that motivated computing cooldown from the DB instead of caching
      * it in session state at the moment the round ended.
@@ -418,6 +493,62 @@ final class round_presenter_test extends \advanced_testcase {
         $this->assertNotSame('', $enabledctx['lobbytimerinfo']);
         $this->assertFalse($disabledctx['timerenabled']);
         $this->assertSame('', $disabledctx['lobbytimerinfo']);
+    }
+
+    /**
+     * The lobby shows the grading method info line when grading is enabled and more than
+     * one round is possible, mirroring mod_quiz's pre-attempt "Grading method: X" message.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_lobby_context
+     * @return void
+     */
+    public function test_build_lobby_context_shows_grading_method_info_when_relevant(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        $instance = $this->make_instance([
+            'grade'       => 100,
+            'max_rounds'  => 0,
+            'grademethod' => PLAYERWORDS_GRADE_AVERAGE,
+        ]);
+        $state = $this->make_state();
+
+        $context = round_presenter::build_lobby_context($instance, $state);
+
+        $this->assertTrue($context['showgradingmethodinfo']);
+        $this->assertStringContainsString('Average grade', $context['gradingmethodinfo']);
+    }
+
+    /**
+     * The lobby hides the grading method info line when only a single round is allowed —
+     * every grading method would produce the same value, so naming it is just noise.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_lobby_context
+     * @return void
+     */
+    public function test_build_lobby_context_hides_grading_method_info_for_single_round(): void {
+        $instance = $this->make_instance(['grade' => 100, 'max_rounds' => 1]);
+        $state = $this->make_state();
+
+        $context = round_presenter::build_lobby_context($instance, $state);
+
+        $this->assertFalse($context['showgradingmethodinfo']);
+        $this->assertSame('', $context['gradingmethodinfo']);
+    }
+
+    /**
+     * The lobby hides the grading method info line when the activity is not graded.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_lobby_context
+     * @return void
+     */
+    public function test_build_lobby_context_hides_grading_method_info_when_ungraded(): void {
+        $instance = $this->make_instance(['grade' => 0]);
+        $state = $this->make_state();
+
+        $context = round_presenter::build_lobby_context($instance, $state);
+
+        $this->assertFalse($context['showgradingmethodinfo']);
     }
 
     /**

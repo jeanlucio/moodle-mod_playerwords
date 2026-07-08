@@ -203,6 +203,11 @@ class submit_guess extends external_api {
                 'iscurrentuser' => new external_value(PARAM_BOOL, 'Whether this row is the current user'),
             ], 'Current user row when outside the top ranking'),
             'rankingempty' => new external_value(PARAM_BOOL, 'Whether the ranking has no rows at all'),
+            'showgradesofar' => new external_value(PARAM_BOOL, 'Whether the grade-so-far summary is shown'),
+            'gradesofarmessage' => new external_value(
+                PARAM_TEXT,
+                'Grading method and current computed grade, empty when not applicable'
+            ),
         ]);
     }
 

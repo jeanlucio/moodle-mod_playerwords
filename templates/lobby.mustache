@@ -25,7 +25,9 @@
         "lobbytimerinfo": "You have 1 min to guess the word.",
         "hudstartcost": true,
         "hudstartcostlabel": "Costs 1 Gold Key",
-        "startlabel": "Start round"
+        "startlabel": "Start round",
+        "showgradingmethodinfo": true,
+        "gradingmethodinfo": "Grading method: Average grade"
     }
 }}
 <div id="playerwords-lobby-body" class="mod-playerwords-lobby text-center my-3">
@@ -35,5 +37,8 @@
     {{#hudstartcost}}
         <p class="text-muted small mb-2">{{hudstartcostlabel}}</p>
     {{/hudstartcost}}
+    {{#showgradingmethodinfo}}
+        <p class="text-muted small">{{gradingmethodinfo}}</p>
+    {{/showgradingmethodinfo}}
     <button type="button" id="playerwords-start-round-button" class="btn btn-primary btn-lg">{{startlabel}}</button>
 </div>

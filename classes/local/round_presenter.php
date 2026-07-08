@@ -127,6 +127,103 @@ class round_presenter {
     }
 
     /**
+     * Whether the grading method is meaningful to surface to the student: grading must be
+     * enabled with a numeric point scale (this summary does not attempt to format a Moodle
+     * scale grade), and more than one round must be possible — with exactly one round, every
+     * grading method produces the same value, so naming it would only be noise.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @return bool
+     */
+    private static function grading_info_relevant(\stdClass $instance): bool {
+        return (float)$instance->grade > 0 && (int)$instance->max_rounds !== 1;
+    }
+
+    /**
+     * Resolves the localized name of the instance's configured grading method.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @return string
+     */
+    private static function grademethod_name(\stdClass $instance): string {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        $options = playerwords_get_grademethod_options();
+        return $options[(int)$instance->grademethod] ?? $options[PLAYERWORDS_GRADE_HIGHEST];
+    }
+
+    /**
+     * Builds the grading-method explanation shown in the lobby before a round starts,
+     * mirroring how mod_quiz tells students its grading method whenever more than one
+     * attempt is possible (its "gradingmethod" info message on the quiz view page).
+     *
+     * @param \stdClass $instance Activity instance.
+     * @return array
+     */
+    public static function build_grading_method_info(\stdClass $instance): array {
+        if (!self::grading_info_relevant($instance)) {
+            return ['showgradingmethodinfo' => false, 'gradingmethodinfo' => ''];
+        }
+
+        return [
+            'showgradingmethodinfo' => true,
+            'gradingmethodinfo' => get_string(
+                'gradingmethodinfo',
+                'mod_playerwords',
+                self::grademethod_name($instance)
+            ),
+        ];
+    }
+
+    /**
+     * Builds the "grade so far" summary shown after a round finishes, mirroring mod_quiz's
+     * gradesofar message: the grading method name alongside the student's current computed
+     * grade, read straight from the gradebook item so it always matches what the teacher sees.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @param int $userid Current user id.
+     * @return array
+     */
+    public static function build_grade_so_far(\stdClass $instance, int $userid): array {
+        $blank = ['showgradesofar' => false, 'gradesofarmessage' => ''];
+
+        if (!self::grading_info_relevant($instance)) {
+            return $blank;
+        }
+
+        global $CFG;
+        require_once($CFG->libdir . '/gradelib.php');
+
+        $gradeitem = \grade_item::fetch([
+            'itemtype'     => 'mod',
+            'itemmodule'   => 'playerwords',
+            'iteminstance' => $instance->id,
+            'itemnumber'   => 0,
+            'courseid'     => $instance->course,
+        ]);
+        if (!$gradeitem) {
+            return $blank;
+        }
+
+        $grade = $gradeitem->get_grade($userid, false);
+        if ($grade === null || $grade->finalgrade === null) {
+            return $blank;
+        }
+
+        $a = (object)[
+            'method'   => self::grademethod_name($instance),
+            'mygrade'  => format_float((float)$grade->finalgrade, 2),
+            'maxgrade' => format_float((float)$instance->grade, 2),
+        ];
+
+        return [
+            'showgradesofar' => true,
+            'gradesofarmessage' => get_string('gradesofar', 'mod_playerwords', $a),
+        ];
+    }
+
+    /**
      * Builds the ranking template context fields.
      *
      * Always returns the full key set (even when show_ranking is disabled or the round is
@@ -211,6 +308,8 @@ class round_presenter {
             'cooldowncountdownlabel' => get_string('cooldowncountdownlabel', 'mod_playerwords'),
             'cooldownactive'        => false,
             'newroundlabel'         => get_string('newroundlabel', 'mod_playerwords'),
+            'showgradesofar'        => false,
+            'gradesofarmessage'     => '',
         ] + self::build_ranking_context($instance, $cm, $userid, false);
 
         if (!$roundfinished) {
@@ -245,7 +344,8 @@ class round_presenter {
             // cooldown, or the round limit having been reached.
             'cooldownactive'        => $restricted,
             'newroundlabel'         => $blank['newroundlabel'],
-        ] + self::build_ranking_context($instance, $cm, $userid, true);
+        ] + self::build_grade_so_far($instance, $userid)
+          + self::build_ranking_context($instance, $cm, $userid, true);
     }
 
     /**
@@ -280,7 +380,7 @@ class round_presenter {
             'hudstartcost' => $hudstartcost,
             'hudstartcostlabel' => $hudstartcostlabel,
             'startlabel' => get_string('startround', 'mod_playerwords'),
-        ];
+        ] + self::build_grading_method_info($instance);
     }
 
     /**

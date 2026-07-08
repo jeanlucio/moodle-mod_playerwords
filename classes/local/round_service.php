@@ -135,6 +135,22 @@ class round_service {
     }
 
     /**
+     * Counts how many rounds a user has completed for this instance.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @param int $userid User id.
+     * @return int
+     */
+    public static function count_rounds_played(\stdClass $instance, int $userid): int {
+        global $DB;
+
+        return $DB->count_records('playerwords_attempts', [
+            'playerwordsid' => $instance->id,
+            'userid'        => $userid,
+        ]);
+    }
+
+    /**
      * Returns a restriction message if the user cannot start a new round, null otherwise.
      *
      * @param \stdClass $instance Activity instance.
@@ -142,13 +158,8 @@ class round_service {
      * @return string|null
      */
     public static function get_round_restriction_notice(\stdClass $instance, int $userid): ?string {
-        global $DB;
-
         if ((int)$instance->max_rounds > 0) {
-            $roundsplayed = $DB->count_records('playerwords_attempts', [
-                'playerwordsid' => $instance->id,
-                'userid'        => $userid,
-            ]);
+            $roundsplayed = self::count_rounds_played($instance, $userid);
             if ($roundsplayed >= (int)$instance->max_rounds) {
                 return get_string('roundlimitreached', 'mod_playerwords', $instance->max_rounds);
             }
