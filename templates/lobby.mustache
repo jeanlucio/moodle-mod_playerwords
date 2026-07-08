@@ -24,7 +24,8 @@
         "timerenabled": true,
         "lobbytimerinfo": "You have 1 min to guess the word.",
         "hudstartcost": true,
-        "hudstartcostlabel": "Costs 1 Gold Key",
+        "hudstartcostlabel": "You have 0× Gold Key. Costs 1× Gold Key.",
+        "canstart": false,
         "startlabel": "Start round",
         "showgradingmethodinfo": true,
         "gradingmethodinfo": "Grading method: Average grade"
@@ -40,5 +41,8 @@
     {{#showgradingmethodinfo}}
         <p class="text-muted small">{{gradingmethodinfo}}</p>
     {{/showgradingmethodinfo}}
-    <button type="button" id="playerwords-start-round-button" class="btn btn-primary btn-lg">{{startlabel}}</button>
+    <button type="button"
+            id="playerwords-start-round-button"
+            class="btn btn-primary btn-lg"
+            {{^canstart}}disabled{{/canstart}}>{{startlabel}}</button>
 </div>

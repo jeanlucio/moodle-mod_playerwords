@@ -497,7 +497,8 @@ final class round_presenter_test extends \advanced_testcase {
 
     /**
      * The lobby shows a PlayerHUD cost hint when a valid item is configured and the
-     * round has not started yet.
+     * round has not started yet, and disables starting when the user's balance is
+     * short of the required quantity.
      *
      * @covers \mod_playerwords\local\round_presenter::build_lobby_context
      * @return void
@@ -506,11 +507,39 @@ final class round_presenter_test extends \advanced_testcase {
         $itemid = $this->make_hud_item('Chave de Ouro');
         $instance = $this->make_instance(['hud_round_cost_item' => $itemid, 'hud_round_cost_qty' => 2]);
         $state = $this->make_state();
+        $user = $this->getDataGenerator()->create_user();
 
-        $context = round_presenter::build_lobby_context($instance, $state);
+        $context = round_presenter::build_lobby_context($instance, $state, $user->id);
 
         $this->assertTrue($context['hudstartcost']);
         $this->assertStringContainsString('Chave de Ouro', $context['hudstartcostlabel']);
+        $this->assertFalse($context['canstart']);
+    }
+
+    /**
+     * The lobby allows starting once the user's balance meets the required quantity.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_lobby_context
+     * @return void
+     */
+    public function test_build_lobby_context_canstart_true_with_enough_balance(): void {
+        global $DB;
+
+        $itemid = $this->make_hud_item('Chave de Ouro');
+        $instance = $this->make_instance(['hud_round_cost_item' => $itemid, 'hud_round_cost_qty' => 1]);
+        $state = $this->make_state();
+        $user = $this->getDataGenerator()->create_user();
+        $DB->insert_record('block_playerhud_inventory', (object)[
+            'userid'      => $user->id,
+            'itemid'      => $itemid,
+            'dropid'      => 0,
+            'source'      => 'manual',
+            'timecreated' => time(),
+        ]);
+
+        $context = round_presenter::build_lobby_context($instance, $state, $user->id);
+
+        $this->assertTrue($context['canstart']);
     }
 
     /**
@@ -524,11 +553,13 @@ final class round_presenter_test extends \advanced_testcase {
         $itemid = $this->make_hud_item('Chave de Ouro');
         $instance = $this->make_instance(['hud_round_cost_item' => $itemid]);
         $state = $this->make_state(['roundstarted' => true]);
+        $user = $this->getDataGenerator()->create_user();
 
-        $context = round_presenter::build_lobby_context($instance, $state);
+        $context = round_presenter::build_lobby_context($instance, $state, $user->id);
 
         $this->assertFalse($context['hudstartcost']);
         $this->assertSame('', $context['hudstartcostlabel']);
+        $this->assertTrue($context['canstart']);
     }
 
     /**
@@ -541,9 +572,10 @@ final class round_presenter_test extends \advanced_testcase {
         $withtimer = $this->make_instance(['timer_minutes' => 3]);
         $withouttimer = $this->make_instance();
         $state = $this->make_state();
+        $user = $this->getDataGenerator()->create_user();
 
-        $enabledctx = round_presenter::build_lobby_context($withtimer, $state);
-        $disabledctx = round_presenter::build_lobby_context($withouttimer, $state);
+        $enabledctx = round_presenter::build_lobby_context($withtimer, $state, $user->id);
+        $disabledctx = round_presenter::build_lobby_context($withouttimer, $state, $user->id);
 
         $this->assertTrue($enabledctx['timerenabled']);
         $this->assertNotSame('', $enabledctx['lobbytimerinfo']);
@@ -568,8 +600,9 @@ final class round_presenter_test extends \advanced_testcase {
             'grademethod' => PLAYERWORDS_GRADE_AVERAGE,
         ]);
         $state = $this->make_state();
+        $user = $this->getDataGenerator()->create_user();
 
-        $context = round_presenter::build_lobby_context($instance, $state);
+        $context = round_presenter::build_lobby_context($instance, $state, $user->id);
 
         $this->assertTrue($context['showgradingmethodinfo']);
         $this->assertStringContainsString('Average grade', $context['gradingmethodinfo']);
@@ -585,8 +618,9 @@ final class round_presenter_test extends \advanced_testcase {
     public function test_build_lobby_context_hides_grading_method_info_for_single_round(): void {
         $instance = $this->make_instance(['grade' => 100, 'max_rounds' => 1]);
         $state = $this->make_state();
+        $user = $this->getDataGenerator()->create_user();
 
-        $context = round_presenter::build_lobby_context($instance, $state);
+        $context = round_presenter::build_lobby_context($instance, $state, $user->id);
 
         $this->assertFalse($context['showgradingmethodinfo']);
         $this->assertSame('', $context['gradingmethodinfo']);
@@ -601,15 +635,16 @@ final class round_presenter_test extends \advanced_testcase {
     public function test_build_lobby_context_hides_grading_method_info_when_ungraded(): void {
         $instance = $this->make_instance(['grade' => 0]);
         $state = $this->make_state();
+        $user = $this->getDataGenerator()->create_user();
 
-        $context = round_presenter::build_lobby_context($instance, $state);
+        $context = round_presenter::build_lobby_context($instance, $state, $user->id);
 
         $this->assertFalse($context['showgradingmethodinfo']);
     }
 
     /**
-     * The round panel's hint button label includes the PlayerHUD cost while the hint
-     * has not been revealed yet.
+     * The round panel shows the PlayerHUD balance/cost line, and disables the hint
+     * button, while the user's balance is short of the required quantity.
      *
      * @covers \mod_playerwords\local\round_presenter::build_round_panel_context
      * @return void
@@ -623,12 +658,41 @@ final class round_presenter_test extends \advanced_testcase {
 
         $context = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
 
-        $this->assertStringContainsString('Lupa', $context['hintbuttonlabel']);
+        $this->assertTrue($context['hudhintcost']);
+        $this->assertStringContainsString('Lupa', $context['hudhintcostlabel']);
+        $this->assertFalse($context['canaffordhint']);
     }
 
     /**
-     * The round panel's hint button label omits the PlayerHUD cost once the hint has
-     * already been revealed — the cost is never charged twice.
+     * The hint button is enabled once the user's balance meets the required quantity.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_panel_context
+     * @return void
+     */
+    public function test_build_round_panel_context_canaffordhint_true_with_enough_balance(): void {
+        global $DB;
+
+        $itemid = $this->make_hud_item('Lupa');
+        $instance = $this->make_instance(['hud_hint_cost_item' => $itemid, 'hud_hint_cost_qty' => 1]);
+        $cm = (object)['id' => 5];
+        $user = $this->getDataGenerator()->create_user();
+        $DB->insert_record('block_playerhud_inventory', (object)[
+            'userid'      => $user->id,
+            'itemid'      => $itemid,
+            'dropid'      => 0,
+            'source'      => 'manual',
+            'timecreated' => time(),
+        ]);
+        $state = $this->make_state(['hint' => 'dica', 'hintrevealed' => false]);
+
+        $context = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
+
+        $this->assertTrue($context['canaffordhint']);
+    }
+
+    /**
+     * The round panel omits the PlayerHUD cost line once the hint has already been
+     * revealed — the cost is never charged twice.
      *
      * @covers \mod_playerwords\local\round_presenter::build_round_panel_context
      * @return void
@@ -642,7 +706,8 @@ final class round_presenter_test extends \advanced_testcase {
 
         $context = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
 
-        $this->assertStringNotContainsString('Lupa', $context['hintbuttonlabel']);
+        $this->assertFalse($context['hudhintcost']);
+        $this->assertSame('', $context['hudhintcostlabel']);
     }
 
     /**

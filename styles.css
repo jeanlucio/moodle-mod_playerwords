@@ -123,6 +123,17 @@
     outline-offset: 2px;
 }
 
+.path-mod-playerwords .pw-hint-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.path-mod-playerwords .pw-hint-btn:disabled:hover {
+    background-color: transparent;
+    border-color: var(--gray-300, #dee2e6);
+    outline: none;
+}
+
 .path-mod-playerwords .mod-playerwords-game > p {
     text-align: center;
 }

@@ -88,6 +88,28 @@ class hud_service {
     }
 
     /**
+     * Returns how many available (not consumed or revoked) units of an item a user
+     * currently holds, using the same eligibility filter as consume_items().
+     *
+     * @param int $userid User ID.
+     * @param int $itemid Item ID.
+     * @return int
+     */
+    public static function get_available_quantity(int $userid, int $itemid): int {
+        global $DB;
+
+        if ($itemid <= 0) {
+            return 0;
+        }
+
+        return $DB->count_records_select(
+            'block_playerhud_inventory',
+            "userid = :userid AND itemid = :itemid AND source NOT IN ('revoked', 'consumed')",
+            ['userid' => $userid, 'itemid' => $itemid]
+        );
+    }
+
+    /**
      * Returns the formatted display name of an item, or empty string if not found.
      *
      * @param int $itemid Item ID.

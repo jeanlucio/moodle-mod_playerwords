@@ -119,7 +119,7 @@ class view_page_service {
         $showlobby = empty($state['finished']) && empty($state['roundstarted']) && ($targetword !== '');
 
         $inner = $showlobby
-            ? round_presenter::build_lobby_context($instance, $state)
+            ? round_presenter::build_lobby_context($instance, $state, $userid)
             : round_presenter::build_round_panel_context($instance, $cm, $state, $targetword, $userid);
 
         return [

@@ -137,6 +137,9 @@ class start_round extends external_api {
             'showhint' => new external_value(PARAM_BOOL, 'Whether the hint is shown'),
             'canhint' => new external_value(PARAM_BOOL, 'Whether the hint can be revealed'),
             'hintbuttonlabel' => new external_value(PARAM_TEXT, 'Hint button label'),
+            'hudhintcost' => new external_value(PARAM_BOOL, 'Whether revealing the hint costs a PlayerHUD item'),
+            'hudhintcostlabel' => new external_value(PARAM_TEXT, 'PlayerHUD hint cost label'),
+            'canaffordhint' => new external_value(PARAM_BOOL, 'Whether the user can afford to reveal the hint'),
             'rows' => new external_multiple_structure(
                 new external_single_structure([
                     'letters' => new external_multiple_structure(

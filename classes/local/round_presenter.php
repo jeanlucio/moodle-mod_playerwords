@@ -352,25 +352,62 @@ class round_presenter {
     }
 
     /**
+     * Builds the "X of Y× item" balance/cost text for a PlayerHUD-gated action, and
+     * whether the user currently has enough to afford it. Shared by the lobby's
+     * start-round cost and the round panel's hint cost — same shape, same decision
+     * (own balance vs configured requirement), different action.
+     *
+     * @param int $itemid PlayerHUD item id, 0 disables the check.
+     * @param int $requiredqty Quantity required by the activity's configuration.
+     * @param int $userid Current user id.
+     * @return array {applies: bool, label: string, canafford: bool}
+     */
+    private static function build_hud_cost_info(int $itemid, int $requiredqty, int $userid): array {
+        $blank = ['applies' => false, 'label' => '', 'canafford' => true];
+
+        if ($itemid <= 0) {
+            return $blank;
+        }
+
+        $itemname = hud_service::get_item_name($itemid);
+        if ($itemname === '') {
+            return $blank;
+        }
+
+        $requiredqty = max(1, $requiredqty);
+        $availableqty = hud_service::get_available_quantity($userid, $itemid);
+
+        $label = get_string('hud_balancecost', 'mod_playerwords', (object)[
+            'available' => $availableqty,
+            'required'  => $requiredqty,
+            'item'      => $itemname,
+        ]);
+
+        return [
+            'applies' => true,
+            'label' => $label,
+            'canafford' => ($availableqty >= $requiredqty),
+        ];
+    }
+
+    /**
      * Builds the pre-round lobby context.
      *
      * @param \stdClass $instance Activity instance record.
      * @param array $state Session state.
+     * @param int $userid Current user id.
      * @return array
      */
-    public static function build_lobby_context(\stdClass $instance, array $state): array {
+    public static function build_lobby_context(\stdClass $instance, array $state, int $userid): array {
         $hudstartcost = false;
         $hudstartcostlabel = '';
+        $canstart = true;
         $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
         if ($roundcostitem > 0 && empty($state['finished']) && empty($state['roundstarted'])) {
-            $itemname = hud_service::get_item_name($roundcostitem);
-            if ($itemname !== '') {
-                $hudstartcost = true;
-                $hudstartcostlabel = get_string('hud_costlabel', 'mod_playerwords', [
-                    'qty'  => max(1, (int)($instance->hud_round_cost_qty ?? 1)),
-                    'item' => $itemname,
-                ]);
-            }
+            $info = self::build_hud_cost_info($roundcostitem, (int)($instance->hud_round_cost_qty ?? 1), $userid);
+            $hudstartcost = $info['applies'];
+            $hudstartcostlabel = $info['label'];
+            $canstart = $info['canafford'];
         }
 
         return [
@@ -382,6 +419,7 @@ class round_presenter {
             ),
             'hudstartcost' => $hudstartcost,
             'hudstartcostlabel' => $hudstartcostlabel,
+            'canstart' => $canstart,
             'startlabel' => get_string('startround', 'mod_playerwords'),
         ] + self::build_grading_method_info($instance);
     }
@@ -406,16 +444,15 @@ class round_presenter {
     ): array {
         $roundfinished = !empty($state['finished']);
 
-        $hintbuttonlabel = get_string('hintbuttonlabel', 'mod_playerwords');
+        $hudhintcost = false;
+        $hudhintcostlabel = '';
+        $canaffordhint = true;
         $hintcostitem = (int)($instance->hud_hint_cost_item ?? 0);
         if ($hintcostitem > 0 && !empty($state['hint']) && empty($state['hintrevealed'])) {
-            $itemname = hud_service::get_item_name($hintcostitem);
-            if ($itemname !== '') {
-                $hintbuttonlabel .= ' (' . get_string('hud_costlabel', 'mod_playerwords', [
-                    'qty'  => max(1, (int)($instance->hud_hint_cost_qty ?? 1)),
-                    'item' => $itemname,
-                ]) . ')';
-            }
+            $info = self::build_hud_cost_info($hintcostitem, (int)($instance->hud_hint_cost_qty ?? 1), $userid);
+            $hudhintcost = $info['applies'];
+            $hudhintcostlabel = $info['label'];
+            $canaffordhint = $info['canafford'];
         }
 
         $timeleft = 0;
@@ -435,7 +472,10 @@ class round_presenter {
             'hintvalue' => !empty($state['hintrevealed']) ? ($state['hint'] ?? '') : '',
             'showhint' => !empty($state['hintrevealed']) && !empty($state['hint']),
             'canhint' => !empty($state['hint']) && empty($state['hintrevealed']) && empty($state['finished']),
-            'hintbuttonlabel' => $hintbuttonlabel,
+            'hintbuttonlabel' => get_string('hintbuttonlabel', 'mod_playerwords'),
+            'hudhintcost' => $hudhintcost,
+            'hudhintcostlabel' => $hudhintcostlabel,
+            'canaffordhint' => $canaffordhint,
             'rows' => self::build_grid_rows($state, $targetword, (int)$instance->max_attempts),
             'roundfinished' => $roundfinished,
             'guesslabel' => get_string('guesslabel', 'mod_playerwords'),

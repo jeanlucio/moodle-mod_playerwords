@@ -74,7 +74,11 @@ class new_round extends external_api {
                 'hastargetword'    => false,
                 'notification'     => $restrictionnotice,
                 'notificationtype' => 'warning',
-                'lobby'            => round_presenter::build_lobby_context($instance, round_service::load_state($cmid, $userid)),
+                'lobby'            => round_presenter::build_lobby_context(
+                    $instance,
+                    round_service::load_state($cmid, $userid),
+                    $userid
+                ),
             ];
         }
 
@@ -86,7 +90,7 @@ class new_round extends external_api {
             'hastargetword'    => ($targetword !== ''),
             'notification'     => '',
             'notificationtype' => '',
-            'lobby'            => round_presenter::build_lobby_context($instance, $state),
+            'lobby'            => round_presenter::build_lobby_context($instance, $state, $userid),
         ];
     }
 
@@ -110,6 +114,7 @@ class new_round extends external_api {
                 'lobbytimerinfo'    => new external_value(PARAM_TEXT, 'Timer info message for the lobby'),
                 'hudstartcost'      => new external_value(PARAM_BOOL, 'Whether starting costs a PlayerHUD item'),
                 'hudstartcostlabel' => new external_value(PARAM_TEXT, 'PlayerHUD cost label'),
+                'canstart'          => new external_value(PARAM_BOOL, 'Whether the user can afford to start'),
                 'startlabel'        => new external_value(PARAM_TEXT, 'Start-round button label'),
                 'showgradingmethodinfo' => new external_value(
                     PARAM_BOOL,

@@ -47,16 +47,23 @@
         "keyboardlabel": "On-screen keyboard",
         "keyboardenterlabel": "Enter",
         "keyboardbackspacelabel": "Backspace",
-        "showcedilla": true
+        "showcedilla": true,
+        "hudhintcost": true,
+        "hudhintcostlabel": "You have 0× Magnifying Glass. Costs 1× Magnifying Glass.",
+        "canaffordhint": false
     }
 }}
 <div id="playerwords-round-panel">
     {{#canhint}}
         <div class="text-center mb-3">
+            {{#hudhintcost}}
+                <p class="mb-1">{{hudhintcostlabel}}</p>
+            {{/hudhintcost}}
             <button type="button"
                     id="playerwords-hint-button"
                     class="pw-hint-btn"
-                    data-hint-label="{{hintlabel}}">
+                    data-hint-label="{{hintlabel}}"
+                    {{^canaffordhint}}disabled{{/canaffordhint}}>
                 <i class="fa fa-lightbulb" aria-hidden="true"></i> {{hintbuttonlabel}}
             </button>
         </div>
