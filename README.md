@@ -52,6 +52,8 @@ The activity integrates with the course **Glossary** (words and definitions are 
 * ✅ **Custom Completion Rule:** Minimum number of attempts completed, evaluated and applied immediately after each round.
 * 🔄 **Course Reset Support:** "Reset course" clears student attempts and resets grades for the activity, scoped to the target course only.
 * 🏆 **Ranking Page:** Leaderboard scoped to the activity, with outsider row for students outside the top positions, respecting `SEPARATEGROUPS`.
+* 📋 **Attempt History:** Students can review every finished round of their own — word, attempts used, time, score, and date — plus their currently computed grade, at any time via the toolbar.
+* ❓ **In-Game Help:** A dedicated help page explains the letter-feedback colours, attempts, hints, timer, and the activity's grading method.
 * ♿ **Accessibility:** WCAG AA contrast on all grid states; non-colour indicators (✓ correct, ~ present); `aria-label` on every cell; a live region announces state changes for screen readers.
 * ⚡ **AJAX-Powered:** Every round transition (guess, hint, forfeit, timeout, start, new round) happens without a page reload.
 * 🎮 **PlayerHUD Integration (Optional):** Require inventory items to start a round or to reveal a hint, with atomic FIFO consumption.
@@ -137,7 +139,7 @@ See the author's [Moodle Plugins Directory profile](https://moodle.org/plugins/b
    * Word sources (manual, Glossary, AI) and Glossary source (optional)
    * PlayerHUD item costs (optional, when PlayerHUD block is present)
 3. Open the **Manage words** page to add, generate with AI, approve, edit, or delete words.
-4. Students play directly from the activity page — guessing, revealing hints, and forfeiting rounds, with no page reload.
+4. Students play directly from the activity page — guessing, revealing hints, and forfeiting rounds, with no page reload. The page's own toolbar gives access to the rules (help), attempt history, and the ranking.
 5. Grades and ranking update automatically after each round.
 
 [⬆️ Back to index](#toc-en)
@@ -153,26 +155,27 @@ PlayerWords ships with a PHPUnit test suite covering business logic, repository 
 | Test file | Cases | What is covered |
 |-----------|------:|----------------|
 | `backup_restore_test.php` | 1 | Duplicating an activity copies its words, renames the copy, rebuilds the course cache, and does not create a duplicate grade item — regression guard for a missing `prepare_activity_structure()` call |
-| `cross_instance_security_test.php` | 3 | Session state, word lookups by id, and attempt records never leak between two different activity instances, even for the same student in the same course |
+| `cross_instance_security_test.php` | 4 | Session state, word lookups by id, attempt records, and the "my attempts" history query never leak between two different activity instances, even for the same student in the same course |
 | `lib_reset_userdata_test.php` | 4 | Course reset deletes attempts and resets grades only when the checkbox is enabled, only for the target course, and the form default enables it |
 | `completion/custom_completion_test.php` | 7 | Custom completion rule ("require attempts"): incomplete below threshold, complete at threshold, rule not reported as available when disabled, defined rule names, rule description includes the required count, display sort order, a still-pending reservation (round started but not finished) is not counted towards the threshold |
 | `privacy/provider_test.php` | 12 | Metadata declaration; contexts by attempts; contexts by words added; list users in context (and no-op for a non-module context); export user data (and no-op for an empty contextlist); delete user data across a single and across multiple contexts; delete all users' data in a context (leaving another activity untouched, and no-op for a non-module context) |
-| **Subtotal** | **27** | |
+| **Subtotal** | **28** | |
 
 #### Local Business-Logic Tests (`tests/local/`)
 
 | Test file | Cases | What is covered |
 |-----------|------:|----------------|
 | `ai_word_generator_test.php` | 12 | AI response parsing (`words`/legacy `concepts` wrappers, bare list, markdown code fence stripped, malformed/non-array JSON, hint falls back to `definition`, non-array entries skipped) and untrusted-input term validation (single alphabetic word accepted; empty, multi-word, and non-alphabetic terms rejected) — all via reflection, no real AI call |
+| `attempts_history_service_test.php` | 7 | Own attempt history and current grade: empty with no finished rounds; excludes a still-pending reservation; rows shown most-recent-first while the grade calculation itself uses ascending order; the computed grade matches `playerwords_calculate_user_grade()` for the configured method; grade summary hidden for an ungraded activity; word text falls back from concept to the raw word; time used formatted as m:ss |
 | `gameplay_service_test.php` | 12 | Letter feedback algorithm across 9 guess/target combinations (correct, absent, present, duplicate letters, pool exhaustion); score calculation for win, loss, and decimal grades |
 | `hud_service_test.php` | 10 | PlayerHUD block lookup across courses; item name resolution; item list retrieval; consume items (insufficient funds, success, FIFO order, zero-quantity short-circuit) |
 | `ranking_service_test.php` | 5 | Empty ranking; score-descending ordering; top-5 truncation with an outsider row for a lower-ranked current user; `SEPARATEGROUPS` filters to the student's own group; a still-pending reservation (round in progress or abandoned without finishing) is excluded from the ranking |
-| `round_presenter_test.php` | 26 | Grid row rendering; cooldown text; feedback messages (forfeited/timed out/lost/won, varying by attempts used); ranking context; round result context (blank until finished, reveals on finish, cooldown reflects a later settings change); lobby PlayerHUD cost hint (shown/hidden by round state), lobby timer info; round panel hint-button PlayerHUD cost (shown/hidden by reveal state), timer stays at zero before the round starts; grade-so-far summary (absent before finished, absent when ungraded, shows method and computed grade once finished, ignores a still-pending attempt); lobby grading-method info line (shown when relevant, hidden for a single-round activity, hidden when ungraded) |
+| `round_presenter_test.php` | 27 | Grid row rendering; cooldown text; feedback messages (forfeited/timed out/lost/won, varying by attempts used); ranking context; round result context (blank until finished, reveals on finish, cooldown reflects a later settings change); lobby PlayerHUD cost hint (shown/hidden by round state), lobby timer info; round panel hint-button PlayerHUD cost (shown/hidden by reveal state), timer stays at zero before the round starts; grade-so-far summary (absent before finished, absent when ungraded, shows method and computed grade once finished, ignores a still-pending attempt); lobby grading-method info line (shown when relevant, hidden for a single-round activity, hidden when ungraded); the keyboard's Ç key only appears once the activity's own word pool needs it |
 | `round_service_test.php` | 23 | Round state transitions: word picked and `round_started` fired; guess submission (wrong, correct, out of attempts, after finish, length mismatch); forfeit; timeout (finishes once the deadline has passed, rejected before the deadline, rejected when the timer is disabled); new round; restriction notice (max rounds reached, unrestricted); `count_rounds_played` scoped to instance and user; cooldown computation (disabled, no attempts yet, expired, reflects a later settings change); recovers by picking a fresh word after the previous one was removed mid-round; `start_round` reserves an attempt row; `finish_round` completes the reservation instead of duplicating it; an abandoned round still counts towards `max_rounds`; the stale reservation is discarded when the word is removed mid-round |
-| `view_page_service_test.php` | 4 | Page-assembly branches: fresh lobby, picked word persists across calls, finished round computes a real cooldown, restriction notice shown when the round limit is reached |
+| `view_page_service_test.php` | 6 | Page-assembly branches: fresh lobby, picked word persists across calls, finished round computes a real cooldown, restriction notice shown when the round limit is reached; the toolbar's help/attempt-history URLs are always present; the forfeit action is shown only during an active round |
 | `word_normalizer_test.php` | 8 | Accent-insensitive normalisation across 8 diacritic combinations |
-| `words_repository_test.php` | 31 | Word picking (empty pool, unapproved/too-short/too-long/non-letter exclusion, random mode, shared-sequence determinism and cycling, avoids the excluded word when an alternative exists, allows it back in when it is the only candidate); `get_last_played_word_id` (0 with no finished rounds, ignores a pending reservation); manual and AI word insertion; word lookup, update and delete scoped to the owning instance; bulk delete and approve; recent-words listing with glossary name join; glossary sync (multi-word concept splitting, configurable stopword filtering, hint update on resync without duplicating, orphan cleanup when an entry disappears, `glossaryid = 0` covering every course glossary) |
-| **Subtotal** | **131** | |
+| `words_repository_test.php` | 35 | Word picking (empty pool, unapproved/too-short/too-long/non-letter exclusion, random mode, shared-sequence determinism and cycling, avoids the excluded word when an alternative exists, allows it back in when it is the only candidate); `get_last_played_word_id` (0 with no finished rounds, ignores a pending reservation); manual and AI word insertion; word lookup, update and delete scoped to the owning instance; bulk delete and approve; recent-words listing with glossary name join; glossary sync (multi-word concept splitting, configurable stopword filtering, hint update on resync without duplicating, orphan cleanup when an entry disappears, `glossaryid = 0` covering every course glossary); the on-screen keyboard's Ç key is only offered when an approved word actually contains one, scoped to its own activity and ignoring unapproved words |
+| **Subtotal** | **145** | |
 
 #### Web Services Tests (`tests/external/`)
 
@@ -185,7 +188,7 @@ PlayerWords ships with a PHPUnit test suite covering business logic, repository 
 | `submit_guess_test.php` | 6 | A wrong guess never reveals the word; a correct guess reveals it only once finished; a losing guess also reveals it; the `mod/playerwords:view` capability is required; `timeleft` reflects seconds remaining while in progress; `timeleft` is frozen at the moment the round finished, not the wall clock |
 | **Subtotal** | **22** | |
 
-| **Grand Total** | **180** | |
+| **Grand Total** | **195** | |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords
@@ -290,6 +293,8 @@ A atividade integra-se com o **Glossário** do curso (palavras e definições s�
 * ✅ **Regra de conclusão personalizada:** Número mínimo de tentativas realizadas, avaliada e aplicada imediatamente após cada rodada.
 * 🔄 **Suporte a "Redefinir curso":** Limpa as tentativas dos estudantes e reseta as notas da atividade, restrito ao curso alvo.
 * 🏆 **Página de ranking:** Classificação por atividade, com linha de "outsider" para estudantes fora das primeiras posições, respeitando `SEPARATEGROUPS`.
+* 📋 **Registro de tentativas:** O estudante pode conferir cada rodada já concluída — palavra, tentativas usadas, tempo, nota e data — além da sua nota atual computada, a qualquer momento pelo toolbar.
+* ❓ **Ajuda no jogo:** Uma página de ajuda dedicada explica as cores do feedback das letras, tentativas, dicas, temporizador e o método de avaliação da atividade.
 * ♿ **Acessibilidade:** Contraste WCAG AA em todos os estados da grade; indicadores não visuais (✓ correto, ~ presente); `aria-label` em cada célula; região viva anuncia mudanças de estado para leitor de tela.
 * ⚡ **Powered por AJAX:** Toda transição de rodada (chute, dica, desistência, timeout, iniciar, nova rodada) acontece sem recarregar a página.
 * 🎮 **Integração com PlayerHUD (Opcional):** Exige itens do inventário para iniciar uma rodada ou revelar a dica, com consumo atômico em ordem FIFO.
@@ -375,7 +380,7 @@ Veja o [perfil do autor no Moodle Plugins Directory](https://moodle.org/plugins/
    - Fontes de palavras (manual, Glossário, IA) e fonte de glossário (opcional)
    - Custos em itens do PlayerHUD (opcional, quando o bloco PlayerHUD está presente)
 3. Acesse **Gerenciar palavras** para adicionar, gerar com IA, aprovar, editar ou excluir palavras.
-4. Os estudantes jogam diretamente na página da atividade — chutando, revelando dicas e desistindo de rodadas, sem recarregar a página.
+4. Os estudantes jogam diretamente na página da atividade — chutando, revelando dicas e desistindo de rodadas, sem recarregar a página. O toolbar da própria página dá acesso às regras (ajuda), ao registro de tentativas e ao ranking.
 5. Notas e ranking são atualizados automaticamente após cada rodada.
 
 [⬆️ Voltar ao índice](#toc-pt)
@@ -391,26 +396,27 @@ O PlayerWords inclui uma suíte PHPUnit cobrindo lógica de negócio, consultas 
 | Arquivo de teste | Casos | O que é coberto |
 |-----------------|------:|----------------|
 | `backup_restore_test.php` | 1 | Duplicar uma atividade copia suas palavras, renomeia a cópia, reconstrói o cache do curso, e não cria um item de nota duplicado — teste de regressão para a ausência de `prepare_activity_structure()` |
-| `cross_instance_security_test.php` | 3 | Estado de sessão, busca de palavra por id e registros de tentativa nunca vazam entre duas instâncias diferentes da atividade, mesmo para o mesmo estudante no mesmo curso |
+| `cross_instance_security_test.php` | 4 | Estado de sessão, busca de palavra por id, registros de tentativa e a consulta do "registro de tentativas" nunca vazam entre duas instâncias diferentes da atividade, mesmo para o mesmo estudante no mesmo curso |
 | `lib_reset_userdata_test.php` | 4 | "Redefinir curso" apaga tentativas e reseta notas só quando a opção está marcada, só para o curso alvo, e o padrão do formulário vem marcado |
 | `completion/custom_completion_test.php` | 7 | Regra de conclusão customizada ("exigir tentativas"): incompleta abaixo do limite, completa no limite, regra não reportada como disponível quando desabilitada, nomes de regra definidos, descrição inclui a quantidade exigida, ordem de exibição, uma reserva ainda pendente (rodada iniciada mas não terminada) não conta para o limite |
 | `privacy/provider_test.php` | 12 | Declaração de metadados; contextos por tentativas; contextos por palavras adicionadas; listar usuários no contexto (e no-op para contexto que não é de módulo); exportar dados do usuário (e no-op para lista de contextos vazia); excluir dados do usuário em um único e em múltiplos contextos; excluir dados de todos os usuários num contexto (sem afetar outra atividade, e no-op para contexto que não é de módulo) |
-| **Subtotal** | **27** | |
+| **Subtotal** | **28** | |
 
 #### Testes de Lógica de Negócio (`tests/local/`)
 
 | Arquivo de teste | Casos | O que é coberto |
 |-----------------|------:|----------------|
 | `ai_word_generator_test.php` | 12 | Parsing da resposta de IA (wrapper `words`/legado `concepts`, lista nua, cerca de código markdown removida, JSON malformado/não-array, dica cai para `definition`, entradas não-array ignoradas) e validação de termo como entrada não confiável (palavra única alfabética aceita; termo vazio, multi-palavra e não-alfabético rejeitados) — tudo via reflection, sem chamada real de IA |
+| `attempts_history_service_test.php` | 7 | Registro de tentativas e nota atual do próprio estudante: vazio sem rodadas terminadas; exclui uma reserva ainda pendente; linhas exibidas da mais recente para a mais antiga, enquanto o cálculo da nota usa ordem crescente; a nota computada bate com `playerwords_calculate_user_grade()` para o método configurado; resumo de nota oculto em atividade não avaliada; texto da palavra cai do conceito para a palavra crua; tempo usado formatado como m:ss |
 | `gameplay_service_test.php` | 12 | Algoritmo de feedback por letra em 9 combinações de chute/alvo (correto, ausente, presente, letras duplicadas, esgotamento do pool); cálculo de nota para vitória, derrota e notas decimais |
 | `hud_service_test.php` | 10 | Localização do bloco PlayerHUD entre cursos; resolução de nome de item; listagem de itens; consumo de itens (fundos insuficientes, sucesso, ordem FIFO, curto-circuito com quantidade zero) |
 | `ranking_service_test.php` | 5 | Ranking vazio; ordenação decrescente por pontuação; truncamento top-5 com linha de "outsider" para o usuário atual fora do top; `SEPARATEGROUPS` filtra para o grupo do próprio estudante; uma reserva ainda pendente (rodada em andamento ou abandonada sem terminar) é excluída do ranking |
-| `round_presenter_test.php` | 26 | Renderização das linhas da grade; texto de cooldown; mensagens de feedback (desistiu/tempo esgotado/perdeu/venceu, variando pelas tentativas usadas); contexto de ranking; contexto de resultado da rodada (em branco até terminar, revela ao terminar, cooldown reflete mudança posterior de configuração); custo em item do PlayerHUD no lobby (exibido/oculto pelo estado da rodada), informação de temporizador no lobby; custo em item do PlayerHUD no botão de dica do painel (exibido/oculto pelo estado de revelação), temporizador permanece zerado antes da rodada iniciar; resumo de nota até agora (ausente antes de terminar, ausente quando não avaliada, mostra método e nota computada ao terminar, ignora uma tentativa ainda pendente); linha de informação do método de avaliação no lobby (exibida quando relevante, oculta em atividade de rodada única, oculta quando não avaliada) |
+| `round_presenter_test.php` | 27 | Renderização das linhas da grade; texto de cooldown; mensagens de feedback (desistiu/tempo esgotado/perdeu/venceu, variando pelas tentativas usadas); contexto de ranking; contexto de resultado da rodada (em branco até terminar, revela ao terminar, cooldown reflete mudança posterior de configuração); custo em item do PlayerHUD no lobby (exibido/oculto pelo estado da rodada), informação de temporizador no lobby; custo em item do PlayerHUD no botão de dica do painel (exibido/oculto pelo estado de revelação), temporizador permanece zerado antes da rodada iniciar; resumo de nota até agora (ausente antes de terminar, ausente quando não avaliada, mostra método e nota computada ao terminar, ignora uma tentativa ainda pendente); linha de informação do método de avaliação no lobby (exibida quando relevante, oculta em atividade de rodada única, oculta quando não avaliada); a tecla Ç do teclado só aparece quando o próprio banco de palavras da atividade precisa dela |
 | `round_service_test.php` | 23 | Transições de estado da rodada: palavra sorteada e `round_started` disparado; envio de chute (errado, correto, sem tentativas, após terminar, tamanho incompatível); desistência; timeout (termina após o prazo passar, rejeitado antes do prazo, rejeitado quando o temporizador está desabilitado); nova rodada; aviso de restrição (limite de rodadas atingido, sem restrição); `count_rounds_played` restrito à instância e ao usuário; cálculo de cooldown (desabilitado, sem tentativas ainda, expirado, reflete mudança posterior de configuração); recupera sorteando palavra nova após a anterior ser removida no meio da rodada; `start_round` reserva uma linha de tentativa; `finish_round` completa a reserva em vez de duplicá-la; uma rodada abandonada continua contando para `max_rounds`; a reserva obsoleta é descartada quando a palavra é removida no meio da rodada |
-| `view_page_service_test.php` | 4 | Ramificações de montagem de página: lobby fresco, palavra sorteada persiste entre chamadas, rodada terminada calcula cooldown real, aviso de restrição exibido quando o limite de rodadas é atingido |
+| `view_page_service_test.php` | 6 | Ramificações de montagem de página: lobby fresco, palavra sorteada persiste entre chamadas, rodada terminada calcula cooldown real, aviso de restrição exibido quando o limite de rodadas é atingido; as URLs de ajuda/registro de tentativas do toolbar sempre estão presentes; a ação de desistir só aparece durante uma rodada ativa |
 | `word_normalizer_test.php` | 8 | Normalização sem acentuação em 8 combinações de diacríticos |
-| `words_repository_test.php` | 31 | Seleção de palavra (pool vazio, exclusão de não aprovados/muito curtos/muito longos/caracteres não-letra, modo aleatório, determinismo e ciclagem da sequência compartilhada, evita a palavra excluída quando há alternativa, permite-a de volta quando é a única candidata); `get_last_played_word_id` (0 sem rodadas terminadas, ignora uma reserva pendente); inserção de palavra manual e por IA; busca, atualização e exclusão de palavra restritas à instância dona; exclusão e aprovação em lote; listagem de palavras recentes com join do nome do glossário; sincronização de glossário (divisão de conceito multi-palavra, filtro de stopwords configuráveis, atualização de dica em re-sincronização sem duplicar, limpeza de órfãos quando uma entrada desaparece, modo `glossaryid = 0` cobrindo todos os glossários do curso) |
-| **Subtotal** | **131** | |
+| `words_repository_test.php` | 35 | Seleção de palavra (pool vazio, exclusão de não aprovados/muito curtos/muito longos/caracteres não-letra, modo aleatório, determinismo e ciclagem da sequência compartilhada, evita a palavra excluída quando há alternativa, permite-a de volta quando é a única candidata); `get_last_played_word_id` (0 sem rodadas terminadas, ignora uma reserva pendente); inserção de palavra manual e por IA; busca, atualização e exclusão de palavra restritas à instância dona; exclusão e aprovação em lote; listagem de palavras recentes com join do nome do glossário; sincronização de glossário (divisão de conceito multi-palavra, filtro de stopwords configuráveis, atualização de dica em re-sincronização sem duplicar, limpeza de órfãos quando uma entrada desaparece, modo `glossaryid = 0` cobrindo todos os glossários do curso); a tecla Ç do teclado virtual só é oferecida quando uma palavra aprovada realmente contém uma, restrito à própria atividade e ignorando palavras não aprovadas |
+| **Subtotal** | **145** | |
 
 #### Testes de Web Services (`tests/external/`)
 
@@ -423,7 +429,7 @@ O PlayerWords inclui uma suíte PHPUnit cobrindo lógica de negócio, consultas 
 | `submit_guess_test.php` | 6 | Um chute errado nunca revela a palavra; um chute correto revela só quando termina; um chute perdedor também revela; a capability `mod/playerwords:view` é exigida; `timeleft` reflete os segundos restantes durante a rodada; `timeleft` fica congelado no momento em que a rodada terminou, não no relógio real |
 | **Subtotal** | **22** | |
 
-| **Total Geral** | **180** | |
+| **Total Geral** | **195** | |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords
