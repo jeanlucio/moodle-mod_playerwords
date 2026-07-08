@@ -155,6 +155,46 @@ final class hud_service_test extends \advanced_testcase {
     // Tests that require block_playerhud tables.
 
     /**
+     * Tests that is_available_for_course is true once a block instance exists.
+     *
+     * @covers \mod_playerwords\local\hud_service::is_available_for_course
+     * @return void
+     */
+    public function test_is_available_for_course_true_with_block_instance(): void {
+        $this->skip_if_no_playerhud();
+        $course = $this->getDataGenerator()->create_course();
+        $this->make_block_instance($course);
+        $this->assertTrue(hud_service::is_available_for_course($course->id));
+    }
+
+    /**
+     * Tests that is_available_for_course is false when the course has no block instance,
+     * even though the block plugin itself is installed.
+     *
+     * @covers \mod_playerwords\local\hud_service::is_available_for_course
+     * @return void
+     */
+    public function test_is_available_for_course_false_without_block_instance(): void {
+        $this->skip_if_no_playerhud();
+        $course = $this->getDataGenerator()->create_course();
+        $this->assertFalse(hud_service::is_available_for_course($course->id));
+    }
+
+    /**
+     * Tests that is_available_for_course ignores a block instance living in another course.
+     *
+     * @covers \mod_playerwords\local\hud_service::is_available_for_course
+     * @return void
+     */
+    public function test_is_available_for_course_ignores_other_course(): void {
+        $this->skip_if_no_playerhud();
+        $course1 = $this->getDataGenerator()->create_course();
+        $course2 = $this->getDataGenerator()->create_course();
+        $this->make_block_instance($course1);
+        $this->assertFalse(hud_service::is_available_for_course($course2->id));
+    }
+
+    /**
      * Tests that get_item_name returns the item name formatted for display.
      *
      * @covers \mod_playerwords\local\hud_service::get_item_name
