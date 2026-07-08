@@ -60,6 +60,7 @@ final class lib_reset_userdata_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => 100,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
 
         $data = (object)[
@@ -94,6 +95,7 @@ final class lib_reset_userdata_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => 100,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
 
         $data = (object)['courseid' => $course->id];
@@ -127,6 +129,7 @@ final class lib_reset_userdata_test extends \advanced_testcase {
                 'completed'     => 1,
                 'score'         => 100,
                 'timecreated'   => time(),
+                'timefinished'  => time(),
             ]);
         }
 

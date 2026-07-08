@@ -84,6 +84,7 @@ class backup_playerwords_activity_structure_step extends backup_activity_structu
             'completed',
             'score',
             'timecreated',
+            'timefinished',
         ]);
 
         // Build the tree.

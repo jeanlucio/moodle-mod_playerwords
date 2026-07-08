@@ -69,6 +69,7 @@ final class ranking_service_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => $score,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
     }
 
@@ -86,6 +87,36 @@ final class ranking_service_test extends \advanced_testcase {
         $this->assertTrue($ranking['isempty']);
         $this->assertSame([], $ranking['rows']);
         $this->assertFalse($ranking['hasoutsider']);
+    }
+
+    /**
+     * A still-pending reservation (round in progress, or abandoned without ever
+     * finishing) is excluded from the ranking — it has no real outcome yet.
+     *
+     * @covers \mod_playerwords\local\ranking_service::get_ranking
+     * @return void
+     */
+    public function test_get_ranking_excludes_pending_attempts(): void {
+        global $DB;
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->add_attempt($user, 50);
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $this->instance->id,
+            'userid'        => $user->id,
+            'wordid'        => 1,
+            'attempts_used' => 0,
+            'time_used'     => 0,
+            'completed'     => 0,
+            'score'         => 0,
+            'timecreated'   => time(),
+            'timefinished'  => 0,
+        ]);
+
+        $ranking = ranking_service::get_ranking($this->instance, $this->cm, $user->id);
+
+        $this->assertCount(1, $ranking['rows']);
+        $this->assertSame(50, $ranking['rows'][0]['totalscore']);
     }
 
     /**

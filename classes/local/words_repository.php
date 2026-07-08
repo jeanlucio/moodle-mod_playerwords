@@ -112,11 +112,22 @@ class words_repository {
      * number: round N uses index (completedround + instanceid) % total, cycling
      * silently when the word list is exhausted.
      *
+     * In WORDMODE_RANDOM mode, $excludewordid (typically the student's most recently
+     * played word) is left out of the draw so the same word cannot appear twice in a
+     * row — unless it is the only candidate left, in which case it is allowed back in
+     * rather than blocking play, the same graceful fallback local_playergames' question
+     * loader uses when its "already seen" pool is exhausted.
+     *
      * @param \stdClass $instance Activity instance.
      * @param int $completedround Number of rounds the student has already completed.
+     * @param int $excludewordid Word id to avoid repeating immediately, 0 for none.
      * @return \stdClass|null
      */
-    public static function pick_round_word(\stdClass $instance, int $completedround = 0): ?\stdClass {
+    public static function pick_round_word(
+        \stdClass $instance,
+        int $completedround = 0,
+        int $excludewordid = 0
+    ): ?\stdClass {
         global $CFG;
         require_once($CFG->dirroot . '/mod/playerwords/lib.php');
 
@@ -136,8 +147,40 @@ class words_repository {
             return $candidates[$index];
         }
 
+        if ($excludewordid > 0 && count($candidates) > 1) {
+            $fresh = array_values(array_filter($candidates, fn($c) => (int)$c->id !== $excludewordid));
+            if ($fresh !== []) {
+                $candidates = $fresh;
+            }
+        }
+
         $index = random_int(0, count($candidates) - 1);
         return $candidates[$index];
+    }
+
+    /**
+     * Returns the word id from the student's most recently finished round, 0 if none.
+     *
+     * Only considers finished rounds (timefinished > 0) — a currently pending reservation
+     * is not "the last word they played", it is the word already sitting in their active
+     * session state, which pick_round_word() is never called for.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @param int $userid User id.
+     * @return int
+     */
+    public static function get_last_played_word_id(\stdClass $instance, int $userid): int {
+        global $DB;
+
+        $wordid = $DB->get_field_sql(
+            "SELECT wordid FROM {playerwords_attempts}"
+            . " WHERE playerwordsid = :pid AND userid = :uid AND timefinished > 0"
+            . " ORDER BY timefinished DESC",
+            ['pid' => $instance->id, 'uid' => $userid],
+            IGNORE_MULTIPLE
+        );
+
+        return $wordid ? (int)$wordid : 0;
     }
 
     /**

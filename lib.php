@@ -146,7 +146,7 @@ function playerwords_get_grademethod_options(): array {
  * Calculates a single user's final grade from their round attempts.
  *
  * @param stdClass $instance Activity instance.
- * @param array $attempts Attempt records for this user, ordered by timecreated ASC.
+ * @param array $attempts Finished attempt records for this user, ordered by timefinished ASC.
  * @return float
  */
 function playerwords_calculate_user_grade(stdClass $instance, array $attempts): float {
@@ -187,9 +187,13 @@ function playerwords_update_grades(stdClass $instance, int $userid = 0): void {
     global $CFG, $DB;
     require_once($CFG->libdir . '/gradelib.php');
 
-    $sql = "SELECT a.id, a.userid, a.score, a.timecreated
+    // The timefinished > 0 filter excludes rounds that are still an open reservation
+    // (either genuinely in progress right now, or abandoned without ever finishing) —
+    // neither has a real outcome yet, so counting either would incorrectly drag a
+    // "highest" or "average" grade toward a 0 the student never actually earned.
+    $sql = "SELECT a.id, a.userid, a.score, a.timefinished
               FROM {playerwords_attempts} a
-             WHERE a.playerwordsid = :instanceid";
+             WHERE a.playerwordsid = :instanceid AND a.timefinished > 0";
     $params = ['instanceid' => $instance->id];
 
     if ($userid > 0) {
@@ -197,7 +201,7 @@ function playerwords_update_grades(stdClass $instance, int $userid = 0): void {
         $params['userid'] = $userid;
     }
 
-    $sql .= ' ORDER BY a.timecreated ASC';
+    $sql .= ' ORDER BY a.timefinished ASC';
     $attempts = $DB->get_records_sql($sql, $params);
 
     if (empty($attempts)) {

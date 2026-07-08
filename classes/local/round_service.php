@@ -35,6 +35,13 @@ use core_text;
  */
 class round_service {
     /**
+     * Grace window, in seconds, allowed between the configured deadline and when a
+     * client-reported timeout is honoured server-side — covers normal network latency
+     * between the client's countdown reaching zero and the request arriving.
+     */
+    private const TIMEOUT_TOLERANCE_SECONDS = 5;
+
+    /**
      * Gets session state, creating defaults when missing.
      *
      * @param int $cmid Course module id.
@@ -63,6 +70,7 @@ class round_service {
                 'forfeited'     => false,
                 'timedout'      => false,
                 'roundstarted'  => false,
+                'attemptid'     => 0,
             ];
         }
 
@@ -121,9 +129,12 @@ class round_service {
             return 0;
         }
 
+        // Only counts genuinely finished rounds: a still-pending reservation (timefinished =
+        // 0, either mid-round right now or abandoned without ever finishing) must not start
+        // the cooldown clock, the same way it must not count as a 0 in the grade average.
         $lastattempttime = $DB->get_field_sql(
-            "SELECT MAX(timecreated) FROM {playerwords_attempts}"
-            . " WHERE playerwordsid = :pid AND userid = :uid",
+            "SELECT MAX(timefinished) FROM {playerwords_attempts}"
+            . " WHERE playerwordsid = :pid AND userid = :uid AND timefinished > 0",
             ['pid' => $instance->id, 'uid' => $userid]
         );
         if (empty($lastattempttime)) {
@@ -214,15 +225,24 @@ class round_service {
                 $state['attemptsused'] = 0;
                 $state['rows'] = [];
                 $wordremoved = true;
+
+                // The reservation made for that word (see start_round()) is not the
+                // student's fault — discard it rather than let it silently spend one of
+                // their max_rounds without ever having been playable.
+                if (!empty($state['attemptid'])) {
+                    $DB->delete_records('playerwords_attempts', [
+                        'id' => $state['attemptid'],
+                        'timefinished' => 0,
+                    ]);
+                    $state['attemptid'] = 0;
+                }
             }
         }
 
         if (!$wordremoved && $targetword === '') {
-            $completedround = $DB->count_records('playerwords_attempts', [
-                'playerwordsid' => $instance->id,
-                'userid' => $userid,
-            ]);
-            $pickedword = words_repository::pick_round_word($instance, $completedround);
+            $completedround = self::count_rounds_played($instance, $userid);
+            $excludewordid = words_repository::get_last_played_word_id($instance, $userid);
+            $pickedword = words_repository::pick_round_word($instance, $completedround, $excludewordid);
             if ($pickedword) {
                 $targetword = word_normalizer::normalize($pickedword->word);
                 $roundwordid = (int)$pickedword->id;
@@ -239,6 +259,7 @@ class round_service {
                 $state['forfeited'] = false;
                 $state['timedout'] = false;
                 $state['roundstarted'] = false;
+                $state['attemptid'] = 0;
 
                 $event = \mod_playerwords\event\round_started::create([
                     'objectid' => $roundwordid,
@@ -255,12 +276,20 @@ class round_service {
     /**
      * Starts the round timer, optionally consuming a PlayerHUD item cost.
      *
+     * Reserves the attempt row here, the moment the student genuinely commits to the
+     * round (not when a word is merely picked for the lobby) — so abandoning it from
+     * this point on still spends one of their max_rounds, instead of a closed tab
+     * silently granting a free re-roll. finish_round() completes this same row rather
+     * than inserting a second one.
+     *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
      * @param int $userid User id.
      * @return array [$state, $notification, $notificationtype]
      */
     public static function start_round(array $state, \stdClass $instance, int $userid): array {
+        global $DB;
+
         $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
         if ($roundcostitem > 0) {
             $consumed = hud_service::consume_items(
@@ -276,6 +305,20 @@ class round_service {
 
         $state['starttime'] = time();
         $state['roundstarted'] = true;
+
+        if (empty($state['attemptid'])) {
+            $state['attemptid'] = $DB->insert_record('playerwords_attempts', (object)[
+                'playerwordsid' => $instance->id,
+                'userid'        => $userid,
+                'wordid'        => (int)$state['wordid'],
+                'attempts_used' => 0,
+                'time_used'     => 0,
+                'completed'     => 0,
+                'score'         => 0,
+                'timecreated'   => time(),
+                'timefinished'  => 0,
+            ]);
+        }
 
         return [$state, null, null];
     }
@@ -411,6 +454,17 @@ class round_service {
             return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning'];
         }
 
+        // The client fires this the moment its own countdown reaches zero — never trust
+        // that alone. Re-check the deadline server-side (with a small tolerance for
+        // normal network latency) so neither clock drift nor a premature/forged call can
+        // end a round before its configured time has actually run out. submit_guess()
+        // already re-derives $outoftime the same way for the guess-triggered path; this
+        // is the equivalent guard for the explicit "time's up" signal.
+        $deadline = (int)$state['starttime'] + (int)$instance->timer_seconds;
+        if ((int)$instance->timer_seconds <= 0 || time() < $deadline - self::TIMEOUT_TOLERANCE_SECONDS) {
+            return [$state, get_string('roundnottimedout', 'mod_playerwords'), 'warning'];
+        }
+
         $roundwordid = (int)$state['wordid'];
         $state = self::finish_round($state, $instance, $cmid, $userid, $roundwordid, false, false, true);
 
@@ -464,16 +518,35 @@ class round_service {
             $completed
         );
 
-        $attemptid = $DB->insert_record('playerwords_attempts', (object)[
-            'playerwordsid' => $instance->id,
-            'userid'        => $userid,
-            'wordid'        => $roundwordid,
-            'attempts_used' => (int)$state['attemptsused'],
-            'time_used'     => $timeused,
-            'completed'     => $completed ? 1 : 0,
-            'score'         => $score,
-            'timecreated'   => time(),
-        ]);
+        // The round reservation made by start_round() is completed here instead of
+        // inserting a second row. A missing reservation only happens for session state
+        // left over from before this reserve-on-start split — insert fresh then, exactly
+        // as before, so old in-flight sessions keep working.
+        $attemptid = (int)($state['attemptid'] ?? 0);
+        if ($attemptid > 0) {
+            $DB->update_record('playerwords_attempts', (object)[
+                'id'            => $attemptid,
+                'wordid'        => $roundwordid,
+                'attempts_used' => (int)$state['attemptsused'],
+                'time_used'     => $timeused,
+                'completed'     => $completed ? 1 : 0,
+                'score'         => $score,
+                'timefinished'  => time(),
+            ]);
+        } else {
+            $attemptid = $DB->insert_record('playerwords_attempts', (object)[
+                'playerwordsid' => $instance->id,
+                'userid'        => $userid,
+                'wordid'        => $roundwordid,
+                'attempts_used' => (int)$state['attemptsused'],
+                'time_used'     => $timeused,
+                'completed'     => $completed ? 1 : 0,
+                'score'         => $score,
+                'timecreated'   => time(),
+                'timefinished'  => time(),
+            ]);
+        }
+        $state['attemptid'] = 0;
 
         $event = \mod_playerwords\event\round_completed::create([
             'objectid' => $attemptid,

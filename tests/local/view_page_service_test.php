@@ -182,6 +182,7 @@ final class view_page_service_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => 100,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
 
         $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);

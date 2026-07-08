@@ -65,6 +65,7 @@ class ranking_service {
                   FROM {playerwords_attempts} pa
                   JOIN {user} u ON u.id = pa.userid
                  WHERE pa.playerwordsid = :instanceid
+                       AND pa.timefinished > 0
                        $userwhere
               GROUP BY u.id, u.firstname, u.lastname
               ORDER BY SUM(pa.score) DESC, AVG(pa.attempts_used) ASC, AVG(pa.time_used) ASC";

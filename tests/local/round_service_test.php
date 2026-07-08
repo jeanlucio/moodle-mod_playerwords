@@ -317,14 +317,16 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
-     * Tests that timeout finishes the round with the timedout flag set.
+     * Tests that timeout finishes the round with the timedout flag set, once the
+     * configured deadline has genuinely passed.
      *
      * @covers \mod_playerwords\local\round_service::timeout
      * @return void
      */
     public function test_timeout_finishes_round(): void {
-        $instance = $this->make_instance();
+        $instance = $this->make_instance(['timer_minutes' => 1]);
         [$state] = $this->start_ready_round($instance);
+        $state['starttime'] = time() - 120;
 
         [$state, $notification, $notificationtype] = round_service::timeout(
             $state,
@@ -337,6 +339,46 @@ final class round_service_test extends \advanced_testcase {
         $this->assertTrue($state['timedout']);
         $this->assertFalse($state['won']);
         $this->assertSame('warning', $notificationtype);
+    }
+
+    /**
+     * Tests that a timeout claim is rejected server-side when the configured deadline
+     * has not actually passed yet — the client's own countdown is never trusted alone.
+     *
+     * @covers \mod_playerwords\local\round_service::timeout
+     * @return void
+     */
+    public function test_timeout_rejected_before_deadline(): void {
+        $instance = $this->make_instance(['timer_minutes' => 5]);
+        [$state] = $this->start_ready_round($instance);
+
+        [$state, $notification, $notificationtype] = round_service::timeout(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id
+        );
+
+        $this->assertFalse($state['finished']);
+        $this->assertSame('warning', $notificationtype);
+        $this->assertNotEmpty($notification);
+    }
+
+    /**
+     * Tests that a timeout claim is rejected when the activity has no timer configured
+     * at all — there is no deadline to have run out.
+     *
+     * @covers \mod_playerwords\local\round_service::timeout
+     * @return void
+     */
+    public function test_timeout_rejected_when_timer_disabled(): void {
+        $instance = $this->make_instance();
+        [$state] = $this->start_ready_round($instance);
+        $state['starttime'] = time() - 3600;
+
+        [$state] = round_service::timeout($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertFalse($state['finished']);
     }
 
     /**
@@ -376,6 +418,7 @@ final class round_service_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => 100,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
 
         $notice = round_service::get_round_restriction_notice($instance, $this->user->id);
@@ -417,6 +460,7 @@ final class round_service_test extends \advanced_testcase {
                 'completed'     => 1,
                 'score'         => 100,
                 'timecreated'   => time(),
+                'timefinished'  => time(),
             ]);
         }
 
@@ -442,6 +486,7 @@ final class round_service_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => 100,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
 
         $this->assertSame(0, round_service::compute_cooldown_until($instance, $this->user->id));
@@ -477,6 +522,7 @@ final class round_service_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => 100,
             'timecreated'   => time() - 120,
+            'timefinished'  => time() - 120,
         ]);
 
         $this->assertSame(0, round_service::compute_cooldown_until($instance, $this->user->id));
@@ -503,6 +549,7 @@ final class round_service_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => 100,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
 
         $this->assertGreaterThan(time() + 3600, round_service::compute_cooldown_until($instance, $this->user->id));
@@ -561,5 +608,105 @@ final class round_service_test extends \advanced_testcase {
         $this->assertNotSame('', $secondword);
         $this->assertNotSame($firstwordid, $secondwordid);
         $this->assertSame(0, $state['attemptsused']);
+    }
+
+    /**
+     * start_round() reserves an attempt row the moment the round genuinely begins,
+     * before the player has made any guess — so abandoning it from here on still
+     * spends one of the student's max_rounds instead of a closed tab granting a
+     * free re-roll.
+     *
+     * @covers \mod_playerwords\local\round_service::start_round
+     * @return void
+     */
+    public function test_start_round_reserves_attempt_row(): void {
+        global $DB;
+
+        $instance = $this->make_instance();
+        [$state] = $this->start_ready_round($instance);
+
+        $this->assertGreaterThan(0, $state['attemptid']);
+        $attempts = $DB->get_records('playerwords_attempts', ['playerwordsid' => $instance->id]);
+        $this->assertCount(1, $attempts);
+        $reserved = reset($attempts);
+        $this->assertSame(0, (int)$reserved->timefinished);
+        $this->assertSame(1, round_service::count_rounds_played($instance, $this->user->id));
+    }
+
+    /**
+     * finish_round() completes the reservation start_round() made instead of inserting
+     * a second row — exactly one attempt row exists per round, whether it is still
+     * pending or already finished.
+     *
+     * @covers \mod_playerwords\local\round_service::submit_guess
+     * @return void
+     */
+    public function test_finish_round_completes_reservation_instead_of_duplicating(): void {
+        global $DB;
+
+        $instance = $this->make_instance();
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+        $reservedid = $state['attemptid'];
+
+        [$state] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'boca'
+        );
+
+        $this->assertSame(0, $state['attemptid']);
+        $attempts = $DB->get_records('playerwords_attempts', ['playerwordsid' => $instance->id]);
+        $this->assertCount(1, $attempts);
+        $finished = reset($attempts);
+        $this->assertSame($reservedid, (int)$finished->id);
+        $this->assertGreaterThan(0, (int)$finished->timefinished);
+    }
+
+    /**
+     * A round abandoned right after starting (session lost before ever finishing) still
+     * spends one of the student's max_rounds: the very next round is blocked once the
+     * limit is reached, even though the abandoned round was never actually finished.
+     *
+     * @covers \mod_playerwords\local\round_service::start_round
+     * @covers \mod_playerwords\local\round_service::get_round_restriction_notice
+     * @return void
+     */
+    public function test_abandoned_round_counts_towards_max_rounds(): void {
+        $instance = $this->make_instance(['max_rounds' => 1, 'cooldown_amount' => 0]);
+
+        // The round is started (reserved) but the student never finishes it — the
+        // session is simply never saved past this point, exactly like a closed tab.
+        $this->start_ready_round($instance);
+
+        $this->assertNotNull(round_service::get_round_restriction_notice($instance, $this->user->id));
+    }
+
+    /**
+     * When the reserved word is removed or unapproved mid-round (e.g. a teacher deletes
+     * it from the pool), the stale reservation is discarded rather than silently
+     * spending one of the student's max_rounds for a round they never got to play.
+     *
+     * @covers \mod_playerwords\local\round_service::ensure_round_state
+     * @return void
+     */
+    public function test_ensure_round_state_discards_reservation_when_word_removed_mid_round(): void {
+        global $DB;
+
+        $instance = $this->make_instance();
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+        round_service::save_state($instance->cmid, $this->user->id, $state);
+        $this->assertSame(1, round_service::count_rounds_played($instance, $this->user->id));
+
+        $DB->delete_records('playerwords_words', ['id' => $roundwordid]);
+
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertSame(0, $state['attemptid']);
+        $this->assertSame(0, round_service::count_rounds_played($instance, $this->user->id));
     }
 }

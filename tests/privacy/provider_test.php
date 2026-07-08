@@ -70,6 +70,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
             'completed'     => 1,
             'score'         => 100.0,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
     }
 

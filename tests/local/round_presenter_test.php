@@ -287,6 +287,7 @@ final class round_presenter_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => 100,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
 
         $context = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
@@ -364,6 +365,7 @@ final class round_presenter_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => 80,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
         playerwords_update_grades($instance, $user->id);
 
@@ -372,6 +374,59 @@ final class round_presenter_test extends \advanced_testcase {
         $this->assertTrue($context['showgradesofar']);
         $this->assertStringContainsString('Highest grade', $context['gradesofarmessage']);
         $this->assertStringContainsString('80', $context['gradesofarmessage']);
+    }
+
+    /**
+     * A still-pending reservation (round in progress, or abandoned without ever
+     * finishing) must not drag the average grade down towards its placeholder 0 score —
+     * playerwords_update_grades() only considers finished rounds.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_result_context
+     * @return void
+     */
+    public function test_build_round_result_context_grade_so_far_ignores_pending_attempt(): void {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        $instance = $this->make_instance([
+            'grade'       => 100,
+            'max_rounds'  => 0,
+            'grademethod' => PLAYERWORDS_GRADE_AVERAGE,
+        ]);
+        $user = $this->getDataGenerator()->create_user();
+        $cm = (object)['id' => 5];
+        $state = $this->make_state(['finished' => true, 'won' => true]);
+
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $user->id,
+            'wordid'        => 1,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 80,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+        // A reservation for a second round, still in progress — not a real outcome yet.
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $user->id,
+            'wordid'        => 2,
+            'attempts_used' => 0,
+            'time_used'     => 0,
+            'completed'     => 0,
+            'score'         => 0,
+            'timecreated'   => time(),
+            'timefinished'  => 0,
+        ]);
+        playerwords_update_grades($instance, $user->id);
+
+        $context = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
+
+        // If the pending row were wrongly included the average would be 40 (80+0)/2.
+        $this->assertStringContainsString('80', $context['gradesofarmessage']);
+        $this->assertStringNotContainsString('40', $context['gradesofarmessage']);
     }
 
     /**
@@ -400,6 +455,7 @@ final class round_presenter_test extends \advanced_testcase {
             'completed'     => 1,
             'score'         => 100,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
 
         $before = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);

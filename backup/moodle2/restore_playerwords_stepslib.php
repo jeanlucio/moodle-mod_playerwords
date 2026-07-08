@@ -125,6 +125,7 @@ class restore_playerwords_activity_structure_step extends restore_activity_struc
 
         $data->playerwordsid = $this->get_new_parentid('playerwords');
         $data->timecreated = $this->apply_date_offset($data->timecreated);
+        $data->timefinished = $this->apply_date_offset($data->timefinished);
 
         $data->userid = (int)$this->get_mappingid('user', $data->userid);
         $data->wordid = (int)$this->get_mappingid('playerwords_words', $data->wordid);

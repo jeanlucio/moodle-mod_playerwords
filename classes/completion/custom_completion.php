@@ -44,10 +44,14 @@ class custom_completion extends activity_custom_completion {
         $this->validate_rule($rule);
 
         $required = (int)$this->cm->customdata['customcompletionrules']['completionattempts'];
-        $attemptscount = $DB->count_records('playerwords_attempts', [
-            'playerwordsid' => $this->cm->instance,
-            'userid'        => $this->userid,
-        ]);
+        // Only finished rounds count towards completion — a still-pending reservation
+        // (in progress right now, or abandoned without ever finishing) is not a
+        // completed attempt yet.
+        $attemptscount = $DB->count_records_select(
+            'playerwords_attempts',
+            'playerwordsid = :pid AND userid = :uid AND timefinished > 0',
+            ['pid' => $this->cm->instance, 'uid' => $this->userid]
+        );
 
         return $attemptscount >= $required ? COMPLETION_COMPLETE : COMPLETION_INCOMPLETE;
     }

@@ -133,15 +133,20 @@ final class end_round_test extends \advanced_testcase {
     }
 
     /**
-     * Tests that timing out finishes the round and reveals the word.
+     * Tests that timing out finishes the round and reveals the word, once the
+     * configured deadline has genuinely passed.
      *
      * @covers \mod_playerwords\external\end_round::execute
      * @return void
      */
     public function test_timeout_finishes_round(): void {
-        $instance = $this->make_instance();
+        $instance = $this->make_instance(['timer_minutes' => 1]);
         $this->setUser($this->student);
         $this->start_round_for_student($instance);
+
+        $state = round_service::load_state($instance->cmid, $this->student->id);
+        $state['starttime'] = time() - 120;
+        round_service::save_state($instance->cmid, $this->student->id, $state);
 
         $result = $this->call_end_round($instance->cmid, 'timeout');
 

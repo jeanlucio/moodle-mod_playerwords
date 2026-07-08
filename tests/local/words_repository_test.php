@@ -222,6 +222,96 @@ final class words_repository_test extends \advanced_testcase {
     }
 
     /**
+     * In random mode, the excluded word id is never picked while another candidate
+     * is available — repeated calls always land on the other word.
+     *
+     * @covers \mod_playerwords\local\words_repository::pick_round_word
+     * @return void
+     */
+    public function test_pick_word_random_avoids_excluded_word_when_alternative_exists(): void {
+        global $DB;
+        $instance = $this->make_instance();
+        $this->make_word($instance->id, 'gato');
+        $this->make_word($instance->id, 'mesa');
+        $excludeid = (int)$DB->get_field('playerwords_words', 'id', ['word' => 'gato'], MUST_EXIST);
+
+        for ($i = 0; $i < 10; $i++) {
+            $word = words_repository::pick_round_word($instance, 0, $excludeid);
+            $this->assertNotNull($word);
+            $this->assertSame('mesa', $word->word);
+        }
+    }
+
+    /**
+     * When the excluded word is the only candidate left, it is allowed back in rather
+     * than blocking play — the same graceful fallback local_playergames' quiz_loader
+     * uses when its "already seen" pool is exhausted.
+     *
+     * @covers \mod_playerwords\local\words_repository::pick_round_word
+     * @return void
+     */
+    public function test_pick_word_random_allows_excluded_word_when_it_is_the_only_candidate(): void {
+        global $DB;
+        $instance = $this->make_instance();
+        $this->make_word($instance->id, 'gato');
+        $excludeid = (int)$DB->get_field('playerwords_words', 'id', ['word' => 'gato'], MUST_EXIST);
+
+        $word = words_repository::pick_round_word($instance, 0, $excludeid);
+
+        $this->assertNotNull($word);
+        $this->assertSame('gato', $word->word);
+    }
+
+    /**
+     * get_last_played_word_id() returns 0 when the student has no finished rounds yet.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_last_played_word_id
+     * @return void
+     */
+    public function test_get_last_played_word_id_none_yet(): void {
+        $instance = $this->make_instance();
+        $this->assertSame(0, words_repository::get_last_played_word_id($instance, $this->user->id));
+    }
+
+    /**
+     * get_last_played_word_id() returns the word from the most recently finished round,
+     * ignoring a still-pending reservation (timefinished = 0) for a later word.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_last_played_word_id
+     * @return void
+     */
+    public function test_get_last_played_word_id_ignores_pending_reservation(): void {
+        global $DB;
+        $instance = $this->make_instance();
+
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => 11,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time() - 60,
+            'timefinished'  => time() - 60,
+        ]);
+        // A pending reservation for a later word — not a finished round yet.
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => 22,
+            'attempts_used' => 0,
+            'time_used'     => 0,
+            'completed'     => 0,
+            'score'         => 0,
+            'timecreated'   => time(),
+            'timefinished'  => 0,
+        ]);
+
+        $this->assertSame(11, words_repository::get_last_played_word_id($instance, $this->user->id));
+    }
+
+    /**
      * Inserts a full playerwords instance record, with every column populated, for
      * tests that need fields beyond the minimal set make_instance() returns (e.g.
      * ->sources, ->glossaryid, ->course, used by sync_glossary_words()).

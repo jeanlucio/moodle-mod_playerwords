@@ -44,5 +44,21 @@ function xmldb_playerwords_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026070701, 'playerwords');
     }
 
+    if ($oldversion < 2026070801) {
+        $table = new xmldb_table('playerwords_attempts');
+        $field = new xmldb_field('timefinished', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'timecreated');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Every pre-existing row was inserted only once the round had already finished
+        // (the "reserve on start, finish on completion" split starts with this upgrade),
+        // so timecreated already holds its finish time.
+        $DB->execute('UPDATE {playerwords_attempts} SET timefinished = timecreated WHERE timefinished = 0');
+
+        upgrade_mod_savepoint(true, 2026070801, 'playerwords');
+    }
+
     return true;
 }

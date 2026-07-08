@@ -73,6 +73,7 @@ final class custom_completion_test extends advanced_testcase {
             'completed'     => 1,
             'score'         => 100,
             'timecreated'   => time(),
+            'timefinished'  => time(),
         ]);
 
         $cminfo = get_fast_modinfo($course)->get_cm($cm->cmid);
@@ -101,6 +102,7 @@ final class custom_completion_test extends advanced_testcase {
                 'completed'     => 1,
                 'score'         => 100,
                 'timecreated'   => time(),
+                'timefinished'  => time(),
             ]);
         }
 
@@ -108,6 +110,35 @@ final class custom_completion_test extends advanced_testcase {
         $completion = new custom_completion($cminfo, (int)$user->id);
 
         $this->assertEquals(COMPLETION_COMPLETE, $completion->get_state('completionattempts'));
+    }
+
+    /**
+     * A still-pending reservation (round in progress, or abandoned without ever
+     * finishing) does not count towards the required attempts — only finished rounds do.
+     */
+    public function test_get_state_ignores_pending_attempt(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        [$course, $cm] = $this->create_fixture(1);
+        $user = $this->getDataGenerator()->create_user();
+
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $cm->id,
+            'userid'        => $user->id,
+            'wordid'        => 1,
+            'attempts_used' => 0,
+            'time_used'     => 0,
+            'completed'     => 0,
+            'score'         => 0,
+            'timecreated'   => time(),
+            'timefinished'  => 0,
+        ]);
+
+        $cminfo = get_fast_modinfo($course)->get_cm($cm->cmid);
+        $completion = new custom_completion($cminfo, (int)$user->id);
+
+        $this->assertEquals(COMPLETION_INCOMPLETE, $completion->get_state('completionattempts'));
     }
 
     /**

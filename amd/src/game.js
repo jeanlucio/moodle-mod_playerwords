@@ -170,17 +170,22 @@ const stopTimer = () => {
 /**
  * Ticks the round timer down one second and re-schedules itself.
  *
- * Adds the urgency class once remaining time falls below the threshold, and ends the
- * round via mod_playerwords_end_round (reason: timeout) once time runs out.
+ * Recomputes remaining time from an absolute deadline on every tick (like the cooldown
+ * countdown already does) instead of decrementing a local counter, so a throttled or
+ * jank-delayed setTimeout never lets the displayed countdown drift from the server's
+ * real deadline. Adds the urgency class once remaining time falls below the threshold,
+ * and ends the round via mod_playerwords_end_round (reason: timeout) once time runs out
+ * — the server independently re-validates that the deadline actually passed.
  *
  * @param {HTMLElement} el        The span showing the countdown.
- * @param {number}      remaining Seconds remaining.
+ * @param {number}      deadline  Unix timestamp (seconds) when the round times out.
  * @param {number}      threshold Seconds at which to add the urgency class.
  * @param {number}      cmid      Course-module id.
  * @param {number}      timertotal Total seconds configured for the round.
  */
-const tickTimer = (el, remaining, threshold, cmid, timertotal) => {
-    el.textContent = formatGameTime(remaining);
+const tickTimer = (el, deadline, threshold, cmid, timertotal) => {
+    const remaining = deadline - Math.floor(Date.now() / 1000);
+    el.textContent = formatGameTime(Math.max(0, remaining));
     if (remaining <= threshold) {
         el.classList.add('pw-timer-urgent');
     }
@@ -189,7 +194,7 @@ const tickTimer = (el, remaining, threshold, cmid, timertotal) => {
         endRound(cmid, 'timeout', timertotal);
         return;
     }
-    timerHandle = window.setTimeout(() => tickTimer(el, remaining - 1, threshold, cmid, timertotal), 1000);
+    timerHandle = window.setTimeout(() => tickTimer(el, deadline, threshold, cmid, timertotal), 1000);
 };
 
 /**
@@ -209,7 +214,8 @@ const startTimer = (timeleft, timertotal, cmid) => {
     }
     el.textContent = formatGameTime(timeleft);
     const threshold = timertotal > 0 ? Math.max(10, Math.floor(timertotal * 0.2)) : 30;
-    tickTimer(el, timeleft, threshold, cmid, timertotal);
+    const deadline = Math.floor(Date.now() / 1000) + timeleft;
+    tickTimer(el, deadline, threshold, cmid, timertotal);
 };
 
 /**
