@@ -661,4 +661,38 @@ final class round_presenter_test extends \advanced_testcase {
 
         $this->assertSame(0, $context['timeleft']);
     }
+
+    /**
+     * The keyboard's Ç key only shows up when the activity's own word pool actually
+     * needs it — many languages never use the letter.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_panel_context
+     * @return void
+     */
+    public function test_build_round_panel_context_showcedilla_reflects_word_pool(): void {
+        global $DB;
+
+        $instance = $this->make_instance();
+        $cm = (object)['id' => 5];
+        $user = $this->getDataGenerator()->create_user();
+        $state = $this->make_state();
+
+        $without = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
+        $this->assertFalse($without['showcedilla']);
+
+        $DB->insert_record('playerwords_words', (object)[
+            'playerwordsid' => $instance->id,
+            'word'          => 'cabeça',
+            'concept'       => 'cabeça',
+            'hint'          => '',
+            'source'        => 'manual',
+            'glossaryid'    => 0,
+            'approved'      => 1,
+            'timecreated'   => time(),
+            'addedby'       => $user->id,
+        ]);
+
+        $with = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
+        $this->assertTrue($with['showcedilla']);
+    }
 }

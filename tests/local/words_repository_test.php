@@ -113,6 +113,57 @@ final class words_repository_test extends \advanced_testcase {
     }
 
     /**
+     * Tests that has_cedilla_word is false when no word contains one.
+     *
+     * @covers \mod_playerwords\local\words_repository::has_cedilla_word
+     * @return void
+     */
+    public function test_has_cedilla_word_false_when_absent(): void {
+        $instance = $this->make_instance();
+        $this->make_word($instance->id, 'gato');
+        $this->assertFalse(words_repository::has_cedilla_word($instance->id));
+    }
+
+    /**
+     * Tests that has_cedilla_word is true once any approved word contains one.
+     *
+     * @covers \mod_playerwords\local\words_repository::has_cedilla_word
+     * @return void
+     */
+    public function test_has_cedilla_word_true_when_present(): void {
+        $instance = $this->make_instance();
+        $this->make_word($instance->id, 'gato');
+        $this->make_word($instance->id, 'cabeça');
+        $this->assertTrue(words_repository::has_cedilla_word($instance->id));
+    }
+
+    /**
+     * Tests that has_cedilla_word ignores unapproved (pending) words.
+     *
+     * @covers \mod_playerwords\local\words_repository::has_cedilla_word
+     * @return void
+     */
+    public function test_has_cedilla_word_ignores_unapproved(): void {
+        $instance = $this->make_instance();
+        $this->make_word($instance->id, 'cabeça', 0);
+        $this->assertFalse(words_repository::has_cedilla_word($instance->id));
+    }
+
+    /**
+     * Tests that has_cedilla_word is scoped to its own activity, never a sibling one.
+     *
+     * @covers \mod_playerwords\local\words_repository::has_cedilla_word
+     * @return void
+     */
+    public function test_has_cedilla_word_is_scoped_to_its_own_activity(): void {
+        $instancea = $this->make_instance();
+        $instanceb = $this->make_instance();
+        $this->make_word($instanceb->id, 'cabeça');
+        $this->assertFalse(words_repository::has_cedilla_word($instancea->id));
+        $this->assertTrue(words_repository::has_cedilla_word($instanceb->id));
+    }
+
+    /**
      * Tests that pick_round_word returns null when no words exist.
      *
      * @covers \mod_playerwords\local\words_repository::pick_round_word

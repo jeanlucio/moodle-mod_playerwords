@@ -447,6 +447,7 @@ class round_presenter {
             'keyboardlabel' => get_string('keyboard_label', 'mod_playerwords'),
             'keyboardenterlabel' => get_string('keyboard_enter', 'mod_playerwords'),
             'keyboardbackspacelabel' => get_string('keyboard_backspace', 'mod_playerwords'),
+            'showcedilla' => words_repository::has_cedilla_word((int)$instance->id),
         ] + self::build_round_result_context($instance, $cm, $state, $userid, $roundfinished);
     }
 }

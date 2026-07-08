@@ -29,7 +29,8 @@
         "guessmaxlength": 7,
         "keyboardlabel": "On-screen keyboard",
         "keyboardenterlabel": "Enter",
-        "keyboardbackspacelabel": "Backspace"
+        "keyboardbackspacelabel": "Backspace",
+        "showcedilla": true
     }
 }}
 <div id="playerwords-round-play">
@@ -70,7 +71,9 @@
             <button type="button" class="pw-key" data-key="J" tabindex="-1">J</button>
             <button type="button" class="pw-key" data-key="K" tabindex="-1">K</button>
             <button type="button" class="pw-key" data-key="L" tabindex="-1">L</button>
-            <button type="button" class="pw-key" data-key="Ç" tabindex="-1">Ç</button>
+            {{#showcedilla}}
+                <button type="button" class="pw-key" data-key="Ç" tabindex="-1">Ç</button>
+            {{/showcedilla}}
         </div>
         <div class="mod-playerwords-keyboard-row">
             <button type="button"
