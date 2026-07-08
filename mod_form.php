@@ -173,7 +173,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         // PlayerHUD integration — only rendered when block_playerhud exists in this course.
         $hudblockid = null;
-        if (class_exists('\block_playerhud\game', false)) {
+        if (class_exists('\block_playerhud\game')) {
             $hudblockid = \mod_playerwords\local\hud_service::get_block_instance_id($COURSE->id);
         }
 
