@@ -664,7 +664,8 @@ final class round_presenter_test extends \advanced_testcase {
     }
 
     /**
-     * The hint button is enabled once the user's balance meets the required quantity.
+     * The confirmation modal's save button can be enabled once the user's balance
+     * meets the required quantity.
      *
      * @covers \mod_playerwords\local\round_presenter::build_round_panel_context
      * @return void
@@ -688,6 +689,35 @@ final class round_presenter_test extends \advanced_testcase {
         $context = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
 
         $this->assertTrue($context['canaffordhint']);
+    }
+
+    /**
+     * The hint cost label reflects the user's actual balance, distinct from the
+     * configured required quantity.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_panel_context
+     * @return void
+     */
+    public function test_build_round_panel_context_hint_cost_label_reflects_balance(): void {
+        global $DB;
+
+        $itemid = $this->make_hud_item('Lupa');
+        $instance = $this->make_instance(['hud_hint_cost_item' => $itemid, 'hud_hint_cost_qty' => 2]);
+        $cm = (object)['id' => 5];
+        $user = $this->getDataGenerator()->create_user();
+        $DB->insert_record('block_playerhud_inventory', (object)[
+            'userid'      => $user->id,
+            'itemid'      => $itemid,
+            'dropid'      => 0,
+            'source'      => 'manual',
+            'timecreated' => time(),
+        ]);
+        $state = $this->make_state(['hint' => 'dica', 'hintrevealed' => false]);
+
+        $context = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
+
+        $this->assertStringContainsString('2×', $context['hudhintcostlabel']);
+        $this->assertStringContainsString('have 1', $context['hudhintcostlabel']);
     }
 
     /**

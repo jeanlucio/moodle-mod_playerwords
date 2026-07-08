@@ -122,6 +122,12 @@ const initForfeit = (cmid, timertotal) => {
  * always freshly rendered whenever the round panel is (re)rendered, so this is safe to call
  * again after every such swap.
  *
+ * When the activity charges a PlayerHUD item for the hint, the button carries a
+ * data-hud-confirm-* pair (set only in that case) and a confirmation modal — reusing the
+ * exact pattern already used for the forfeit button — shows the cost/balance right before
+ * the item is spent, instead of it sitting as permanent text above the button. A free hint
+ * (no cost configured) reveals immediately on click, same as before.
+ *
  * @param {number} cmid Course-module id.
  */
 const initHintButton = (cmid) => {
@@ -129,7 +135,8 @@ const initHintButton = (cmid) => {
     if (!button) {
         return;
     }
-    button.addEventListener('click', async() => {
+
+    const revealHint = async() => {
         let payload;
         try {
             payload = await Ajax.call([{methodname: 'mod_playerwords_reveal_hint', args: {cmid}}])[0];
@@ -155,6 +162,29 @@ const initHintButton = (cmid) => {
             alertEl.hidden = false;
         }
         button.hidden = true;
+    };
+
+    button.addEventListener('click', () => {
+        if (!button.dataset.hudConfirmBody) {
+            revealHint();
+            return;
+        }
+        Promise.all([
+            ModalSaveCancel.create({
+                title: button.dataset.hudConfirmTitle,
+                body: button.dataset.hudConfirmBody,
+                show: true,
+                removeOnClose: true,
+            }),
+            getString('yes', 'core'),
+        ]).then(([modal, yesStr]) => {
+            modal.setSaveButtonText(yesStr);
+            if (button.dataset.hudConfirmInsufficient) {
+                modal.setButtonDisabled('save', true);
+            }
+            modal.getRoot().on(ModalEvents.save, revealHint);
+            return;
+        }).catch(Notification.exception);
     });
 };
 
