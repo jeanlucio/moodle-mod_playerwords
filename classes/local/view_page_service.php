@@ -132,6 +132,9 @@ class view_page_service {
             'helpurl' => (new moodle_url('/mod/playerwords/help.php', ['id' => $cm->id]))->out(false),
             'toolbarmyattempts' => get_string('toolbarmyattempts', 'mod_playerwords'),
             'myattemptsurl' => (new moodle_url('/mod/playerwords/myattempts.php', ['id' => $cm->id]))->out(false),
+            'showforfeit' => !empty($state['roundstarted']) && empty($state['finished']),
+            'forfeitlabel' => get_string('forfeitbutton', 'mod_playerwords'),
+            'forfeitconfirm' => get_string('forfeitconfirm', 'mod_playerwords'),
             'showlobby' => $showlobby,
             'roundstarted' => !empty($state['roundstarted']),
         ]

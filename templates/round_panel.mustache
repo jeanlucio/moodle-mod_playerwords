@@ -51,10 +51,14 @@
 }}
 <div id="playerwords-round-panel">
     {{#canhint}}
-        <button type="button"
-                id="playerwords-hint-button"
-                class="btn btn-outline-info btn-sm mb-2"
-                data-hint-label="{{hintlabel}}">{{hintbuttonlabel}}</button>
+        <div class="text-center mb-3">
+            <button type="button"
+                    id="playerwords-hint-button"
+                    class="pw-hint-btn"
+                    data-hint-label="{{hintlabel}}">
+                <i class="fa fa-lightbulb" aria-hidden="true"></i> {{hintbuttonlabel}}
+            </button>
+        </div>
     {{/canhint}}
     <div id="playerwords-hint-alert" class="alert alert-info"{{^showhint}} hidden{{/showhint}}>
         <strong>{{hintlabel}}</strong> <span id="playerwords-hint-value">{{hintvalue}}</span>

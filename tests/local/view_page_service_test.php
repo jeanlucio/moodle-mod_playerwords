@@ -162,6 +162,35 @@ final class view_page_service_test extends \advanced_testcase {
     }
 
     /**
+     * The forfeit button is only meaningful while a round is actively being played:
+     * hidden in the lobby (nothing to forfeit yet), shown once the round starts, and
+     * hidden again once it finishes (forfeiting an already-finished round makes no sense).
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_shows_forfeit_only_during_active_round(): void {
+        [$instance, $cm, $context] = $this->make_instance();
+
+        $lobbypagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $this->assertFalse($lobbypagedata['templatecontext']['showforfeit']);
+
+        $state = round_service::load_state($cm->id, $this->user->id);
+        [$state, , $roundwordid] = round_service::ensure_round_state($state, $instance, $cm->id, $this->user->id);
+        [$state] = round_service::start_round($state, $instance, $this->user->id);
+        round_service::save_state($cm->id, $this->user->id, $state);
+
+        $activepagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $this->assertTrue($activepagedata['templatecontext']['showforfeit']);
+
+        [$state] = round_service::submit_guess($state, $instance, $cm->id, $this->user->id, $roundwordid, 'boca', 'boca');
+        round_service::save_state($cm->id, $this->user->id, $state);
+
+        $finishedpagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $this->assertFalse($finishedpagedata['templatecontext']['showforfeit']);
+    }
+
+    /**
      * The template context always carries the toolbar URLs for the help and
      * attempt-history pages, mirroring how managewordsurl/rankingurl are always
      * present regardless of round state.

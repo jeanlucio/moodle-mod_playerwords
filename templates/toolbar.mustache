@@ -18,7 +18,7 @@
     @template mod_playerwords/toolbar
 
     Compact icon toolbar shown above the game board: help, manage words (teacher-only),
-    attempt history and ranking.
+    attempt history, ranking and forfeit (hidden outside an active round).
 
     Example context (json):
     {
@@ -31,7 +31,10 @@
         "myattemptsurl": "https://example.com/mod/playerwords/myattempts.php?id=1",
         "showranking": true,
         "rankingurl": "https://example.com/mod/playerwords/ranking.php?id=1",
-        "rankingviewfulllabel": "Full ranking"
+        "rankingviewfulllabel": "Full ranking",
+        "showforfeit": true,
+        "forfeitlabel": "Give up",
+        "forfeitconfirm": "Are you sure you want to give up?"
     }
 }}
 <div class="pw-toolbar">
@@ -51,4 +54,14 @@
             <i class="fa fa-trophy" aria-hidden="true"></i>
         </a>
     {{/showranking}}
+    <button type="button"
+            id="playerwords-forfeit-button"
+            class="pw-toolbar-btn pw-toolbar-btn-danger"
+            title="{{forfeitlabel}}"
+            aria-label="{{forfeitlabel}}"
+            data-title="{{forfeitlabel}}"
+            data-confirm="{{forfeitconfirm}}"
+            {{^showforfeit}}hidden{{/showforfeit}}>
+        <i class="fa fa-door-open" aria-hidden="true"></i>
+    </button>
 </div>

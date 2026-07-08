@@ -445,15 +445,28 @@ const setTimerBadgeVisible = (visible) => {
 };
 
 /**
- * Wires every control inside a freshly-rendered round panel: forfeit, keyboard, grid
- * preview, guess form and hint button. Safe to call again after each panel re-render,
- * since each wired element only ever exists once at a time in the DOM.
+ * Shows or hides the toolbar's forfeit button. It also lives outside #playerwords-stage
+ * (its click handler is wired once, in init(), not on every round-panel re-render), so
+ * visibility is the only thing that needs to track the active-round/lobby/finished state.
+ *
+ * @param {boolean} visible Whether the forfeit button should be shown.
+ */
+const setForfeitButtonVisible = (visible) => {
+    const button = document.getElementById('playerwords-forfeit-button');
+    if (button) {
+        button.hidden = !visible;
+    }
+};
+
+/**
+ * Wires every control inside a freshly-rendered round panel: keyboard, grid preview,
+ * guess form and hint button. Safe to call again after each panel re-render, since each
+ * wired element only ever exists once at a time in the DOM.
  *
  * @param {number} cmid Course-module id.
  * @param {number} timertotal Total seconds configured for the round (0 = no timer).
  */
 const wireRoundPanel = (cmid, timertotal) => {
-    initForfeit(cmid);
     recolorKeyboard();
     initGridPreview();
     initGuessForm(cmid, timertotal);
@@ -471,6 +484,7 @@ const wireRoundPanel = (cmid, timertotal) => {
  */
 const showRoundResult = async(roundresult, cmid, timertotal) => {
     stopTimer();
+    setForfeitButtonVisible(false);
     const playNode = document.getElementById('playerwords-round-play');
     if (!playNode) {
         return;
@@ -504,6 +518,7 @@ const showRoundPanel = async(panelcontext, cmid, timertotal) => {
     await Templates.replaceNodeContents(stage, html, js);
     wireRoundPanel(cmid, timertotal);
     setTimerBadgeVisible(true);
+    setForfeitButtonVisible(true);
     if (panelcontext.timerenabled && panelcontext.timeleft > 0) {
         startTimer(panelcontext.timeleft, timertotal, cmid);
     }
@@ -528,6 +543,7 @@ const showLobby = async(lobbycontext, cmid, timertotal) => {
     const {html, js} = await Templates.renderForPromise('mod_playerwords/lobby', lobbycontext);
     await Templates.replaceNodeContents(stage, html, js);
     setTimerBadgeVisible(false);
+    setForfeitButtonVisible(false);
     initStartRound(cmid, timertotal);
     const startButton = document.getElementById('playerwords-start-round-button');
     if (startButton) {
@@ -710,6 +726,7 @@ const initGuessForm = (cmid, timertotal) => {
  */
 const init = (cooldownUntil, timeleft, timertotal, cmid) => {
     initInputFilter();
+    initForfeit(cmid, timertotal || 0);
     wireRoundPanel(cmid, timertotal || 0);
     initStartRound(cmid, timertotal || 0);
     initNewRound(cmid, timertotal || 0);

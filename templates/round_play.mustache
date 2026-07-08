@@ -17,16 +17,16 @@
 {{!
     @template mod_playerwords/round_play
 
-    Guess input, forfeit/timeout triggers and the on-screen keyboard for an active round.
+    Guess input and the on-screen keyboard for an active round. Submitting happens via
+    Enter (physical keyboard, implicit form submission) or the keyboard's own ENTER key
+    (form.requestSubmit()) — there is no separate submit button. The forfeit action lives
+    in the page-level toolbar (mod_playerwords/toolbar), not here.
 
     Example context (json):
     {
         "guesslabel": "Your guess",
         "guessplaceholder": "Type a word",
         "guessmaxlength": 7,
-        "submitguess": "Submit guess",
-        "forfeitlabel": "Give up",
-        "forfeitconfirm": "Are you sure you want to give up?",
         "keyboardlabel": "On-screen keyboard",
         "keyboardenterlabel": "Enter",
         "keyboardbackspacelabel": "Backspace"
@@ -34,7 +34,7 @@
 }}
 <div id="playerwords-round-play">
     <form id="playerwords-guess-form" class="mod-playerwords-form">
-        <label for="playerwords-guess" class="form-label">{{guesslabel}}</label>
+        <label for="playerwords-guess" class="visually-hidden sr-only">{{guesslabel}}</label>
         <input
             type="text"
             id="playerwords-guess"
@@ -47,14 +47,6 @@
             required
         >
     </form>
-    <div class="d-flex gap-2 mt-2 mod-playerwords-actions">
-        <button type="submit" form="playerwords-guess-form" class="btn btn-primary flex-grow-1">{{submitguess}}</button>
-        <button type="button"
-                id="playerwords-forfeit-button"
-                class="btn btn-outline-danger flex-grow-1"
-                data-title="{{forfeitlabel}}"
-                data-confirm="{{forfeitconfirm}}">{{forfeitlabel}}</button>
-    </div>
     <div id="playerwords-keyboard" class="mod-playerwords-keyboard" role="group" aria-label="{{keyboardlabel}}">
         <div class="mod-playerwords-keyboard-row">
             <button type="button" class="pw-key" data-key="Q" tabindex="-1">Q</button>
