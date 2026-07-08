@@ -222,7 +222,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
         }
 
         $this->standard_grading_coursemodule_elements();
-        $mform->setDefault('grade[modgrade_type]', 'none');
+        $mform->setDefault('grade', 0);
 
         $mform->addElement(
             'select',
@@ -302,7 +302,13 @@ class mod_playerwords_mod_form extends moodleform_mod {
             $errors['completionattemptsgroup'] = get_string('error_completionattempts', 'mod_playerwords');
         }
 
+        // Irrelevant, and must not block saving, once grading is off: grademethod has no
+        // effect at all in that state (see round_presenter::grading_info_relevant()), and
+        // this field can end up disabled and unreadable by the teacher once real grades
+        // already exist (Moodle core locks the grade type then), so its stale stored value
+        // must never veto an otherwise valid max_rounds change.
         if (
+            (float)$data['grade'] > 0 &&
             (int)$data['grademethod'] === PLAYERWORDS_GRADE_AVERAGE_ALL &&
             (int)$data['max_rounds'] === 0
         ) {
