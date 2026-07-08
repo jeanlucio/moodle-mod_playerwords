@@ -128,6 +128,44 @@ class provider implements
         }
     }
 
+    /**
+     * Bulk-resolves the playerwords instance id for every context_module context in the
+     * list in a single query, instead of calling get_coursemodule_from_id() once per
+     * context — shared by export_user_data() and delete_data_for_user(), the two
+     * places that need to walk every context in an approved_contextlist.
+     *
+     * @param approved_contextlist $contextlist Approved contexts.
+     * @return array<int,int> Course module id => playerwords instance id.
+     */
+    private static function get_instance_ids_by_cmid(approved_contextlist $contextlist): array {
+        global $DB;
+
+        $cmids = [];
+        foreach ($contextlist->get_contexts() as $context) {
+            if ($context instanceof \context_module) {
+                $cmids[] = $context->instanceid;
+            }
+        }
+        if (empty($cmids)) {
+            return [];
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($cmids, SQL_PARAMS_NAMED);
+        $records = $DB->get_records_sql(
+            "SELECT cm.id, cm.instance
+               FROM {course_modules} cm
+               JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+              WHERE cm.id $insql",
+            array_merge(['modname' => 'playerwords'], $inparams)
+        );
+
+        $map = [];
+        foreach ($records as $record) {
+            $map[(int)$record->id] = (int)$record->instance;
+        }
+        return $map;
+    }
+
     #[\Override]
     public static function export_user_data(approved_contextlist $contextlist): void {
         global $DB;
@@ -137,21 +175,22 @@ class provider implements
         }
 
         $userid = $contextlist->get_user()->id;
+        $instanceidsbycmid = self::get_instance_ids_by_cmid($contextlist);
 
         foreach ($contextlist->get_contexts() as $context) {
             if (!$context instanceof \context_module) {
                 continue;
             }
 
-            $cm = get_coursemodule_from_id('playerwords', $context->instanceid);
-            if (!$cm) {
+            $instanceid = $instanceidsbycmid[$context->instanceid] ?? null;
+            if ($instanceid === null) {
                 continue;
             }
 
             $attempts = $DB->get_records_select(
                 'playerwords_attempts',
                 'userid = :userid AND playerwordsid = :pid',
-                ['userid' => $userid, 'pid' => (int)$cm->instance],
+                ['userid' => $userid, 'pid' => $instanceid],
                 'timecreated ASC'
             );
 
@@ -180,7 +219,7 @@ class provider implements
             $words = $DB->get_records_select(
                 'playerwords_words',
                 'addedby = :addedby AND playerwordsid = :pid',
-                ['addedby' => $userid, 'pid' => (int)$cm->instance],
+                ['addedby' => $userid, 'pid' => $instanceid],
                 'timecreated ASC',
                 'id, word, source, timecreated'
             );
@@ -231,27 +270,28 @@ class provider implements
         }
 
         $userid = $contextlist->get_user()->id;
+        $instanceidsbycmid = self::get_instance_ids_by_cmid($contextlist);
 
         foreach ($contextlist->get_contexts() as $context) {
             if (!$context instanceof \context_module) {
                 continue;
             }
 
-            $cm = get_coursemodule_from_id('playerwords', $context->instanceid);
-            if (!$cm) {
+            $instanceid = $instanceidsbycmid[$context->instanceid] ?? null;
+            if ($instanceid === null) {
                 continue;
             }
 
             $DB->delete_records('playerwords_attempts', [
                 'userid'        => $userid,
-                'playerwordsid' => (int)$cm->instance,
+                'playerwordsid' => $instanceid,
             ]);
             $DB->set_field_select(
                 'playerwords_words',
                 'addedby',
                 0,
                 'addedby = :addedby AND playerwordsid = :pid',
-                ['addedby' => $userid, 'pid' => (int)$cm->instance]
+                ['addedby' => $userid, 'pid' => $instanceid]
             );
         }
     }
