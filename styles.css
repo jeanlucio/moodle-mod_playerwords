@@ -290,7 +290,7 @@
 
 .path-mod-playerwords .mod-playerwords-keyboard .pw-key.pw-key-wide {
     min-width: 3.75rem;
-    font-size: 0.75rem;
+    font-size: 1.35rem;
     color: var(--black, #000);
     background-color: var(--info, #0dcaf0);
     border-color: var(--info, #0dcaf0);
