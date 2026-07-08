@@ -467,6 +467,46 @@ final class round_presenter_test extends \advanced_testcase {
     }
 
     /**
+     * Tests that the round result announces the PlayerHUD item granted for the win,
+     * once a win-grant item is configured and the round was actually won.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_result_context
+     * @return void
+     */
+    public function test_build_round_result_context_shows_hud_grant_label_on_win(): void {
+        $itemid = $this->make_hud_item('Gold Key');
+        $instance = $this->make_instance(['hud_win_grant_item' => $itemid, 'hud_win_grant_qty' => 2]);
+        $cm = (object)['id' => 5];
+        $state = $this->make_state(['finished' => true, 'won' => true]);
+
+        $context = round_presenter::build_round_result_context($instance, $cm, $state, 1, true);
+
+        $this->assertStringContainsString('Gold Key', $context['huditemgrantedlabel']);
+    }
+
+    /**
+     * Tests that no grant label is shown when the round was lost, or when no win-grant
+     * item is configured at all.
+     *
+     * @covers \mod_playerwords\local\round_presenter::build_round_result_context
+     * @return void
+     */
+    public function test_build_round_result_context_no_hud_grant_label_on_loss_or_unconfigured(): void {
+        $itemid = $this->make_hud_item('Gold Key');
+        $cm = (object)['id' => 5];
+
+        $instancewithitem = $this->make_instance(['hud_win_grant_item' => $itemid]);
+        $lost = $this->make_state(['finished' => true, 'won' => false]);
+        $lostcontext = round_presenter::build_round_result_context($instancewithitem, $cm, $lost, 1, true);
+        $this->assertSame('', $lostcontext['huditemgrantedlabel']);
+
+        $instancewithoutitem = $this->make_instance();
+        $won = $this->make_state(['finished' => true, 'won' => true]);
+        $unconfiguredcontext = round_presenter::build_round_result_context($instancewithoutitem, $cm, $won, 1, true);
+        $this->assertSame('', $unconfiguredcontext['huditemgrantedlabel']);
+    }
+
+    /**
      * Tests that changing cooldown_seconds after a round finished takes effect immediately —
      * the specific behaviour that motivated computing cooldown from the DB instead of caching
      * it in session state at the moment the round ended.

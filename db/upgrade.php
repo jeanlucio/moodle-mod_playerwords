@@ -60,5 +60,39 @@ function xmldb_playerwords_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026070801, 'playerwords');
     }
 
+    if ($oldversion < 2026070802) {
+        $table = new xmldb_table('playerwords');
+
+        $field = new xmldb_field(
+            'hud_win_grant_item',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'hud_hint_cost_qty'
+        );
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field(
+            'hud_win_grant_qty',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'hud_win_grant_item'
+        );
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026070802, 'playerwords');
+    }
+
     return true;
 }

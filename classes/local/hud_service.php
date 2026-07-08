@@ -173,4 +173,48 @@ class hud_service {
             $lock->release();
         }
     }
+
+    /**
+     * Grants $qty units of $itemid to $userid, awarding the item's own XP value unless
+     * $suppressxp is set.
+     *
+     * $suppressxp exists to mirror block_playerhud's own "infinite drop gives no XP"
+     * anti-farming rule: since this grant never goes through a real PlayerHUD drop
+     * (dropid is always 0, same convention as quest/teacher grants), block_playerhud has
+     * no way to know on its own whether the caller represents an unbounded source —
+     * callers must decide that themselves and pass it in.
+     *
+     * @param int $userid User ID.
+     * @param int $itemid Item ID from block_playerhud_items.
+     * @param int $qty    Number of items to grant.
+     * @param bool $suppressxp Whether to withhold the item's XP even though it was granted.
+     * @return void
+     */
+    public static function grant_items(int $userid, int $itemid, int $qty, bool $suppressxp): void {
+        global $DB;
+
+        if ($itemid <= 0 || $qty <= 0) {
+            return;
+        }
+
+        $item = $DB->get_record('block_playerhud_items', ['id' => $itemid], 'id, blockinstanceid, xp');
+        if (!$item) {
+            return;
+        }
+
+        for ($i = 0; $i < $qty; $i++) {
+            $DB->insert_record('block_playerhud_inventory', (object)[
+                'userid'      => $userid,
+                'itemid'      => $itemid,
+                'dropid'      => 0,
+                'source'      => 'playerwords',
+                'timecreated' => time(),
+            ]);
+        }
+
+        if (!$suppressxp && (int)$item->xp > 0) {
+            $player = \block_playerhud\game::get_player($item->blockinstanceid, $userid);
+            \block_playerhud\game::change_xp($player, (int)$item->xp * $qty, $item->blockinstanceid);
+        }
+    }
 }

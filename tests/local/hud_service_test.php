@@ -78,14 +78,15 @@ final class hud_service_test extends \advanced_testcase {
      *
      * @param int $blockinstanceid Block instance ID.
      * @param string $name         Item display name.
+     * @param int $xp              XP awarded per unit collected, 0 for none.
      * @return int Item ID.
      */
-    private function make_item(int $blockinstanceid, string $name = 'Gold Key'): int {
+    private function make_item(int $blockinstanceid, string $name = 'Gold Key', int $xp = 0): int {
         global $DB;
         return $DB->insert_record('block_playerhud_items', (object)[
             'blockinstanceid' => $blockinstanceid,
             'name'            => $name,
-            'xp'              => 0,
+            'xp'              => $xp,
             'image'           => '',
             'description'     => '',
             'enabled'         => 1,
@@ -330,5 +331,118 @@ final class hud_service_test extends \advanced_testcase {
         $this->skip_if_no_playerhud();
         $user   = $this->getDataGenerator()->create_user();
         $this->assertTrue(hud_service::consume_items($user->id, 999, 0));
+    }
+
+    /**
+     * Tests that grant_items creates one inventory row per unit, tagged with the
+     * 'playerwords' source, and awards the item's XP multiplied by the quantity.
+     *
+     * @covers \mod_playerwords\local\hud_service::grant_items
+     * @return void
+     */
+    public function test_grant_items_creates_inventory_and_awards_xp(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+        $user   = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $biid   = $this->make_block_instance($course);
+        $itemid = $this->make_item($biid, 'Gold Key', 30);
+
+        hud_service::grant_items($user->id, $itemid, 2, false);
+
+        $rows = $DB->get_records('block_playerhud_inventory', ['userid' => $user->id, 'itemid' => $itemid]);
+        $this->assertCount(2, $rows);
+        foreach ($rows as $row) {
+            $this->assertSame('playerwords', $row->source);
+            $this->assertSame(0, (int)$row->dropid);
+        }
+
+        $currentxp = $DB->get_field('block_playerhud_user', 'currentxp', [
+            'blockinstanceid' => $biid,
+            'userid'          => $user->id,
+        ]);
+        $this->assertSame(60, (int)$currentxp);
+    }
+
+    /**
+     * Tests that grant_items still grants the item, but withholds its XP, when the
+     * caller flags the source as unbounded — the same anti-farming outcome
+     * block_playerhud itself applies to its own infinite drops.
+     *
+     * @covers \mod_playerwords\local\hud_service::grant_items
+     * @return void
+     */
+    public function test_grant_items_suppresses_xp_when_flagged(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+        $user   = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $biid   = $this->make_block_instance($course);
+        $itemid = $this->make_item($biid, 'Gold Key', 30);
+
+        hud_service::grant_items($user->id, $itemid, 1, true);
+
+        $this->assertSame(1, $DB->count_records('block_playerhud_inventory', ['userid' => $user->id, 'itemid' => $itemid]));
+        $currentxp = $DB->get_field('block_playerhud_user', 'currentxp', [
+            'blockinstanceid' => $biid,
+            'userid'          => $user->id,
+        ]);
+        $this->assertSame(0, (int)$currentxp);
+    }
+
+    /**
+     * Tests that a zero-XP item never changes the player's XP, regardless of the
+     * suppressxp flag — there is nothing to withhold or award either way.
+     *
+     * @covers \mod_playerwords\local\hud_service::grant_items
+     * @return void
+     */
+    public function test_grant_items_zero_xp_item_awards_nothing(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+        $user   = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $biid   = $this->make_block_instance($course);
+        $itemid = $this->make_item($biid, 'Trinket', 0);
+
+        hud_service::grant_items($user->id, $itemid, 3, false);
+
+        $this->assertSame(3, $DB->count_records('block_playerhud_inventory', ['userid' => $user->id, 'itemid' => $itemid]));
+        $this->assertSame(0, (int)$DB->count_records('block_playerhud_user', [
+            'blockinstanceid' => $biid,
+            'userid'          => $user->id,
+        ]));
+    }
+
+    /**
+     * Tests that granting a non-existent item is a silent no-op.
+     *
+     * @covers \mod_playerwords\local\hud_service::grant_items
+     * @return void
+     */
+    public function test_grant_items_invalid_item_noop(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+        $user = $this->getDataGenerator()->create_user();
+
+        hud_service::grant_items($user->id, 999999, 1, false);
+
+        $this->assertSame(0, $DB->count_records('block_playerhud_inventory', ['userid' => $user->id]));
+    }
+
+    /**
+     * Tests that grant_items with qty zero is a no-op.
+     *
+     * @covers \mod_playerwords\local\hud_service::grant_items
+     * @return void
+     */
+    public function test_grant_items_zero_qty_short_circuits(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+        $user = $this->getDataGenerator()->create_user();
+
+        hud_service::grant_items($user->id, 999, 0, false);
+
+        $this->assertSame(0, $DB->count_records('block_playerhud_inventory', ['userid' => $user->id]));
     }
 }

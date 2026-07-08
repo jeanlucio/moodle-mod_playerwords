@@ -212,6 +212,10 @@ class submit_guess extends external_api {
                 PARAM_TEXT,
                 'Rounds played counter, e.g. "3 / 10", empty until finished'
             ),
+            'huditemgrantedlabel' => new external_value(
+                PARAM_TEXT,
+                'PlayerHUD item granted for winning, empty when not applicable'
+            ),
         ]);
     }
 

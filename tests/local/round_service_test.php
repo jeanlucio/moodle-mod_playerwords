@@ -103,6 +103,63 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
+     * Skips the current test when block_playerhud is not installed.
+     *
+     * @return void
+     */
+    private function skip_if_no_playerhud(): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('block_playerhud_items')) {
+            $this->markTestSkipped('block_playerhud not installed.');
+        }
+    }
+
+    /**
+     * Inserts a block_instances record for block_playerhud in the given course context.
+     *
+     * @param \stdClass $course Course object.
+     * @return int Block instance ID.
+     */
+    private function make_block_instance(\stdClass $course): int {
+        global $DB;
+        $ctx = \context_course::instance($course->id);
+        return $DB->insert_record('block_instances', (object)[
+            'blockname'        => 'playerhud',
+            'parentcontextid'  => $ctx->id,
+            'showinsubcontexts' => 0,
+            'pagetypepattern'  => 'course-view-*',
+            'subpagepattern'   => null,
+            'defaultregion'    => 'side-pre',
+            'defaultweight'    => 0,
+            'configdata'       => base64_encode(serialize(new \stdClass())),
+            'timecreated'      => time(),
+            'timemodified'     => time(),
+        ]);
+    }
+
+    /**
+     * Inserts a block_playerhud_items record for the given block instance.
+     *
+     * @param int $blockinstanceid Block instance ID.
+     * @param int $xp              XP awarded per unit collected, 0 for none.
+     * @return int Item ID.
+     */
+    private function make_item(int $blockinstanceid, int $xp = 0): int {
+        global $DB;
+        return $DB->insert_record('block_playerhud_items', (object)[
+            'blockinstanceid' => $blockinstanceid,
+            'name'            => 'Gold Key',
+            'xp'              => $xp,
+            'image'           => '',
+            'description'     => '',
+            'enabled'         => 1,
+            'secret'          => 0,
+            'timecreated'     => time(),
+            'timemodified'    => time(),
+        ]);
+    }
+
+    /**
      * Tests that ensure_round_state picks the only approved word and fires round_started once.
      *
      * @covers \mod_playerwords\local\round_service::ensure_round_state
@@ -708,5 +765,97 @@ final class round_service_test extends \advanced_testcase {
 
         $this->assertSame(0, $state['attemptid']);
         $this->assertSame(0, round_service::count_rounds_played($instance, $this->user->id));
+    }
+
+    /**
+     * Tests that winning a round with a bounded max_rounds grants the configured
+     * PlayerHUD item together with its XP — a finite round limit is the same "bounded
+     * source" case block_playerhud itself allows XP for on its own drops.
+     *
+     * @covers \mod_playerwords\local\round_service::submit_guess
+     * @return void
+     */
+    public function test_submit_guess_correct_grants_item_with_xp_when_bounded(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+
+        $biid = $this->make_block_instance($this->course);
+        $itemid = $this->make_item($biid, 30);
+        $instance = $this->make_instance([
+            'max_rounds' => 5,
+            'hud_win_grant_item' => $itemid,
+            'hud_win_grant_qty' => 2,
+        ]);
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+
+        round_service::submit_guess($state, $instance, $instance->cmid, $this->user->id, $roundwordid, 'boca', 'boca');
+
+        $this->assertSame(2, $DB->count_records('block_playerhud_inventory', [
+            'userid' => $this->user->id,
+            'itemid' => $itemid,
+        ]));
+        $currentxp = $DB->get_field('block_playerhud_user', 'currentxp', [
+            'blockinstanceid' => $biid,
+            'userid'          => $this->user->id,
+        ]);
+        $this->assertSame(60, (int)$currentxp);
+    }
+
+    /**
+     * Tests that winning a round on an activity with Unlimited rounds still grants the
+     * item, but withholds its XP — the anti-farming safeguard this feature needs to
+     * match PlayerHUD's own "infinite drop gives no XP" rule.
+     *
+     * @covers \mod_playerwords\local\round_service::submit_guess
+     * @return void
+     */
+    public function test_submit_guess_correct_grants_item_without_xp_when_unlimited(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+
+        $biid = $this->make_block_instance($this->course);
+        $itemid = $this->make_item($biid, 30);
+        // The max_rounds override is omitted — make_instance() defaults it to 0 (unlimited).
+        $instance = $this->make_instance([
+            'hud_win_grant_item' => $itemid,
+            'hud_win_grant_qty' => 2,
+        ]);
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+
+        round_service::submit_guess($state, $instance, $instance->cmid, $this->user->id, $roundwordid, 'boca', 'boca');
+
+        $this->assertSame(2, $DB->count_records('block_playerhud_inventory', [
+            'userid' => $this->user->id,
+            'itemid' => $itemid,
+        ]));
+        $currentxp = $DB->get_field('block_playerhud_user', 'currentxp', [
+            'blockinstanceid' => $biid,
+            'userid'          => $this->user->id,
+        ]);
+        $this->assertSame(0, (int)$currentxp);
+    }
+
+    /**
+     * Tests that a lost round never grants the win item, regardless of configuration.
+     *
+     * @covers \mod_playerwords\local\round_service::submit_guess
+     * @return void
+     */
+    public function test_submit_guess_wrong_does_not_grant_item(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+
+        $biid = $this->make_block_instance($this->course);
+        $itemid = $this->make_item($biid, 30);
+        $instance = $this->make_instance([
+            'max_attempts' => 1,
+            'hud_win_grant_item' => $itemid,
+            'hud_win_grant_qty' => 2,
+        ]);
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+
+        round_service::submit_guess($state, $instance, $instance->cmid, $this->user->id, $roundwordid, 'boca', 'casa');
+
+        $this->assertSame(0, $DB->count_records('block_playerhud_inventory', ['userid' => $this->user->id]));
     }
 }

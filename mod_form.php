@@ -219,6 +219,22 @@ class mod_playerwords_mod_form extends moodleform_mod {
             $mform->setDefault('hud_hint_cost_qty', 1);
             $mform->addRule('hud_hint_cost_qty', null, 'numeric', null, 'client');
             $mform->hideIf('hud_hint_cost_qty', 'hud_hint_cost_item', 'eq', 0);
+
+            $mform->addElement(
+                'select',
+                'hud_win_grant_item',
+                get_string('hud_win_grant_item', 'mod_playerwords'),
+                $itemoptions
+            );
+            $mform->setType('hud_win_grant_item', PARAM_INT);
+            $mform->setDefault('hud_win_grant_item', 0);
+            $mform->addHelpButton('hud_win_grant_item', 'hud_win_grant_item', 'mod_playerwords');
+
+            $mform->addElement('text', 'hud_win_grant_qty', get_string('hud_win_grant_qty', 'mod_playerwords'));
+            $mform->setType('hud_win_grant_qty', PARAM_INT);
+            $mform->setDefault('hud_win_grant_qty', 1);
+            $mform->addRule('hud_win_grant_qty', null, 'numeric', null, 'client');
+            $mform->hideIf('hud_win_grant_qty', 'hud_win_grant_item', 'eq', 0);
         }
 
         $this->standard_grading_coursemodule_elements();
@@ -289,6 +305,10 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         if (!empty($data['hud_hint_cost_item']) && (int)$data['hud_hint_cost_qty'] < 1) {
             $errors['hud_hint_cost_qty'] = get_string('error_hud_cost_qty', 'mod_playerwords');
+        }
+
+        if (!empty($data['hud_win_grant_item']) && (int)$data['hud_win_grant_qty'] < 1) {
+            $errors['hud_win_grant_qty'] = get_string('error_hud_cost_qty', 'mod_playerwords');
         }
 
         if ((int)$data['cooldown_amount'] < 0) {

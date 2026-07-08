@@ -47,6 +47,10 @@
             COMMENT="block_playerhud_items.id required to reveal the hint; 0 = disabled"/>
         <FIELD NAME="hud_hint_cost_qty" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
             COMMENT="Number of items consumed to reveal the hint"/>
+        <FIELD NAME="hud_win_grant_item" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
+            COMMENT="block_playerhud_items.id granted for winning a round; 0 = disabled"/>
+        <FIELD NAME="hud_win_grant_qty" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
+            COMMENT="Number of items granted for winning a round"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

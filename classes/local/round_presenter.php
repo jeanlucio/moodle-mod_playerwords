@@ -314,6 +314,7 @@ class round_presenter {
             'showgradesofar'        => false,
             'gradesofarmessage'     => '',
             'roundsplayedlabel'     => '',
+            'huditemgrantedlabel'   => '',
         ] + self::build_ranking_context($instance, $cm, $userid, false);
 
         if (!$roundfinished) {
@@ -349,8 +350,35 @@ class round_presenter {
             'cooldownactive'        => $restricted,
             'newroundlabel'         => $blank['newroundlabel'],
             'roundsplayedlabel'     => self::build_rounds_played_label($instance, $userid),
+            'huditemgrantedlabel'   => self::build_hud_grant_label($instance, $state),
         ] + self::build_grade_so_far($instance, $userid)
           + self::build_ranking_context($instance, $cm, $userid, true);
+    }
+
+    /**
+     * Builds the "you received X× item" text shown after a won round, when the activity
+     * has a win-grant item configured. Blank when there is nothing to announce (no grant
+     * configured, or the round was not actually won).
+     *
+     * @param \stdClass $instance Activity instance record.
+     * @param array $state Session state.
+     * @return string
+     */
+    private static function build_hud_grant_label(\stdClass $instance, array $state): string {
+        $grantitem = (int)($instance->hud_win_grant_item ?? 0);
+        if ($grantitem <= 0 || empty($state['won'])) {
+            return '';
+        }
+
+        $itemname = hud_service::get_item_name($grantitem);
+        if ($itemname === '') {
+            return '';
+        }
+
+        return get_string('hud_grantedlabel', 'mod_playerwords', (object)[
+            'qty'  => max(1, (int)($instance->hud_win_grant_qty ?? 1)),
+            'item' => $itemname,
+        ]);
     }
 
     /**

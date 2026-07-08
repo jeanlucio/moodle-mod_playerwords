@@ -563,6 +563,23 @@ class round_service {
 
         playerwords_update_grades($instance, $userid);
 
+        // Grants only on a genuine win, never on forfeit/timeout/a wrong final guess.
+        // Items are still granted on an unlimited-rounds activity, but their XP is
+        // withheld — the same anti-farming rule block_playerhud itself applies to its
+        // own infinite drops, replicated here since this grant never goes through a
+        // real drop (see hud_service::grant_items() for why).
+        if ($completed) {
+            $grantitem = (int)($instance->hud_win_grant_item ?? 0);
+            if ($grantitem > 0) {
+                hud_service::grant_items(
+                    $userid,
+                    $grantitem,
+                    max(1, (int)($instance->hud_win_grant_qty ?? 1)),
+                    (int)$instance->max_rounds === 0
+                );
+            }
+        }
+
         // Automatic completion (e.g. the "require attempts" custom rule) is only
         // recomputed and persisted when something explicitly asks for it — Moodle has
         // no cron sweep for this, unlike grading. Trigger it here so the activity page's

@@ -57,6 +57,8 @@ class backup_playerwords_activity_structure_step extends backup_activity_structu
             'hud_round_cost_qty',
             'hud_hint_cost_item',
             'hud_hint_cost_qty',
+            'hud_win_grant_item',
+            'hud_win_grant_qty',
             'timecreated',
             'timemodified',
         ]);
