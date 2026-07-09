@@ -139,6 +139,17 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setType('show_ranking', PARAM_INT);
         $mform->setDefault('show_ranking', 1);
 
+        $mform->addElement(
+            'select',
+            'rankingscoringmode',
+            get_string('rankingscoringmode', 'mod_playerwords'),
+            playerwords_get_scoring_mode_options()
+        );
+        $mform->setType('rankingscoringmode', PARAM_INT);
+        $mform->setDefault('rankingscoringmode', PLAYERWORDS_SCORING_BINARY);
+        $mform->addHelpButton('rankingscoringmode', 'rankingscoringmode', 'mod_playerwords');
+        $mform->hideIf('rankingscoringmode', 'show_ranking', 'eq', 0);
+
         $maxroundsoptions = [0 => get_string('max_rounds_unlimited', 'mod_playerwords')];
         for ($i = 1; $i <= 10; $i++) {
             $maxroundsoptions[$i] = $i;
@@ -251,6 +262,17 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->addHelpButton('grademethod', 'grademethod', 'mod_playerwords');
         $mform->hideIf('grademethod', 'grade[modgrade_type]', 'eq', 'none');
 
+        $mform->addElement(
+            'select',
+            'gradescoringmode',
+            get_string('gradescoringmode', 'mod_playerwords'),
+            playerwords_get_scoring_mode_options()
+        );
+        $mform->setType('gradescoringmode', PARAM_INT);
+        $mform->setDefault('gradescoringmode', PLAYERWORDS_SCORING_BINARY);
+        $mform->addHelpButton('gradescoringmode', 'gradescoringmode', 'mod_playerwords');
+        $mform->hideIf('gradescoringmode', 'grade[modgrade_type]', 'eq', 'none');
+
         $PAGE->requires->js_call_amd('mod_playerwords/grademethod', 'init', [
             'id_max_rounds',
             'id_grademethod',
@@ -260,6 +282,52 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
+    }
+
+    /**
+     * Freezes settings that feed the per-round scoring formula once the activity has
+     * recorded a real grade for any student.
+     *
+     * max_attempts and the two scoring-mode settings are baked into every already-scored
+     * round at the moment it finishes (see gameplay_service::compute_points()). Changing
+     * any of them afterwards would make past and future rounds count on different scales,
+     * both for the grade and for the ranking total. This mirrors the same condition core
+     * already uses to freeze the "Maximum grade" field itself — the modgrade element in
+     * lib/form/modgrade.php disables it once $gradeitem->has_grades() is true — so all of
+     * this is reusing that exact check rather than inventing a separate trigger.
+     *
+     * @return void
+     */
+    #[\Override]
+    public function definition_after_data(): void {
+        parent::definition_after_data();
+
+        if (empty($this->_instance)) {
+            return;
+        }
+
+        global $COURSE;
+        $gradeitem = grade_item::fetch([
+            'itemtype'     => 'mod',
+            'itemmodule'   => 'playerwords',
+            'iteminstance' => $this->_instance,
+            'itemnumber'   => 0,
+            'courseid'     => $COURSE->id,
+        ]);
+
+        if (!$gradeitem || !$gradeitem->has_grades()) {
+            return;
+        }
+
+        $mform = $this->_form;
+        $lockedfields = ['max_attempts', 'gradescoringmode', 'rankingscoringmode'];
+        $mform->freeze($lockedfields);
+
+        $warninghtml = html_writer::div(get_string('scoringmode_locked', 'mod_playerwords'), 'alert alert-warning');
+        $mform->insertElementBefore(
+            $mform->createElement('static', 'scoringmodelockedmsg', '', $warninghtml),
+            'max_attempts'
+        );
     }
 
     /**

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/playerwords/db" VERSION="20260428" COMMENT="XMLDB file for mod_playerwords"
+<XMLDB PATH="mod/playerwords/db" VERSION="20260709" COMMENT="XMLDB file for mod_playerwords"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -39,6 +39,10 @@
             DECIMALS="5" COMMENT="Minimum passing grade"/>
         <FIELD NAME="grademethod" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
             COMMENT="Grade aggregation: 1=highest, 2=average, 3=first, 4=last"/>
+        <FIELD NAME="gradescoringmode" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
+            COMMENT="Per-round grade scoring: 1=binary, 2=linear (proportional to attempts spared)"/>
+        <FIELD NAME="rankingscoringmode" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
+            COMMENT="Per-round ranking scoring: 1=binary, 2=linear (proportional to attempts spared)"/>
         <FIELD NAME="hud_round_cost_item" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
             COMMENT="block_playerhud_items.id required to start a round; 0 = disabled"/>
         <FIELD NAME="hud_round_cost_qty" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
@@ -100,6 +104,8 @@
         <FIELD NAME="completed" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="score" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="0.00000" SEQUENCE="false"
             DECIMALS="5"/>
+        <FIELD NAME="rankingpoints" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="0.00000" SEQUENCE="false"
+            DECIMALS="5" COMMENT="Points this round contributes to the ranking total; independent from score"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timefinished" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
             COMMENT="0 while the round is reserved but not yet finished; the finish epoch otherwise"/>

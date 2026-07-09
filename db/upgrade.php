@@ -94,5 +94,54 @@ function xmldb_playerwords_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026070802, 'playerwords');
     }
 
+    if ($oldversion < 2026070900) {
+        $table = new xmldb_table('playerwords');
+
+        $field = new xmldb_field(
+            'gradescoringmode',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'grademethod'
+        );
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field(
+            'rankingscoringmode',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'gradescoringmode'
+        );
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $table = new xmldb_table('playerwords_attempts');
+        $field = new xmldb_field(
+            'rankingpoints',
+            XMLDB_TYPE_NUMBER,
+            '10,5',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0.00000',
+            'score'
+        );
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026070900, 'playerwords');
+    }
+
     return true;
 }
