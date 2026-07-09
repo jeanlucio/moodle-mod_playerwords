@@ -23,7 +23,7 @@
     Example context (json):
     {
         "toolbarhelp": "Help",
-        "helpurl": "https://example.com/mod/playerwords/help.php?id=1",
+        "helptitle": "How to play",
         "canmanagewords": true,
         "managewordsbutton": "Manage words",
         "managewordsurl": "https://example.com/mod/playerwords/managewords.php?id=1",
@@ -38,9 +38,14 @@
     }
 }}
 <div class="pw-toolbar">
-    <a href="{{{helpurl}}}" class="pw-toolbar-btn" title="{{toolbarhelp}}" aria-label="{{toolbarhelp}}">
+    <button type="button"
+            id="playerwords-help-button"
+            class="pw-toolbar-btn"
+            title="{{toolbarhelp}}"
+            aria-label="{{toolbarhelp}}"
+            data-title="{{helptitle}}">
         <i class="fa fa-question-circle" aria-hidden="true"></i>
-    </a>
+    </button>
     {{#canmanagewords}}
         <a href="{{{managewordsurl}}}" class="pw-toolbar-btn" title="{{managewordsbutton}}" aria-label="{{managewordsbutton}}">
             <i class="fa fa-cog" aria-hidden="true"></i>

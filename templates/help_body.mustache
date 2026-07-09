@@ -15,15 +15,13 @@
     along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_playerwords/help
+    @template mod_playerwords/help_body
 
-    How-to-play help page for a PlayerWords activity.
+    How-to-play help content for a PlayerWords activity, shown inside a modal
+    opened from the in-game toolbar (see mod_playerwords/toolbar and amd/src/game.js).
 
     Example context (json):
     {
-        "activityurl": "https://example.com/mod/playerwords/view.php?id=1",
-        "backlabel": "Back to game",
-        "helptitle": "How to play",
         "introtext": "Guess the hidden word within the allowed attempts.",
         "legendcorrectlabel": "Correct: the letter is correct and in the right position.",
         "legendpresentlabel": "Present: the letter is in the word but in the wrong position.",
@@ -35,11 +33,7 @@
         "gradingtext": "Grading method: Highest grade."
     }
 }}
-<div class="mod-playerwords-help-page">
-    <p>
-        <a href="{{activityurl}}" class="btn btn-secondary btn-sm">{{backlabel}}</a>
-    </p>
-    <h2>{{helptitle}}</h2>
+<div class="mod-playerwords-help-body">
     <p>{{introtext}}</p>
     <ul class="mod-playerwords-help-legend">
         <li><span class="pw-legend-swatch is-correct" aria-hidden="true">A</span> {{legendcorrectlabel}}</li>

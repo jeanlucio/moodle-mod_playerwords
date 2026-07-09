@@ -191,9 +191,8 @@ final class view_page_service_test extends \advanced_testcase {
     }
 
     /**
-     * The template context always carries the toolbar URLs for the help and
-     * attempt-history pages, mirroring how managewordsurl/rankingurl are always
-     * present regardless of round state.
+     * The template context always carries the attempt-history toolbar URL and the
+     * how-to-play help content shown in the in-game modal, regardless of round state.
      *
      * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
@@ -204,8 +203,9 @@ final class view_page_service_test extends \advanced_testcase {
         $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
         $ctx = $pagedata['templatecontext'];
 
-        $this->assertStringContainsString('help.php', $ctx['helpurl']);
         $this->assertStringContainsString('myattempts.php', $ctx['myattemptsurl']);
+        $this->assertNotEmpty($ctx['helptitle']);
+        $this->assertNotEmpty($ctx['introtext']);
     }
 
     /**

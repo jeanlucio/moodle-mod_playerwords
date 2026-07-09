@@ -129,7 +129,6 @@ class view_page_service {
             'managewordsbutton' => get_string('managewordsbutton', 'mod_playerwords'),
             'managewordsurl' => (new moodle_url('/mod/playerwords/managewords.php', ['id' => $cm->id]))->out(false),
             'toolbarhelp' => get_string('toolbarhelp', 'mod_playerwords'),
-            'helpurl' => (new moodle_url('/mod/playerwords/help.php', ['id' => $cm->id]))->out(false),
             'toolbarmyattempts' => get_string('toolbarmyattempts', 'mod_playerwords'),
             'myattemptsurl' => (new moodle_url('/mod/playerwords/myattempts.php', ['id' => $cm->id]))->out(false),
             'showforfeit' => !empty($state['roundstarted']) && empty($state['finished']),
@@ -138,7 +137,34 @@ class view_page_service {
             'showlobby' => $showlobby,
             'roundstarted' => !empty($state['roundstarted']),
         ]
+            + self::build_help_context($instance)
             + round_presenter::build_ranking_context($instance, $cm, $userid, !empty($state['finished']))
             + $inner;
+    }
+
+    /**
+     * Builds the context for the how-to-play help content, rendered as a hidden template
+     * in the page and shown in a modal (see mod_playerwords/help_body).
+     *
+     * @param \stdClass $instance Activity instance.
+     * @return array
+     */
+    private static function build_help_context(\stdClass $instance): array {
+        $showgrading = (float)$instance->grade > 0;
+
+        return [
+            'helptitle' => get_string('help_title', 'mod_playerwords'),
+            'introtext' => get_string('help_intro', 'mod_playerwords'),
+            'legendcorrectlabel' => get_string('help_legend_correct', 'mod_playerwords'),
+            'legendpresentlabel' => get_string('help_legend_present', 'mod_playerwords'),
+            'legendabsentlabel' => get_string('help_legend_absent', 'mod_playerwords'),
+            'attemptstext' => get_string('help_attempts', 'mod_playerwords'),
+            'hinttext' => get_string('help_hint', 'mod_playerwords'),
+            'timertext' => get_string('help_timer', 'mod_playerwords'),
+            'showgrading' => $showgrading,
+            'gradingtext' => $showgrading
+                ? get_string('help_grading', 'mod_playerwords', round_presenter::grademethod_name($instance))
+                : '',
+        ];
     }
 }

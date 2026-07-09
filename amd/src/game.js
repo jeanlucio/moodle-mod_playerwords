@@ -28,6 +28,7 @@
 
 import Ajax from 'core/ajax';
 import Config from 'core/config';
+import Modal from 'core/modal';
 import ModalEvents from 'core/modal_events';
 import ModalSaveCancel from 'core/modal_save_cancel';
 import Notification from 'core/notification';
@@ -113,6 +114,28 @@ const initForfeit = (cmid, timertotal) => {
                 endRound(cmid, 'forfeit', timertotal);
             });
             return;
+        }).catch(Notification.exception);
+    });
+};
+
+/**
+ * Wires the toolbar's help button to open the how-to-play content in a modal, keeping the
+ * current round visible instead of navigating away to a separate page. The content itself
+ * is server-rendered once into a hidden container in the page (#playerwords-help-content)
+ * so it never needs to be re-fetched.
+ */
+const initHelpModal = () => {
+    const button = document.getElementById('playerwords-help-button');
+    const content = document.getElementById('playerwords-help-content');
+    if (!button || !content) {
+        return;
+    }
+    button.addEventListener('click', () => {
+        Modal.create({
+            title: button.dataset.title,
+            body: content.innerHTML,
+            show: true,
+            removeOnClose: true,
         }).catch(Notification.exception);
     });
 };
@@ -770,6 +793,7 @@ const initGuessForm = (cmid, timertotal) => {
  */
 const init = (cooldownUntil, timeleft, timertotal, cmid) => {
     initInputFilter();
+    initHelpModal();
     initForfeit(cmid, timertotal || 0);
     wireRoundPanel(cmid, timertotal || 0);
     initStartRound(cmid, timertotal || 0);

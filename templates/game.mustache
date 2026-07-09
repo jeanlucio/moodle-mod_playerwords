@@ -27,7 +27,16 @@
         "managewordsbutton": "Manage words",
         "managewordsurl": "https://example.com/mod/playerwords/managewords.php?id=1",
         "toolbarhelp": "Help",
-        "helpurl": "https://example.com/mod/playerwords/help.php?id=1",
+        "helptitle": "How to play",
+        "introtext": "Guess the hidden word within the allowed attempts.",
+        "legendcorrectlabel": "Correct: the letter is correct and in the right position.",
+        "legendpresentlabel": "Present: the letter is in the word but in the wrong position.",
+        "legendabsentlabel": "Absent: the letter is not in the word.",
+        "attemptstext": "You have a limited number of attempts per round.",
+        "hinttext": "A hint may be available, depending on how the teacher configured the activity.",
+        "timertext": "Some activities have a time limit per round.",
+        "showgrading": true,
+        "gradingtext": "Grading method: Highest grade.",
         "toolbarmyattempts": "Attempt history",
         "myattemptsurl": "https://example.com/mod/playerwords/myattempts.php?id=1",
         "hastargetword": true,
@@ -135,4 +144,8 @@
          class="visually-hidden sr-only"
          aria-live="polite"
          aria-atomic="true"></div>
+
+    <div id="playerwords-help-content" hidden>
+        {{> mod_playerwords/help_body}}
+    </div>
 </div>
