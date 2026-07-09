@@ -194,7 +194,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
                 'select',
                 'hud_round_cost_item',
                 get_string('hud_round_cost_item', 'mod_playerwords'),
-                $itemoptions
+                $this->add_stale_hud_item_option($itemoptions, $hudblockid, 'hud_round_cost_item')
             );
             $mform->setType('hud_round_cost_item', PARAM_INT);
             $mform->setDefault('hud_round_cost_item', 0);
@@ -209,7 +209,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
                 'select',
                 'hud_hint_cost_item',
                 get_string('hud_hint_cost_item', 'mod_playerwords'),
-                $itemoptions
+                $this->add_stale_hud_item_option($itemoptions, $hudblockid, 'hud_hint_cost_item')
             );
             $mform->setType('hud_hint_cost_item', PARAM_INT);
             $mform->setDefault('hud_hint_cost_item', 0);
@@ -224,7 +224,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
                 'select',
                 'hud_win_grant_item',
                 get_string('hud_win_grant_item', 'mod_playerwords'),
-                $itemoptions
+                $this->add_stale_hud_item_option($itemoptions, $hudblockid, 'hud_win_grant_item')
             );
             $mform->setType('hud_win_grant_item', PARAM_INT);
             $mform->setDefault('hud_win_grant_item', 0);
@@ -260,6 +260,33 @@ class mod_playerwords_mod_form extends moodleform_mod {
 
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
+    }
+
+    /**
+     * Adds the currently stored item as an extra select option when it fell out of the
+     * enabled-items list (disabled or deleted after being configured).
+     *
+     * Without this, saving the form for any unrelated reason would silently wipe the field
+     * back to "no item" the moment the browser submits whatever option happens to render as
+     * selected, since a <select> with no matching option cannot preserve the real value.
+     *
+     * @param array $options Base options (enabled items only), keyed by item id.
+     * @param int $blockinstanceid Block instance ID the stored value must belong to.
+     * @param string $field Field name to read the stored value from $this->current.
+     * @return array
+     */
+    private function add_stale_hud_item_option(array $options, int $blockinstanceid, string $field): array {
+        $storedid = (int)($this->current->{$field} ?? 0);
+        if ($storedid <= 0 || isset($options[$storedid])) {
+            return $options;
+        }
+
+        $itemname = \mod_playerwords\local\hud_service::get_item_name($blockinstanceid, $storedid);
+        $options[$storedid] = ($itemname !== '')
+            ? get_string('hud_item_disabled', 'mod_playerwords', $itemname)
+            : get_string('hud_item_deleted', 'mod_playerwords');
+
+        return $options;
     }
 
     /**
