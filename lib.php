@@ -43,6 +43,12 @@ define('PLAYERWORDS_GRADE_LAST', 4);
 /** Grade aggregation: average over all required rounds (uses max_rounds as denominator). */
 define('PLAYERWORDS_GRADE_AVERAGE_ALL', 5);
 
+/** Per-round scoring: full grade if the round was won, zero otherwise. */
+define('PLAYERWORDS_SCORING_BINARY', 1);
+
+/** Per-round scoring: proportional to attempts spared out of max_attempts. */
+define('PLAYERWORDS_SCORING_LINEAR', 2);
+
 /** Word selection mode: a random word is picked each round. */
 define('PLAYERWORDS_WORDMODE_RANDOM', 1);
 
@@ -139,6 +145,22 @@ function playerwords_get_grademethod_options(): array {
         PLAYERWORDS_GRADE_FIRST       => get_string('grademethod_first', 'mod_playerwords'),
         PLAYERWORDS_GRADE_LAST        => get_string('grademethod_last', 'mod_playerwords'),
         PLAYERWORDS_GRADE_AVERAGE_ALL => get_string('grademethod_average_all', 'mod_playerwords'),
+    ];
+}
+
+/**
+ * Returns the available per-round scoring mode options, keyed by their
+ * PLAYERWORDS_SCORING_* constant.
+ *
+ * Shared by the grade-scoring and ranking-scoring settings form dropdowns — they offer
+ * the same two choices, computed by the same formula, just feeding different columns.
+ *
+ * @return array<int, string>
+ */
+function playerwords_get_scoring_mode_options(): array {
+    return [
+        PLAYERWORDS_SCORING_BINARY => get_string('scoringmode_binary', 'mod_playerwords'),
+        PLAYERWORDS_SCORING_LINEAR => get_string('scoringmode_linear', 'mod_playerwords'),
     ];
 }
 
