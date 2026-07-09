@@ -290,18 +290,17 @@ class round_service {
     public static function start_round(array $state, \stdClass $instance, int $userid): array {
         global $DB;
 
-        // A deleted cost item can never be restocked, so waive the cost instead of locking
-        // the student out forever; mirrors round_presenter::build_hud_cost_info(), which
-        // already hides the cost badge in this same case.
         $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
-        if ($roundcostitem > 0 && hud_service::get_item_name($roundcostitem) !== '') {
+        if ($roundcostitem > 0) {
+            $blockinstanceid = hud_service::resolve_block_instance_id($instance);
             $consumed = hud_service::consume_items(
+                $blockinstanceid,
                 $userid,
                 $roundcostitem,
                 max(1, (int)($instance->hud_round_cost_qty ?? 1))
             );
             if (!$consumed) {
-                $itemname = hud_service::get_item_name($roundcostitem);
+                $itemname = hud_service::get_item_name($blockinstanceid, $roundcostitem);
                 return [$state, get_string('hud_insufficient_round', 'mod_playerwords', $itemname), 'warning'];
             }
         }
@@ -335,16 +334,17 @@ class round_service {
      * @return array [$state, $notification, $notificationtype]
      */
     public static function reveal_hint(array $state, \stdClass $instance, int $userid): array {
-        // Same waived-cost rationale as start_round() above.
         $hintcostitem = (int)($instance->hud_hint_cost_item ?? 0);
-        if ($hintcostitem > 0 && hud_service::get_item_name($hintcostitem) !== '') {
+        if ($hintcostitem > 0) {
+            $blockinstanceid = hud_service::resolve_block_instance_id($instance);
             $consumed = hud_service::consume_items(
+                $blockinstanceid,
                 $userid,
                 $hintcostitem,
                 max(1, (int)($instance->hud_hint_cost_qty ?? 1))
             );
             if (!$consumed) {
-                $itemname = hud_service::get_item_name($hintcostitem);
+                $itemname = hud_service::get_item_name($blockinstanceid, $hintcostitem);
                 return [$state, get_string('hud_insufficient_hint', 'mod_playerwords', $itemname), 'warning'];
             }
         }
@@ -576,6 +576,7 @@ class round_service {
             $grantitem = (int)($instance->hud_win_grant_item ?? 0);
             if ($grantitem > 0) {
                 hud_service::grant_items(
+                    hud_service::resolve_block_instance_id($instance),
                     $userid,
                     $grantitem,
                     max(1, (int)($instance->hud_win_grant_qty ?? 1)),

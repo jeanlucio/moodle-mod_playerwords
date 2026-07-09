@@ -882,6 +882,35 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
+     * A round cost pointing at a PlayerHUD item belonging to a different course's block
+     * instance is waived, the same as a deleted item — the cross-course leak external_items
+     * exists to prevent (block_playerhud_items.id is a single site-wide sequence, so a stale
+     * or misconfigured ID could otherwise silently charge against another course's economy).
+     * This course has its own PlayerHUD block instance too, proving the rejection is about
+     * this specific item's ownership, not merely "no PlayerHUD available in this course".
+     *
+     * @covers \mod_playerwords\local\round_service::start_round
+     * @return void
+     */
+    public function test_start_round_waives_cost_when_item_belongs_to_other_course(): void {
+        $this->skip_if_no_playerhud();
+
+        $this->make_block_instance($this->course);
+        $othercourse = $this->getDataGenerator()->create_course();
+        $otherbiid = $this->make_block_instance($othercourse);
+        $itemid = $this->make_item($otherbiid);
+
+        $instance = $this->make_instance(['hud_round_cost_item' => $itemid, 'hud_round_cost_qty' => 1]);
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+
+        [$state, $notification] = round_service::start_round($state, $instance, $this->user->id);
+
+        $this->assertNull($notification);
+        $this->assertTrue($state['roundstarted']);
+    }
+
+    /**
      * A hint cost pointing at a PlayerHUD item that no longer exists is waived, same
      * rationale as test_start_round_waives_cost_when_item_deleted().
      *

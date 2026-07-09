@@ -72,6 +72,18 @@ class hud_service {
     }
 
     /**
+     * Resolves the block instance ID for an activity's own course, returning 0 (not null)
+     * when PlayerHUD is unavailable — external_items treats any ID <= 0 as "does not belong",
+     * so callers can pass this straight through without a separate null check.
+     *
+     * @param \stdClass $instance Activity instance record.
+     * @return int
+     */
+    public static function resolve_block_instance_id(\stdClass $instance): int {
+        return (int)(self::get_block_instance_id((int)$instance->course) ?? 0);
+    }
+
+    /**
      * Returns enabled items for a block instance, sorted by name.
      *
      * @param int $blockinstanceid Block instance ID.
@@ -89,94 +101,51 @@ class hud_service {
 
     /**
      * Returns how many available (not consumed or revoked) units of an item a user
-     * currently holds, using the same eligibility filter as consume_items().
+     * currently holds. Zero if the item does not belong to $blockinstanceid.
      *
+     * @param int $blockinstanceid Block instance ID the item must belong to.
      * @param int $userid User ID.
      * @param int $itemid Item ID.
      * @return int
      */
-    public static function get_available_quantity(int $userid, int $itemid): int {
-        global $DB;
-
-        if ($itemid <= 0) {
-            return 0;
-        }
-
-        return $DB->count_records_select(
-            'block_playerhud_inventory',
-            "userid = :userid AND itemid = :itemid AND source NOT IN ('revoked', 'consumed')",
-            ['userid' => $userid, 'itemid' => $itemid]
-        );
+    public static function get_available_quantity(int $blockinstanceid, int $userid, int $itemid): int {
+        return \block_playerhud\local\external_items::get_available_quantity($blockinstanceid, $itemid, $userid);
     }
 
     /**
-     * Returns the formatted display name of an item, or empty string if not found.
+     * Returns the formatted display name of an item, or empty string if it does not belong to
+     * $blockinstanceid.
      *
+     * @param int $blockinstanceid Block instance ID the item must belong to.
      * @param int $itemid Item ID.
      * @return string
      */
-    public static function get_item_name(int $itemid): string {
-        global $DB;
-
-        if ($itemid <= 0) {
-            return '';
-        }
-        $name = $DB->get_field('block_playerhud_items', 'name', ['id' => $itemid]);
-        return ($name !== false) ? format_string($name) : '';
+    public static function get_item_name(int $blockinstanceid, int $itemid): string {
+        return \block_playerhud\local\external_items::get_name($blockinstanceid, $itemid);
     }
 
     /**
-     * Atomically consumes $qty items of $itemid from $userid's inventory.
+     * Atomically consumes $qty items of $itemid from $userid's inventory, FIFO (oldest first).
      *
-     * Uses FIFO order (oldest first). Returns false when the user does not have
-     * enough available items; in that case no items are consumed.
+     * Returns true both on a genuine successful consumption and when the item does not belong
+     * to $blockinstanceid (deleted, or configured for a different course) — a cost that can
+     * never be paid should be waived, not block the student forever. Returns false only for a
+     * genuine insufficient balance on a valid item.
      *
+     * @param int $blockinstanceid Block instance ID the item must belong to.
      * @param int $userid User ID.
      * @param int $itemid Item ID from block_playerhud_items.
-     * @param int $qty    Number of items to consume.
-     * @return bool True on success, false if insufficient.
+     * @param int $qty Number of items to consume.
+     * @return bool
      */
-    public static function consume_items(int $userid, int $itemid, int $qty): bool {
-        global $DB;
-
-        if ($qty <= 0) {
-            return true;
-        }
-
-        $lockfactory = \core\lock\lock_config::get_lock_factory('mod_playerwords');
-        $lockkey = 'hud_uid' . $userid . '_iid' . $itemid;
-        $lock = $lockfactory->get_lock($lockkey, 5);
-
-        if (!$lock) {
-            return false;
-        }
-
-        try {
-            $sql = "SELECT id
-                      FROM {block_playerhud_inventory}
-                     WHERE userid = :uid AND itemid = :iid
-                           AND source NOT IN ('revoked', 'consumed')
-                  ORDER BY timecreated ASC";
-
-            $records = $DB->get_records_sql($sql, ['uid' => $userid, 'iid' => $itemid], 0, $qty);
-
-            if (count($records) < $qty) {
-                return false;
-            }
-
-            $ids = array_keys($records);
-            [$insql, $inparams] = $DB->get_in_or_equal($ids, SQL_PARAMS_NAMED, 'ci');
-            $DB->set_field_select('block_playerhud_inventory', 'source', 'consumed', "id $insql", $inparams);
-
-            return true;
-        } finally {
-            $lock->release();
-        }
+    public static function consume_items(int $blockinstanceid, int $userid, int $itemid, int $qty): bool {
+        return \block_playerhud\local\external_items::consume($blockinstanceid, $itemid, $userid, $qty) !== false;
     }
 
     /**
      * Grants $qty units of $itemid to $userid, awarding the item's own XP value unless
-     * $suppressxp is set.
+     * $suppressxp is set. A no-op when the item does not belong to $blockinstanceid or is
+     * disabled.
      *
      * $suppressxp exists to mirror block_playerhud's own "infinite drop gives no XP"
      * anti-farming rule: since this grant never goes through a real PlayerHUD drop
@@ -184,37 +153,14 @@ class hud_service {
      * no way to know on its own whether the caller represents an unbounded source —
      * callers must decide that themselves and pass it in.
      *
+     * @param int $blockinstanceid Block instance ID the item must belong to.
      * @param int $userid User ID.
      * @param int $itemid Item ID from block_playerhud_items.
      * @param int $qty    Number of items to grant.
      * @param bool $suppressxp Whether to withhold the item's XP even though it was granted.
      * @return void
      */
-    public static function grant_items(int $userid, int $itemid, int $qty, bool $suppressxp): void {
-        global $DB;
-
-        if ($itemid <= 0 || $qty <= 0) {
-            return;
-        }
-
-        $item = $DB->get_record('block_playerhud_items', ['id' => $itemid], 'id, blockinstanceid, xp');
-        if (!$item) {
-            return;
-        }
-
-        for ($i = 0; $i < $qty; $i++) {
-            $DB->insert_record('block_playerhud_inventory', (object)[
-                'userid'      => $userid,
-                'itemid'      => $itemid,
-                'dropid'      => 0,
-                'source'      => 'playerwords',
-                'timecreated' => time(),
-            ]);
-        }
-
-        if (!$suppressxp && (int)$item->xp > 0) {
-            $player = \block_playerhud\game::get_player($item->blockinstanceid, $userid);
-            \block_playerhud\game::change_xp($player, (int)$item->xp * $qty, $item->blockinstanceid);
-        }
+    public static function grant_items(int $blockinstanceid, int $userid, int $itemid, int $qty, bool $suppressxp): void {
+        \block_playerhud\local\external_items::grant($blockinstanceid, $itemid, $userid, $qty, 'playerwords', $suppressxp);
     }
 }

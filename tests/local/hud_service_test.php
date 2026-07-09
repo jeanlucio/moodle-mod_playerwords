@@ -206,7 +206,7 @@ final class hud_service_test extends \advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $biid   = $this->make_block_instance($course);
         $itemid = $this->make_item($biid, 'Gold Key');
-        $this->assertSame('Gold Key', hud_service::get_item_name($itemid));
+        $this->assertSame('Gold Key', hud_service::get_item_name($biid, $itemid));
     }
 
     /**
@@ -217,7 +217,25 @@ final class hud_service_test extends \advanced_testcase {
      */
     public function test_get_item_name_zero_returns_empty(): void {
         $this->skip_if_no_playerhud();
-        $this->assertSame('', hud_service::get_item_name(0));
+        $this->assertSame('', hud_service::get_item_name(0, 0));
+    }
+
+    /**
+     * Tests that get_item_name returns an empty string for an item belonging to a different
+     * block instance — the cross-course leak this delegation to external_items prevents.
+     *
+     * @covers \mod_playerwords\local\hud_service::get_item_name
+     * @return void
+     */
+    public function test_get_item_name_empty_for_other_instance_item(): void {
+        $this->skip_if_no_playerhud();
+        $course = $this->getDataGenerator()->create_course();
+        $othercourse = $this->getDataGenerator()->create_course();
+        $biid = $this->make_block_instance($course);
+        $otherbiid = $this->make_block_instance($othercourse);
+        $itemid = $this->make_item($otherbiid, 'Gold Key');
+
+        $this->assertSame('', hud_service::get_item_name($biid, $itemid));
     }
 
     /**
@@ -266,8 +284,29 @@ final class hud_service_test extends \advanced_testcase {
         $itemid = $this->make_item($biid);
         $this->make_inventory($user->id, $itemid);
 
-        $result = hud_service::consume_items($user->id, $itemid, 2);
+        $result = hud_service::consume_items($biid, $user->id, $itemid, 2);
         $this->assertFalse($result);
+    }
+
+    /**
+     * Tests that consume_items returns true (waived, not blocked) for an item belonging to a
+     * different block instance — a foreign or deleted item can never be restocked, so the cost
+     * is dispensed rather than locking the student out forever.
+     *
+     * @covers \mod_playerwords\local\hud_service::consume_items
+     * @return void
+     */
+    public function test_consume_items_waived_for_other_instance_item(): void {
+        $this->skip_if_no_playerhud();
+        $user   = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $othercourse = $this->getDataGenerator()->create_course();
+        $biid = $this->make_block_instance($course);
+        $otherbiid = $this->make_block_instance($othercourse);
+        $itemid = $this->make_item($otherbiid);
+
+        $result = hud_service::consume_items($biid, $user->id, $itemid, 1);
+        $this->assertTrue($result);
     }
 
     /**
@@ -286,7 +325,7 @@ final class hud_service_test extends \advanced_testcase {
         $this->make_inventory($user->id, $itemid);
         $this->make_inventory($user->id, $itemid);
 
-        $result = hud_service::consume_items($user->id, $itemid, 2);
+        $result = hud_service::consume_items($biid, $user->id, $itemid, 2);
         $this->assertTrue($result);
 
         $remaining = $DB->count_records_select(
@@ -314,7 +353,7 @@ final class hud_service_test extends \advanced_testcase {
         $middle = $this->make_inventory($user->id, $itemid, 50);
         $newest = $this->make_inventory($user->id, $itemid, 0);
 
-        hud_service::consume_items($user->id, $itemid, 2);
+        hud_service::consume_items($biid, $user->id, $itemid, 2);
 
         $this->assertSame('consumed', $DB->get_field('block_playerhud_inventory', 'source', ['id' => $oldest]));
         $this->assertSame('consumed', $DB->get_field('block_playerhud_inventory', 'source', ['id' => $middle]));
@@ -330,7 +369,10 @@ final class hud_service_test extends \advanced_testcase {
     public function test_consume_items_zero_qty_short_circuits(): void {
         $this->skip_if_no_playerhud();
         $user   = $this->getDataGenerator()->create_user();
-        $this->assertTrue(hud_service::consume_items($user->id, 999, 0));
+        $course = $this->getDataGenerator()->create_course();
+        $biid   = $this->make_block_instance($course);
+        $itemid = $this->make_item($biid);
+        $this->assertTrue(hud_service::consume_items($biid, $user->id, $itemid, 0));
     }
 
     /**
@@ -348,7 +390,7 @@ final class hud_service_test extends \advanced_testcase {
         $biid   = $this->make_block_instance($course);
         $itemid = $this->make_item($biid, 'Gold Key', 30);
 
-        hud_service::grant_items($user->id, $itemid, 2, false);
+        hud_service::grant_items($biid, $user->id, $itemid, 2, false);
 
         $rows = $DB->get_records('block_playerhud_inventory', ['userid' => $user->id, 'itemid' => $itemid]);
         $this->assertCount(2, $rows);
@@ -380,7 +422,7 @@ final class hud_service_test extends \advanced_testcase {
         $biid   = $this->make_block_instance($course);
         $itemid = $this->make_item($biid, 'Gold Key', 30);
 
-        hud_service::grant_items($user->id, $itemid, 1, true);
+        hud_service::grant_items($biid, $user->id, $itemid, 1, true);
 
         $this->assertSame(1, $DB->count_records('block_playerhud_inventory', ['userid' => $user->id, 'itemid' => $itemid]));
         $currentxp = $DB->get_field('block_playerhud_user', 'currentxp', [
@@ -405,7 +447,7 @@ final class hud_service_test extends \advanced_testcase {
         $biid   = $this->make_block_instance($course);
         $itemid = $this->make_item($biid, 'Trinket', 0);
 
-        hud_service::grant_items($user->id, $itemid, 3, false);
+        hud_service::grant_items($biid, $user->id, $itemid, 3, false);
 
         $this->assertSame(3, $DB->count_records('block_playerhud_inventory', ['userid' => $user->id, 'itemid' => $itemid]));
         $this->assertSame(0, (int)$DB->count_records('block_playerhud_user', [
@@ -424,8 +466,32 @@ final class hud_service_test extends \advanced_testcase {
         global $DB;
         $this->skip_if_no_playerhud();
         $user = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $biid = $this->make_block_instance($course);
 
-        hud_service::grant_items($user->id, 999999, 1, false);
+        hud_service::grant_items($biid, $user->id, 999999, 1, false);
+
+        $this->assertSame(0, $DB->count_records('block_playerhud_inventory', ['userid' => $user->id]));
+    }
+
+    /**
+     * Tests that granting an item belonging to a different block instance is a no-op — the
+     * cross-course leak this delegation to external_items prevents.
+     *
+     * @covers \mod_playerwords\local\hud_service::grant_items
+     * @return void
+     */
+    public function test_grant_items_other_instance_item_noop(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+        $user = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $othercourse = $this->getDataGenerator()->create_course();
+        $biid = $this->make_block_instance($course);
+        $otherbiid = $this->make_block_instance($othercourse);
+        $itemid = $this->make_item($otherbiid, 'Gold Key', 30);
+
+        hud_service::grant_items($biid, $user->id, $itemid, 1, false);
 
         $this->assertSame(0, $DB->count_records('block_playerhud_inventory', ['userid' => $user->id]));
     }
@@ -440,8 +506,10 @@ final class hud_service_test extends \advanced_testcase {
         global $DB;
         $this->skip_if_no_playerhud();
         $user = $this->getDataGenerator()->create_user();
+        $course = $this->getDataGenerator()->create_course();
+        $biid = $this->make_block_instance($course);
 
-        hud_service::grant_items($user->id, 999, 0, false);
+        hud_service::grant_items($biid, $user->id, 999, 0, false);
 
         $this->assertSame(0, $DB->count_records('block_playerhud_inventory', ['userid' => $user->id]));
     }

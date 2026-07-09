@@ -548,6 +548,40 @@ final class round_presenter_test extends \advanced_testcase {
         $this->assertSame(0, $after['cooldownuntil']);
     }
 
+    /** @var int|null Memoized PlayerHUD block instance ID for $this->course. */
+    private ?int $hudblockinstanceid = null;
+
+    /**
+     * Returns the PlayerHUD block instance ID for $this->course, creating it on first use.
+     *
+     * Items must belong to a real block instance in the activity's own course now that
+     * hud_service delegates to external_items, which validates ownership before doing
+     * anything — a placeholder blockinstanceid would make every cost/grant check fail.
+     *
+     * @return int
+     */
+    private function get_hud_block_instance(): int {
+        global $DB;
+
+        if ($this->hudblockinstanceid === null) {
+            $ctx = \context_course::instance($this->course->id);
+            $this->hudblockinstanceid = (int) $DB->insert_record('block_instances', (object) [
+                'blockname'         => 'playerhud',
+                'parentcontextid'   => $ctx->id,
+                'showinsubcontexts' => 0,
+                'pagetypepattern'   => 'course-view-*',
+                'subpagepattern'    => null,
+                'defaultregion'     => 'side-pre',
+                'defaultweight'     => 0,
+                'configdata'        => base64_encode(serialize(new \stdClass())),
+                'timecreated'       => time(),
+                'timemodified'      => time(),
+            ]);
+        }
+
+        return $this->hudblockinstanceid;
+    }
+
     /**
      * Inserts a block_playerhud_items record, skipping the test if the block is absent.
      *
@@ -560,7 +594,7 @@ final class round_presenter_test extends \advanced_testcase {
             $this->markTestSkipped('block_playerhud not installed.');
         }
         return $DB->insert_record('block_playerhud_items', (object)[
-            'blockinstanceid' => 0,
+            'blockinstanceid' => $this->get_hud_block_instance(),
             'name'            => $name,
             'xp'              => 0,
             'image'           => '',

@@ -370,7 +370,7 @@ class round_presenter {
             return '';
         }
 
-        $itemname = hud_service::get_item_name($grantitem);
+        $itemname = hud_service::get_item_name(hud_service::resolve_block_instance_id($instance), $grantitem);
         if ($itemname === '') {
             return '';
         }
@@ -387,25 +387,26 @@ class round_presenter {
      * start-round cost and the round panel's hint cost — same shape, same decision
      * (own balance vs configured requirement), different action.
      *
+     * @param int $blockinstanceid Block instance ID the item must belong to.
      * @param int $itemid PlayerHUD item id, 0 disables the check.
      * @param int $requiredqty Quantity required by the activity's configuration.
      * @param int $userid Current user id.
      * @return array {applies: bool, label: string, canafford: bool}
      */
-    private static function build_hud_cost_info(int $itemid, int $requiredqty, int $userid): array {
+    private static function build_hud_cost_info(int $blockinstanceid, int $itemid, int $requiredqty, int $userid): array {
         $blank = ['applies' => false, 'label' => '', 'canafford' => true];
 
         if ($itemid <= 0) {
             return $blank;
         }
 
-        $itemname = hud_service::get_item_name($itemid);
+        $itemname = hud_service::get_item_name($blockinstanceid, $itemid);
         if ($itemname === '') {
             return $blank;
         }
 
         $requiredqty = max(1, $requiredqty);
-        $availableqty = hud_service::get_available_quantity($userid, $itemid);
+        $availableqty = hud_service::get_available_quantity($blockinstanceid, $userid, $itemid);
 
         $label = get_string('hud_balancecost', 'mod_playerwords', (object)[
             'available' => $availableqty,
@@ -453,7 +454,12 @@ class round_presenter {
         $canstart = true;
         $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
         if ($roundcostitem > 0 && empty($state['finished']) && empty($state['roundstarted'])) {
-            $info = self::build_hud_cost_info($roundcostitem, (int)($instance->hud_round_cost_qty ?? 1), $userid);
+            $info = self::build_hud_cost_info(
+                hud_service::resolve_block_instance_id($instance),
+                $roundcostitem,
+                (int)($instance->hud_round_cost_qty ?? 1),
+                $userid
+            );
             $hudstartcost = $info['applies'];
             $hudstartcostlabel = $info['label'];
             $canstart = $info['canafford'];
@@ -499,7 +505,12 @@ class round_presenter {
         $canaffordhint = true;
         $hintcostitem = (int)($instance->hud_hint_cost_item ?? 0);
         if ($hintcostitem > 0 && !empty($state['hint']) && empty($state['hintrevealed'])) {
-            $info = self::build_hud_cost_info($hintcostitem, (int)($instance->hud_hint_cost_qty ?? 1), $userid);
+            $info = self::build_hud_cost_info(
+                hud_service::resolve_block_instance_id($instance),
+                $hintcostitem,
+                (int)($instance->hud_hint_cost_qty ?? 1),
+                $userid
+            );
             $hudhintcost = $info['applies'];
             $hudhintcostlabel = $info['label'];
             $canaffordhint = $info['canafford'];
