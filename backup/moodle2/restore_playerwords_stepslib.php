@@ -59,6 +59,46 @@ class restore_playerwords_activity_structure_step extends restore_activity_struc
     }
 
     /**
+     * Resolves a backed-up PlayerHUD item ID to the item that should be referenced in the
+     * restored copy, or 0 if none applies.
+     *
+     * Tries, in order: (1) the playerhud_item restore mapping, when the PlayerHUD block was
+     * part of the same restore (full course backup/restore, or "Import") — block_playerhud's
+     * own restore task always runs before this activity's, so the mapping is already
+     * available here, no after_execute()/after_restore() deferral needed; (2) if no mapping
+     * was registered, whether the original ID still legitimately belongs to the destination
+     * course's own PlayerHUD block instance ("Duplicate activity", which never restores the
+     * block, so nothing needs remapping); (3) otherwise the original ID belongs to a
+     * different course's PlayerHUD, or PlayerHUD isn't installed on this site at all, and
+     * must be dropped rather than risk operating on the wrong course's item —
+     * block_playerhud_items.id is a single site-wide sequence, not scoped per course.
+     *
+     * @param int $oldid Backed-up item ID, 0 if the field was not configured.
+     * @return int
+     */
+    private function resolve_hud_item(int $oldid): int {
+        if ($oldid <= 0) {
+            return 0;
+        }
+
+        $mapped = $this->get_mappingid('playerhud_item', $oldid);
+        if ($mapped) {
+            return (int)$mapped;
+        }
+
+        if (!class_exists('\block_playerhud\local\external_items')) {
+            return 0;
+        }
+
+        $blockinstanceid = \mod_playerwords\local\hud_service::get_block_instance_id($this->get_courseid());
+        if ($blockinstanceid === null) {
+            return 0;
+        }
+
+        return \block_playerhud\local\external_items::belongs_to_instance($oldid, $blockinstanceid) ? $oldid : 0;
+    }
+
+    /**
      * Restores the root playerwords instance record.
      *
      * @param array|object $data XML data for this element.
@@ -78,6 +118,10 @@ class restore_playerwords_activity_structure_step extends restore_activity_struc
         if (!empty($data->glossaryid)) {
             $data->glossaryid = $this->get_mappingid('glossary', $data->glossaryid, 0);
         }
+
+        $data->hud_round_cost_item = $this->resolve_hud_item((int)($data->hud_round_cost_item ?? 0));
+        $data->hud_hint_cost_item = $this->resolve_hud_item((int)($data->hud_hint_cost_item ?? 0));
+        $data->hud_win_grant_item = $this->resolve_hud_item((int)($data->hud_win_grant_item ?? 0));
 
         $newitemid = $DB->insert_record('playerwords', $data);
         $this->apply_activity_instance($newitemid);
