@@ -290,8 +290,11 @@ class round_service {
     public static function start_round(array $state, \stdClass $instance, int $userid): array {
         global $DB;
 
+        // A deleted cost item can never be restocked, so waive the cost instead of locking
+        // the student out forever; mirrors round_presenter::build_hud_cost_info(), which
+        // already hides the cost badge in this same case.
         $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
-        if ($roundcostitem > 0) {
+        if ($roundcostitem > 0 && hud_service::get_item_name($roundcostitem) !== '') {
             $consumed = hud_service::consume_items(
                 $userid,
                 $roundcostitem,
@@ -332,8 +335,9 @@ class round_service {
      * @return array [$state, $notification, $notificationtype]
      */
     public static function reveal_hint(array $state, \stdClass $instance, int $userid): array {
+        // Same waived-cost rationale as start_round() above.
         $hintcostitem = (int)($instance->hud_hint_cost_item ?? 0);
-        if ($hintcostitem > 0) {
+        if ($hintcostitem > 0 && hud_service::get_item_name($hintcostitem) !== '') {
             $consumed = hud_service::consume_items(
                 $userid,
                 $hintcostitem,

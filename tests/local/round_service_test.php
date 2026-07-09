@@ -858,4 +858,71 @@ final class round_service_test extends \advanced_testcase {
 
         $this->assertSame(0, $DB->count_records('block_playerhud_inventory', ['userid' => $this->user->id]));
     }
+
+    /**
+     * A round cost pointing at a PlayerHUD item that no longer exists is waived instead of
+     * blocking the student forever — a deleted item can never be restocked, so charging for
+     * it would be a permanent lockout. Mirrors round_presenter::build_hud_cost_info(), which
+     * already hides the cost badge in this same case.
+     *
+     * @covers \mod_playerwords\local\round_service::start_round
+     * @return void
+     */
+    public function test_start_round_waives_cost_when_item_deleted(): void {
+        $this->skip_if_no_playerhud();
+
+        $instance = $this->make_instance(['hud_round_cost_item' => 999999, 'hud_round_cost_qty' => 1]);
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+
+        [$state, $notification] = round_service::start_round($state, $instance, $this->user->id);
+
+        $this->assertNull($notification);
+        $this->assertTrue($state['roundstarted']);
+    }
+
+    /**
+     * A hint cost pointing at a PlayerHUD item that no longer exists is waived, same
+     * rationale as test_start_round_waives_cost_when_item_deleted().
+     *
+     * @covers \mod_playerwords\local\round_service::reveal_hint
+     * @return void
+     */
+    public function test_reveal_hint_waives_cost_when_item_deleted(): void {
+        $this->skip_if_no_playerhud();
+
+        $instance = $this->make_instance(['hud_hint_cost_item' => 999999, 'hud_hint_cost_qty' => 1]);
+        [$state] = $this->start_ready_round($instance);
+
+        [$state, $notification] = round_service::reveal_hint($state, $instance, $this->user->id);
+
+        $this->assertNull($notification);
+        $this->assertTrue($state['hintrevealed']);
+    }
+
+    /**
+     * A round cost pointing at a disabled (not deleted) item still blocks the student when
+     * their balance is short. Disabling is reversible, so the cost is deliberately not
+     * waived here — only a deleted item (permanently unobtainable) gets that treatment.
+     *
+     * @covers \mod_playerwords\local\round_service::start_round
+     * @return void
+     */
+    public function test_start_round_still_blocks_when_item_disabled_and_insufficient(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+
+        $biid = $this->make_block_instance($this->course);
+        $itemid = $this->make_item($biid);
+        $DB->set_field('block_playerhud_items', 'enabled', 0, ['id' => $itemid]);
+
+        $instance = $this->make_instance(['hud_round_cost_item' => $itemid, 'hud_round_cost_qty' => 1]);
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+
+        [$state, $notification] = round_service::start_round($state, $instance, $this->user->id);
+
+        $this->assertNotNull($notification);
+        $this->assertFalse($state['roundstarted']);
+    }
 }

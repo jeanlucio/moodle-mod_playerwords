@@ -84,6 +84,52 @@ final class reveal_hint_test extends \advanced_testcase {
     }
 
     /**
+     * Skips the current test when block_playerhud is not installed.
+     *
+     * @return void
+     */
+    private function skip_if_no_playerhud(): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('block_playerhud_items')) {
+            $this->markTestSkipped('block_playerhud not installed.');
+        }
+    }
+
+    /**
+     * Inserts a genuine block_playerhud_items record (with its own block instance), so
+     * cost-checking tests exercise a real item rather than a bare numeric ID.
+     *
+     * @return int Item ID.
+     */
+    private function make_hud_item(): int {
+        global $DB;
+        $ctx = \context_course::instance($this->course->id);
+        $biid = $DB->insert_record('block_instances', (object)[
+            'blockname'         => 'playerhud',
+            'parentcontextid'   => $ctx->id,
+            'showinsubcontexts' => 0,
+            'pagetypepattern'   => 'course-view-*',
+            'subpagepattern'    => null,
+            'defaultregion'     => 'side-pre',
+            'defaultweight'     => 0,
+            'configdata'        => base64_encode(serialize(new \stdClass())),
+            'timecreated'       => time(),
+            'timemodified'      => time(),
+        ]);
+        return $DB->insert_record('block_playerhud_items', (object)[
+            'blockinstanceid' => $biid,
+            'name'            => 'Gold Key',
+            'xp'              => 0,
+            'image'           => '',
+            'description'     => '',
+            'enabled'         => 1,
+            'secret'          => 0,
+            'timecreated'     => time(),
+            'timemodified'    => time(),
+        ]);
+    }
+
+    /**
      * Calls the mod_playerwords_reveal_hint web service through the real dispatch path.
      *
      * @param int $cmid Course module id.
@@ -175,7 +221,9 @@ final class reveal_hint_test extends \advanced_testcase {
      * @return void
      */
     public function test_hud_insufficient_item_blocks_reveal(): void {
-        $instance = $this->make_instance(['hud_hint_cost_item' => 999, 'hud_hint_cost_qty' => 1]);
+        $this->skip_if_no_playerhud();
+        $itemid = $this->make_hud_item();
+        $instance = $this->make_instance(['hud_hint_cost_item' => $itemid, 'hud_hint_cost_qty' => 1]);
         $this->setUser($this->student);
 
         $result = $this->call_reveal_hint($instance->cmid);
@@ -184,5 +232,24 @@ final class reveal_hint_test extends \advanced_testcase {
         $this->assertFalse($result['data']['success']);
         $this->assertSame('', $result['data']['hintvalue']);
         $this->assertNotEmpty($result['data']['notification']);
+    }
+
+    /**
+     * Tests that a hint cost pointing at a PlayerHUD item that does not exist (e.g. it was
+     * deleted after the activity was configured) is waived rather than blocking the hint
+     * forever with a broken notification.
+     *
+     * @covers \mod_playerwords\external\reveal_hint::execute
+     * @return void
+     */
+    public function test_hud_deleted_item_waives_reveal_cost(): void {
+        $instance = $this->make_instance(['hud_hint_cost_item' => 999999, 'hud_hint_cost_qty' => 1]);
+        $this->setUser($this->student);
+
+        $result = $this->call_reveal_hint($instance->cmid);
+
+        $this->assertFalse($result['error']);
+        $this->assertTrue($result['data']['success']);
+        $this->assertSame('dica secreta', $result['data']['hintvalue']);
     }
 }
