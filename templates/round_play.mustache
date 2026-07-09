@@ -28,7 +28,8 @@
         "guessplaceholder": "Type a word",
         "guessmaxlength": 7,
         "keyboardlabel": "On-screen keyboard",
-        "keyboardenterlabel": "Enter",
+        "keyboardenterlabel": "Submit",
+        "keyboardentertext": "Enter",
         "keyboardbackspacelabel": "Backspace",
         "showcedilla": true
     }
@@ -77,10 +78,10 @@
         </div>
         <div class="mod-playerwords-keyboard-row">
             <button type="button"
-                    class="pw-key pw-key-wide"
+                    class="pw-key pw-key-wide pw-key-enter"
                     data-key="ENTER"
                     tabindex="-1"
-                    aria-label="{{keyboardenterlabel}}">&#x21b5;</button>
+                    aria-label="{{keyboardenterlabel}}">{{keyboardentertext}}</button>
             <button type="button" class="pw-key" data-key="Z" tabindex="-1">Z</button>
             <button type="button" class="pw-key" data-key="X" tabindex="-1">X</button>
             <button type="button" class="pw-key" data-key="C" tabindex="-1">C</button>
@@ -89,7 +90,7 @@
             <button type="button" class="pw-key" data-key="N" tabindex="-1">N</button>
             <button type="button" class="pw-key" data-key="M" tabindex="-1">M</button>
             <button type="button"
-                    class="pw-key pw-key-wide"
+                    class="pw-key pw-key-wide pw-key-backspace"
                     data-key="BACKSPACE"
                     tabindex="-1"
                     aria-label="{{keyboardbackspacelabel}}">&#x232b;</button>

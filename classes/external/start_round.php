@@ -162,6 +162,7 @@ class start_round extends external_api {
             'forfeitconfirm' => new external_value(PARAM_TEXT, 'Forfeit confirmation message'),
             'keyboardlabel' => new external_value(PARAM_TEXT, 'On-screen keyboard aria label'),
             'keyboardenterlabel' => new external_value(PARAM_TEXT, 'Enter key aria label'),
+            'keyboardentertext' => new external_value(PARAM_TEXT, 'Enter key visible text'),
             'keyboardbackspacelabel' => new external_value(PARAM_TEXT, 'Backspace key aria label'),
         ];
 

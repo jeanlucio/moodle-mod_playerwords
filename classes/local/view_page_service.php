@@ -155,6 +155,7 @@ class view_page_service {
         return [
             'helptitle' => get_string('help_title', 'mod_playerwords'),
             'introtext' => get_string('help_intro', 'mod_playerwords'),
+            'keyboardtext' => get_string('help_keyboard', 'mod_playerwords'),
             'legendcorrectlabel' => get_string('help_legend_correct', 'mod_playerwords'),
             'legendpresentlabel' => get_string('help_legend_present', 'mod_playerwords'),
             'legendabsentlabel' => get_string('help_legend_absent', 'mod_playerwords'),

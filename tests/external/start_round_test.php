@@ -161,6 +161,10 @@ final class start_round_test extends \advanced_testcase {
         $this->assertLessThanOrEqual(120, $result['data']['roundpanel']['timeleft']);
         $this->assertTrue($result['data']['roundpanel']['timerenabled']);
         $this->assertFalse($result['data']['roundpanel']['roundfinished']);
+        // Regression guard: a context field not also declared in roundpanel_structure() is
+        // silently stripped by the external API's return-value cleaning, so this must stay
+        // in sync with round_presenter::build_round_panel_context().
+        $this->assertNotEmpty($result['data']['roundpanel']['keyboardentertext']);
 
         $state = round_service::load_state($instance->cmid, $this->student->id);
         $this->assertTrue($state['roundstarted']);

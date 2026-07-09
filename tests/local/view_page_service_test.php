@@ -206,6 +206,7 @@ final class view_page_service_test extends \advanced_testcase {
         $this->assertStringContainsString('myattempts.php', $ctx['myattemptsurl']);
         $this->assertNotEmpty($ctx['helptitle']);
         $this->assertNotEmpty($ctx['introtext']);
+        $this->assertNotEmpty($ctx['keyboardtext']);
     }
 
     /**

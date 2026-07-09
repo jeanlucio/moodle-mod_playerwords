@@ -290,10 +290,17 @@
 
 .path-mod-playerwords .mod-playerwords-keyboard .pw-key.pw-key-wide {
     min-width: 3.75rem;
-    font-size: 1.35rem;
     color: var(--black, #000);
     background-color: var(--info, #0dcaf0);
     border-color: var(--info, #0dcaf0);
+}
+
+.path-mod-playerwords .mod-playerwords-keyboard .pw-key.pw-key-enter {
+    font-size: 0.8rem;
+}
+
+.path-mod-playerwords .mod-playerwords-keyboard .pw-key.pw-key-backspace {
+    font-size: 0.95rem;
 }
 
 .path-mod-playerwords .mod-playerwords-keyboard .pw-key.is-absent {
@@ -388,5 +395,13 @@
 
     .path-mod-playerwords .mod-playerwords-keyboard .pw-key.pw-key-wide {
         min-width: 3rem;
+    }
+
+    .path-mod-playerwords .mod-playerwords-keyboard .pw-key.pw-key-enter {
+        font-size: 0.65rem;
+    }
+
+    .path-mod-playerwords .mod-playerwords-keyboard .pw-key.pw-key-backspace {
+        font-size: 0.8rem;
     }
 }
