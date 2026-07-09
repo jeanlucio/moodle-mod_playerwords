@@ -29,6 +29,13 @@ namespace mod_playerwords\local;
  * Tests for gameplay_service — pure logic, no database required.
  */
 final class gameplay_service_test extends \basic_testcase {
+    #[\Override]
+    protected function setUp(): void {
+        global $CFG;
+        parent::setUp();
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+    }
+
     /**
      * Provides guess/target pairs with expected per-letter feedback arrays.
      *
@@ -136,5 +143,85 @@ final class gameplay_service_test extends \basic_testcase {
         $instance = (object)['grade' => '75.5'];
         $score = gameplay_service::calculate_round_score($instance, 1, 10, true);
         $this->assertSame(75.5, $score);
+    }
+
+    /**
+     * Tests that linear grade scoring gives full marks on the first attempt.
+     *
+     * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
+     * @return void
+     */
+    public function test_calculate_score_linear_first_attempt(): void {
+        $instance = (object)['grade' => 100, 'max_attempts' => 6, 'gradescoringmode' => PLAYERWORDS_SCORING_LINEAR];
+        $score = gameplay_service::calculate_round_score($instance, 1, 10, true);
+        $this->assertSame(100.0, $score);
+    }
+
+    /**
+     * Tests that linear grade scoring still awards a positive share on the last
+     * allowed attempt — never collapsing all the way to zero on a win.
+     *
+     * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
+     * @return void
+     */
+    public function test_calculate_score_linear_last_attempt(): void {
+        $instance = (object)['grade' => 100, 'max_attempts' => 6, 'gradescoringmode' => PLAYERWORDS_SCORING_LINEAR];
+        $score = gameplay_service::calculate_round_score($instance, 6, 10, true);
+        $this->assertEqualsWithDelta(16.6667, $score, 0.001);
+    }
+
+    /**
+     * Tests that linear grade scoring still returns zero for a round not completed.
+     *
+     * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
+     * @return void
+     */
+    public function test_calculate_score_linear_not_completed(): void {
+        $instance = (object)['grade' => 100, 'max_attempts' => 6, 'gradescoringmode' => PLAYERWORDS_SCORING_LINEAR];
+        $score = gameplay_service::calculate_round_score($instance, 6, 10, false);
+        $this->assertSame(0.0, $score);
+    }
+
+    /**
+     * Tests that binary ranking points match the full grade on a win.
+     *
+     * @covers \mod_playerwords\local\gameplay_service::calculate_ranking_points
+     * @return void
+     */
+    public function test_calculate_ranking_points_binary(): void {
+        $instance = (object)['grade' => 100];
+        $points = gameplay_service::calculate_ranking_points($instance, 3, true);
+        $this->assertSame(100.0, $points);
+    }
+
+    /**
+     * Tests that linear ranking points scale down proportionally to attempts used,
+     * independently from whatever the grade scoring mode is set to.
+     *
+     * @covers \mod_playerwords\local\gameplay_service::calculate_ranking_points
+     * @return void
+     */
+    public function test_calculate_ranking_points_linear(): void {
+        $instance = (object)[
+            'grade'              => 100,
+            'max_attempts'       => 6,
+            'gradescoringmode'   => PLAYERWORDS_SCORING_BINARY,
+            'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR,
+        ];
+        $this->assertSame(100.0, gameplay_service::calculate_ranking_points($instance, 1, true));
+        $this->assertEqualsWithDelta(83.3333, gameplay_service::calculate_ranking_points($instance, 2, true), 0.001);
+        $this->assertEqualsWithDelta(16.6667, gameplay_service::calculate_ranking_points($instance, 6, true), 0.001);
+    }
+
+    /**
+     * Tests that a failed round always returns zero ranking points, regardless of mode.
+     *
+     * @covers \mod_playerwords\local\gameplay_service::calculate_ranking_points
+     * @return void
+     */
+    public function test_calculate_ranking_points_not_completed(): void {
+        $instance = (object)['grade' => 100, 'max_attempts' => 6, 'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR];
+        $points = gameplay_service::calculate_ranking_points($instance, 6, false);
+        $this->assertSame(0.0, $points);
     }
 }

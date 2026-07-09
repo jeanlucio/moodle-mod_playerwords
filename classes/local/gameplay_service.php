@@ -81,7 +81,7 @@ class gameplay_service {
     }
 
     /**
-     * Calculates score for one finished round.
+     * Calculates the grade contribution of one finished round.
      *
      * @param \stdClass $instance Activity instance.
      * @param int $attemptsused Attempts used.
@@ -95,6 +95,68 @@ class gameplay_service {
         int $timeused,
         bool $completed
     ): float {
-        return $completed ? (float)$instance->grade : 0.0;
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        $mode = (int)($instance->gradescoringmode ?? PLAYERWORDS_SCORING_BINARY);
+        return self::compute_points($instance, $mode, $attemptsused, $completed);
+    }
+
+    /**
+     * Calculates the ranking-points contribution of one finished round.
+     *
+     * Independent from calculate_round_score() — the grade and the ranking each have
+     * their own scoring mode setting, so the same round can be worth different amounts
+     * for the grade versus the ranking total.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @param int $attemptsused Attempts used.
+     * @param bool $completed Whether completed.
+     * @return float
+     */
+    public static function calculate_ranking_points(
+        \stdClass $instance,
+        int $attemptsused,
+        bool $completed
+    ): float {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        $mode = (int)($instance->rankingscoringmode ?? PLAYERWORDS_SCORING_BINARY);
+        return self::compute_points($instance, $mode, $attemptsused, $completed);
+    }
+
+    /**
+     * Shared points formula for both the grade and the ranking.
+     *
+     * Binary mode awards the full activity grade on a win, zero otherwise. Linear mode
+     * scales the full grade by how many attempts were spared out of max_attempts, so
+     * winning on the first attempt earns the full grade and winning on the last allowed
+     * attempt still earns a positive (non-zero) share. Not completing the round always
+     * earns zero, regardless of mode.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @param int $mode One of the PLAYERWORDS_SCORING_* constants.
+     * @param int $attemptsused Attempts used.
+     * @param bool $completed Whether completed.
+     * @return float
+     */
+    private static function compute_points(\stdClass $instance, int $mode, int $attemptsused, bool $completed): float {
+        if (!$completed) {
+            return 0.0;
+        }
+
+        $maxpoints = (float)$instance->grade;
+        if ($mode !== PLAYERWORDS_SCORING_LINEAR) {
+            return $maxpoints;
+        }
+
+        $maxattempts = (int)$instance->max_attempts;
+        if ($maxattempts <= 0) {
+            return $maxpoints;
+        }
+
+        $attemptsused = min(max($attemptsused, 1), $maxattempts);
+        return $maxpoints * ($maxattempts - $attemptsused + 1) / $maxattempts;
     }
 }
