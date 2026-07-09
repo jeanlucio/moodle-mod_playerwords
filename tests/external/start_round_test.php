@@ -109,7 +109,10 @@ final class start_round_test extends \advanced_testcase {
 
         $this->assertFalse($result['error']);
         $this->assertTrue($result['data']['success']);
-        $this->assertSame(120, $result['data']['roundpanel']['timeleft']);
+        // The timer starts counting down between start_round() persisting starttime and this
+        // response being built, so a slow run can observe 119 instead of 120. Accept both.
+        $this->assertGreaterThanOrEqual(119, $result['data']['roundpanel']['timeleft']);
+        $this->assertLessThanOrEqual(120, $result['data']['roundpanel']['timeleft']);
         $this->assertTrue($result['data']['roundpanel']['timerenabled']);
         $this->assertFalse($result['data']['roundpanel']['roundfinished']);
 
