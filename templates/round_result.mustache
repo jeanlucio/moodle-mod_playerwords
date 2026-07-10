@@ -55,16 +55,16 @@
 }}
 <div id="playerwords-round-result" tabindex="-1">
     {{#feedbackmessage}}
-        <p class="mod-playerwords-feedback fw-bold mt-3">{{feedbackmessage}}</p>
+        <p class="mod-playerwords-feedback fw-bold mt-3 text-center">{{feedbackmessage}}</p>
     {{/feedbackmessage}}
     {{#showgradesofar}}
-        <p class="mt-2">{{gradesofarmessage}}</p>
+        <p class="mt-2 text-center">{{gradesofarmessage}}</p>
     {{/showgradesofar}}
     {{#huditemgrantedlabel}}
-        <p class="mt-2">{{huditemgrantedlabel}}</p>
+        <p class="mt-2 text-center">{{huditemgrantedlabel}}</p>
     {{/huditemgrantedlabel}}
     {{#roundsplayedlabel}}
-        <p class="text-muted small mt-1">{{roundsplayedlabel}}</p>
+        <p class="text-muted small mt-1 text-center">{{roundsplayedlabel}}</p>
     {{/roundsplayedlabel}}
     {{#showreveal}}
         <div class="mod-playerwords-reveal alert alert-secondary mt-3">
@@ -128,6 +128,8 @@
         </div>
     {{/showranking}}
     {{^cooldownactive}}
-    <button type="button" id="playerwords-new-round-button" class="btn btn-secondary mt-2">{{newroundlabel}}</button>
+    <div class="text-center">
+        <button type="button" id="playerwords-new-round-button" class="btn btn-secondary mt-2">{{newroundlabel}}</button>
+    </div>
     {{/cooldownactive}}
 </div>
