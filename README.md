@@ -184,6 +184,8 @@ Linear rewards guessing in fewer attempts, but never fully zeroes out a win — 
 
 **The ranking** is the sum of every finished round's ranking points for a student (`SUM`), ordered highest first; ties are broken by fewer attempts used on average, then less time spent on average. It only appears when the teacher enables "Show ranking", and never reveals a round still in progress.
 
+**"Show ranking" only controls visibility, not data collection:** ranking points are computed and stored for every finished round regardless of whether the setting is on or off at the time. Turning it on after students have already played reveals the full total accumulated since the activity started, not just the points earned from that moment forward — nothing is lost, and nothing needs to be "recovered" by switching it off and back on.
+
 **Locked once graded:** the moment the activity records a real grade for any student, `Maximum attempts`, `Grade scoring` and `Ranking scoring` all lock — the same way Moodle already locks a graded activity's own "Maximum grade" field once real grades exist. This guarantees every round ever recorded for that activity was scored under the exact same rules, so the grade and the ranking total both stay internally consistent for the activity's whole lifetime.
 
 **Attempt history:** each student can review their own past rounds — word, attempts used, time, grade score and (when ranking is enabled) ranking points — from the toolbar's attempt-history page.
@@ -473,6 +475,8 @@ O modo linear recompensa acertar em menos tentativas, mas nunca zera totalmente 
 **Combinar várias rodadas numa nota final** é uma configuração separada, `Método de avaliação` (maior nota, média, primeira tentativa, última tentativa ou média sobre todas as rodadas exigidas — veja [📖 Como Usar](#-como-usar)). Funciona igual independente de a pontuação por rodada acima ser Binária ou Linear: só agrega o valor que cada rodada já registrou.
 
 **O ranking** é a soma dos pontos de ranking de todas as rodadas terminadas de um estudante (`SUM`), ordenado do maior para o menor; empates são desfeitos por menos tentativas usadas em média, depois menos tempo gasto em média. Só aparece quando o professor liga "Mostrar ranking", e nunca revela uma rodada ainda em andamento.
+
+**"Mostrar ranking" só controla a exibição, não a coleta de dados:** os pontos de ranking são calculados e gravados em toda rodada terminada, esteja a configuração ligada ou desligada naquele momento. Ligá-la depois que os estudantes já jogaram revela o total acumulado desde o início da atividade, não só os pontos ganhos a partir da mudança — nada se perde, e não é preciso "recuperar" nada ao desligar e ligar de novo.
 
 **Trava ao registrar a nota:** assim que a atividade registra uma nota real para qualquer estudante, `Máximo de tentativas`, `Pontuação da nota` e `Pontuação do ranking` travam — do mesmo jeito que o Moodle já trava o campo "Nota máxima" de uma atividade avaliada assim que existem notas reais. Isso garante que toda rodada já registrada para aquela atividade foi pontuada sob exatamente as mesmas regras, então a nota e o total do ranking permanecem consistentes durante toda a vida da atividade.
 
