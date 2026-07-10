@@ -190,7 +190,7 @@ class submit_guess extends external_api {
                 new external_single_structure([
                     'position'      => new external_value(PARAM_INT, 'Rank position'),
                     'fullname'      => new external_value(PARAM_TEXT, 'Player full name'),
-                    'totalscore'    => new external_value(PARAM_INT, 'Total score'),
+                    'totalscore'    => new external_value(PARAM_TEXT, 'Total score, formatted to 2 decimals'),
                     'iscurrentuser' => new external_value(PARAM_BOOL, 'Whether this row is the current user'),
                 ]),
                 'Top ranking rows'
@@ -199,7 +199,7 @@ class submit_guess extends external_api {
             'rankingoutsiderrow' => new external_single_structure([
                 'position'      => new external_value(PARAM_INT, 'Rank position'),
                 'fullname'      => new external_value(PARAM_TEXT, 'Player full name'),
-                'totalscore'    => new external_value(PARAM_INT, 'Total score'),
+                'totalscore'    => new external_value(PARAM_TEXT, 'Total score, formatted to 2 decimals'),
                 'iscurrentuser' => new external_value(PARAM_BOOL, 'Whether this row is the current user'),
             ], 'Current user row when outside the top ranking'),
             'rankingempty' => new external_value(PARAM_BOOL, 'Whether the ranking has no rows at all'),

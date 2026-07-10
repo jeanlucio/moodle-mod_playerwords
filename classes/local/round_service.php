@@ -317,6 +317,7 @@ class round_service {
                 'time_used'     => 0,
                 'completed'     => 0,
                 'score'         => 0,
+                'rankingpoints' => 0,
                 'timecreated'   => time(),
                 'timefinished'  => 0,
             ]);
@@ -521,6 +522,11 @@ class round_service {
             $timeused,
             $completed
         );
+        $rankingpoints = gameplay_service::calculate_ranking_points(
+            $instance,
+            (int)$state['attemptsused'],
+            $completed
+        );
 
         // The round reservation made by start_round() is completed here instead of
         // inserting a second row. A missing reservation only happens for session state
@@ -535,6 +541,7 @@ class round_service {
                 'time_used'     => $timeused,
                 'completed'     => $completed ? 1 : 0,
                 'score'         => $score,
+                'rankingpoints' => $rankingpoints,
                 'timefinished'  => time(),
             ]);
         } else {
@@ -546,6 +553,7 @@ class round_service {
                 'time_used'     => $timeused,
                 'completed'     => $completed ? 1 : 0,
                 'score'         => $score,
+                'rankingpoints' => $rankingpoints,
                 'timecreated'   => time(),
                 'timefinished'  => time(),
             ]);

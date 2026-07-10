@@ -257,7 +257,12 @@ class round_presenter {
             'rankingemptylabel'    => get_string('ranking_empty', 'mod_playerwords'),
             'rankingrows'          => [],
             'rankinghasoutsider'   => false,
-            'rankingoutsiderrow'   => ['position' => 0, 'fullname' => '', 'totalscore' => 0, 'iscurrentuser' => false],
+            'rankingoutsiderrow'   => [
+                'position' => 0,
+                'fullname' => '',
+                'totalscore' => format_float(0, 2),
+                'iscurrentuser' => false,
+            ],
             'rankingempty'         => true,
         ];
 

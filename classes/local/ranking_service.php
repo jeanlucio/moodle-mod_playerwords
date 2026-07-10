@@ -34,7 +34,7 @@ class ranking_service {
     /**
      * Returns the accumulated ranking for an activity.
      *
-     * One row per student: SUM(score) DESC, AVG(attempts_used) ASC, AVG(time_used) ASC.
+     * One row per student: SUM(rankingpoints) DESC, AVG(attempts_used) ASC, AVG(time_used) ASC.
      * Respects SEPARATEGROUPS: filters to members of the current user's group.
      * Returns up to TOP_N rows plus the current user's row when outside the top.
      *
@@ -59,7 +59,7 @@ class ranking_service {
         $fullname = $DB->sql_fullname('u.firstname', 'u.lastname');
         $sql = "SELECT u.id,
                        $fullname AS fullname,
-                       SUM(pa.score) AS totalscore,
+                       SUM(pa.rankingpoints) AS totalscore,
                        AVG(pa.attempts_used) AS avgattempts,
                        AVG(pa.time_used) AS avgtime
                   FROM {playerwords_attempts} pa
@@ -68,7 +68,7 @@ class ranking_service {
                        AND pa.timefinished > 0
                        $userwhere
               GROUP BY u.id, u.firstname, u.lastname
-              ORDER BY SUM(pa.score) DESC, AVG(pa.attempts_used) ASC, AVG(pa.time_used) ASC";
+              ORDER BY SUM(pa.rankingpoints) DESC, AVG(pa.attempts_used) ASC, AVG(pa.time_used) ASC";
 
         $records = $DB->get_records_sql($sql, $params);
 
@@ -81,7 +81,7 @@ class ranking_service {
             $row = [
                 'position'      => $position,
                 'fullname'      => $record->fullname,
-                'totalscore'    => (int)$record->totalscore,
+                'totalscore'    => format_float((float)$record->totalscore, 2),
                 'iscurrentuser' => $iscurrent,
             ];
 

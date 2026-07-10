@@ -52,12 +52,12 @@ final class ranking_service_test extends \advanced_testcase {
      * Inserts one attempt record for a user.
      *
      * @param \stdClass $user User.
-     * @param float $score Score for the attempt.
+     * @param float $points Ranking points for the attempt (also used as the grade score).
      * @param int $attemptsused Attempts used.
      * @param int $timeused Time used, in seconds.
      * @return void
      */
-    private function add_attempt(\stdClass $user, float $score, int $attemptsused = 1, int $timeused = 10): void {
+    private function add_attempt(\stdClass $user, float $points, int $attemptsused = 1, int $timeused = 10): void {
         global $DB;
 
         $DB->insert_record('playerwords_attempts', (object)[
@@ -67,7 +67,8 @@ final class ranking_service_test extends \advanced_testcase {
             'attempts_used' => $attemptsused,
             'time_used'     => $timeused,
             'completed'     => 1,
-            'score'         => $score,
+            'score'         => $points,
+            'rankingpoints' => $points,
             'timecreated'   => time(),
             'timefinished'  => time(),
         ]);
@@ -109,6 +110,7 @@ final class ranking_service_test extends \advanced_testcase {
             'time_used'     => 0,
             'completed'     => 0,
             'score'         => 0,
+            'rankingpoints' => 0,
             'timecreated'   => time(),
             'timefinished'  => 0,
         ]);
@@ -116,7 +118,7 @@ final class ranking_service_test extends \advanced_testcase {
         $ranking = ranking_service::get_ranking($this->instance, $this->cm, $user->id);
 
         $this->assertCount(1, $ranking['rows']);
-        $this->assertSame(50, $ranking['rows'][0]['totalscore']);
+        $this->assertSame('50.00', $ranking['rows'][0]['totalscore']);
     }
 
     /**
@@ -136,10 +138,10 @@ final class ranking_service_test extends \advanced_testcase {
 
         $this->assertFalse($ranking['isempty']);
         $this->assertCount(2, $ranking['rows']);
-        $this->assertSame(80, $ranking['rows'][0]['totalscore']);
+        $this->assertSame('80.00', $ranking['rows'][0]['totalscore']);
         $this->assertSame(1, $ranking['rows'][0]['position']);
         $this->assertTrue($ranking['rows'][0]['iscurrentuser']);
-        $this->assertSame(20, $ranking['rows'][1]['totalscore']);
+        $this->assertSame('20.00', $ranking['rows'][1]['totalscore']);
     }
 
     /**
@@ -165,7 +167,7 @@ final class ranking_service_test extends \advanced_testcase {
         $this->assertTrue($ranking['hasoutsider']);
         $this->assertNotNull($ranking['outsiderrow']);
         $this->assertSame(6, $ranking['outsiderrow']['position']);
-        $this->assertSame(10, $ranking['outsiderrow']['totalscore']);
+        $this->assertSame('10.00', $ranking['outsiderrow']['totalscore']);
         $this->assertTrue($ranking['outsiderrow']['iscurrentuser']);
 
         foreach ($ranking['rows'] as $row) {
