@@ -35,7 +35,11 @@ class ranking_service {
      * Returns the accumulated ranking for an activity.
      *
      * One row per student: SUM(rankingpoints) DESC, AVG(attempts_used) ASC, AVG(time_used) ASC.
-     * Respects SEPARATEGROUPS: filters to members of the current user's group.
+     * Respects SEPARATEGROUPS: filters to members of the current user's group. Excludes anyone
+     * who can manage the activity (editingteacher, manager) even if they have attempts of their
+     * own — a teacher previewing the activity should not pollute the student-facing ranking, the
+     * same way mod_lesson::count_all_participants() excludes mod/lesson:manage holders from its
+     * own participant count.
      * Returns up to TOP_N rows plus the current user's row when outside the top.
      *
      * @param \stdClass $instance Activity instance record.
@@ -54,6 +58,14 @@ class ranking_service {
             [$insql, $inparams] = $DB->get_in_or_equal($useridfilter, SQL_PARAMS_NAMED, 'uid');
             $userwhere = "AND pa.userid $insql";
             $params = array_merge($params, $inparams);
+        }
+
+        $context = \context_module::instance($cm->id);
+        $managers = get_users_by_capability($context, 'mod/playerwords:addinstance', 'u.id');
+        if (!empty($managers)) {
+            [$notinsql, $notinparams] = $DB->get_in_or_equal(array_keys($managers), SQL_PARAMS_NAMED, 'mgr', false);
+            $userwhere .= " AND pa.userid $notinsql";
+            $params = array_merge($params, $notinparams);
         }
 
         $fullname = $DB->sql_fullname('u.firstname', 'u.lastname');

@@ -176,6 +176,30 @@ final class ranking_service_test extends \advanced_testcase {
     }
 
     /**
+     * A user who can manage the activity (editingteacher) never appears in the ranking,
+     * even with attempts of their own — the ranking is student-facing, not a raw attempts
+     * dump, so a teacher previewing the activity must not pollute it.
+     *
+     * @covers \mod_playerwords\local\ranking_service::get_ranking
+     * @return void
+     */
+    public function test_get_ranking_excludes_users_who_can_manage_the_activity(): void {
+        $student = $this->getDataGenerator()->create_user();
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($student->id, $this->course->id, 'student');
+        $this->getDataGenerator()->enrol_user($teacher->id, $this->course->id, 'editingteacher');
+
+        $this->add_attempt($student, 50);
+        $this->add_attempt($teacher, 999);
+
+        $ranking = ranking_service::get_ranking($this->instance, $this->cm, $student->id);
+
+        $this->assertCount(1, $ranking['rows']);
+        $this->assertSame(fullname($student), $ranking['rows'][0]['fullname']);
+        $this->assertFalse($ranking['hasoutsider']);
+    }
+
+    /**
      * With SEPARATEGROUPS, the ranking only includes members of the current
      * user's own group, never students from a different group.
      *
