@@ -38,7 +38,7 @@ class attempts_history_service {
      *
      * @param \stdClass $instance Activity instance record.
      * @param int $userid Student id, always the logged-in user.
-     * @return array {rows, isempty, showgrade, grade, maxgrade, grademethodname}
+     * @return array {rows, isempty, showgrade, grade, maxgrade, grademethodname, showranking}
      */
     public static function get_history(\stdClass $instance, int $userid): array {
         global $CFG, $DB;
@@ -57,9 +57,10 @@ class attempts_history_service {
         ]));
 
         $isempty = empty($attemptsasc);
+        $showranking = !empty($instance->show_ranking);
 
         $rows = array_map(
-            fn(\stdClass $attempt): array => self::build_row($attempt),
+            fn(\stdClass $attempt): array => self::build_row($attempt, $showranking),
             array_reverse($attemptsasc)
         );
 
@@ -76,6 +77,7 @@ class attempts_history_service {
             'grade'            => format_float($grade, 2),
             'maxgrade'         => format_float((float)$instance->grade, 2),
             'grademethodname'  => round_presenter::grademethod_name($instance),
+            'showranking'      => $showranking,
         ];
     }
 
@@ -83,9 +85,10 @@ class attempts_history_service {
      * Formats one attempt record into a display row.
      *
      * @param \stdClass $attempt Attempt record, joined with word/concept.
+     * @param bool $showranking Whether to include the ranking-points column.
      * @return array
      */
-    private static function build_row(\stdClass $attempt): array {
+    private static function build_row(\stdClass $attempt, bool $showranking): array {
         $minutes = intdiv((int)$attempt->time_used, 60);
         $seconds = (int)$attempt->time_used % 60;
 
@@ -95,6 +98,7 @@ class attempts_history_service {
             'timeused'      => sprintf('%d:%02d', $minutes, $seconds),
             'won'           => !empty($attempt->completed),
             'score'         => format_float((float)$attempt->score, 2),
+            'rankingpoints' => $showranking ? format_float((float)$attempt->rankingpoints, 2) : '',
             'datefinished'  => userdate((int)$attempt->timefinished, get_string('strftimedatetime', 'langconfig')),
         ];
     }

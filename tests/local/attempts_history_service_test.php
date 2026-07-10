@@ -72,6 +72,7 @@ final class attempts_history_service_test extends \advanced_testcase {
      * @param int $wordid Word id the attempt was played with, 0 for none.
      * @param bool $finished Whether the round is finished.
      * @param int $timeoffset Seconds to add to time(), used to control ordering.
+     * @param ?float $rankingpoints Ranking points for the attempt; defaults to $score.
      * @return void
      */
     private function add_attempt(
@@ -80,7 +81,8 @@ final class attempts_history_service_test extends \advanced_testcase {
         float $score,
         int $wordid = 0,
         bool $finished = true,
-        int $timeoffset = 0
+        int $timeoffset = 0,
+        ?float $rankingpoints = null
     ): void {
         global $DB;
 
@@ -92,6 +94,7 @@ final class attempts_history_service_test extends \advanced_testcase {
             'time_used'     => $finished ? 65 : 0,
             'completed'     => $finished && $score > 0 ? 1 : 0,
             'score'         => $score,
+            'rankingpoints' => $rankingpoints ?? $score,
             'timecreated'   => time() + $timeoffset,
             'timefinished'  => $finished ? (time() + $timeoffset) : 0,
         ]);
@@ -226,5 +229,40 @@ final class attempts_history_service_test extends \advanced_testcase {
         $history = attempts_history_service::get_history($instance, $this->user->id);
 
         $this->assertSame('1:05', $history['rows'][0]['timeused']);
+    }
+
+    /**
+     * The ranking-points column is included, formatted to 2 decimals, when the
+     * activity has ranking enabled.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_history
+     * @return void
+     */
+    public function test_get_history_shows_ranking_points_when_ranking_enabled(): void {
+        $instance = $this->make_instance(['grade' => 100, 'show_ranking' => 1]);
+        $this->add_attempt($instance, $this->user, 100, 0, true, 0, 83.33333);
+
+        $history = attempts_history_service::get_history($instance, $this->user->id);
+
+        $this->assertTrue($history['showranking']);
+        $this->assertSame('83.33', $history['rows'][0]['rankingpoints']);
+    }
+
+    /**
+     * The ranking-points column is omitted (empty string) when the activity has
+     * ranking disabled — there is nothing meaningful to show a student about a
+     * ranking they can never see.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_history
+     * @return void
+     */
+    public function test_get_history_hides_ranking_points_when_ranking_disabled(): void {
+        $instance = $this->make_instance(['grade' => 100, 'show_ranking' => 0]);
+        $this->add_attempt($instance, $this->user, 100, 0, true, 0, 83.33333);
+
+        $history = attempts_history_service::get_history($instance, $this->user->id);
+
+        $this->assertFalse($history['showranking']);
+        $this->assertSame('', $history['rows'][0]['rankingpoints']);
     }
 }

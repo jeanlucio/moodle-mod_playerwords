@@ -161,6 +161,7 @@ $string['modulenameplural'] = 'PlayerWords';
 $string['myattempts_attempts'] = 'Attempts';
 $string['myattempts_date'] = 'Date';
 $string['myattempts_empty'] = 'You have not finished any rounds yet.';
+$string['myattempts_rankingpoints'] = 'Ranking points';
 $string['myattempts_score'] = 'Score';
 $string['myattempts_time'] = 'Time';
 $string['myattempts_title'] = 'My attempts';

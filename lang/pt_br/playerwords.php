@@ -161,6 +161,7 @@ $string['modulenameplural'] = 'PlayerWords';
 $string['myattempts_attempts'] = 'Tentativas';
 $string['myattempts_date'] = 'Data';
 $string['myattempts_empty'] = 'Você ainda não concluiu nenhuma rodada.';
+$string['myattempts_rankingpoints'] = 'Pontos no ranking';
 $string['myattempts_score'] = 'Nota';
 $string['myattempts_time'] = 'Tempo';
 $string['myattempts_title'] = 'Minhas tentativas';
