@@ -254,13 +254,16 @@ final class submit_guess_test extends \advanced_testcase {
     public function test_fractional_ranking_points_survive_the_webservice_call(): void {
         $instance = $this->make_instance([
             'show_ranking'       => 1,
+            'max_attempts'       => 7,
             'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR,
         ]);
         $this->setUser($this->student);
         $this->start_round_for_student($instance);
 
-        // Wrong guess first, so the winning guess lands on the 2nd of 6 attempts —
-        // rankingpoints = 100 * (6 - 2 + 1) / 6 = 83.33, a genuinely fractional value.
+        // Two wrong guesses first, so the winning guess lands on the 3rd of 7 attempts —
+        // the first two attempts share the same full-credit plateau in Linear mode, so
+        // rankingpoints = 100 * (7 - 3 + 1) / (7 - 1) = 83.33, a genuinely fractional value.
+        $this->call_submit_guess($instance->cmid, 'casa');
         $this->call_submit_guess($instance->cmid, 'casa');
         $result = $this->call_submit_guess($instance->cmid, 'boca');
 

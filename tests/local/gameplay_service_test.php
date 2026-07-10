@@ -146,20 +146,24 @@ final class gameplay_service_test extends \basic_testcase {
     }
 
     /**
-     * Tests that linear grade scoring gives full marks on the first attempt.
+     * Tests that linear grade scoring gives full marks on both of the first two
+     * attempts — a confident second guess is not treated as less deserving than a
+     * first-try one.
      *
      * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
      * @return void
      */
-    public function test_calculate_score_linear_first_attempt(): void {
+    public function test_calculate_score_linear_first_two_attempts(): void {
         $instance = (object)['grade' => 100, 'max_attempts' => 6, 'gradescoringmode' => PLAYERWORDS_SCORING_LINEAR];
-        $score = gameplay_service::calculate_round_score($instance, 1, 10, true);
-        $this->assertSame(100.0, $score);
+        $this->assertSame(100.0, gameplay_service::calculate_round_score($instance, 1, 10, true));
+        $this->assertSame(100.0, gameplay_service::calculate_round_score($instance, 2, 10, true));
     }
 
     /**
      * Tests that linear grade scoring still awards a positive share on the last
-     * allowed attempt — never collapsing all the way to zero on a win.
+     * allowed attempt — never collapsing all the way to zero on a win. The scale is
+     * spread over (max_attempts − 1) steps, since the first two attempts share the
+     * same full-credit plateau, so the last attempt here earns 100 / 5, not 100 / 6.
      *
      * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
      * @return void
@@ -167,7 +171,7 @@ final class gameplay_service_test extends \basic_testcase {
     public function test_calculate_score_linear_last_attempt(): void {
         $instance = (object)['grade' => 100, 'max_attempts' => 6, 'gradescoringmode' => PLAYERWORDS_SCORING_LINEAR];
         $score = gameplay_service::calculate_round_score($instance, 6, 10, true);
-        $this->assertEqualsWithDelta(16.6667, $score, 0.001);
+        $this->assertEqualsWithDelta(20.0, $score, 0.001);
     }
 
     /**
@@ -195,8 +199,9 @@ final class gameplay_service_test extends \basic_testcase {
     }
 
     /**
-     * Tests that linear ranking points scale down proportionally to attempts used,
-     * independently from whatever the grade scoring mode is set to.
+     * Tests that linear ranking points give full credit on the first two attempts,
+     * then scale down proportionally over the remaining ones, independently from
+     * whatever the grade scoring mode is set to.
      *
      * @covers \mod_playerwords\local\gameplay_service::calculate_ranking_points
      * @return void
@@ -209,8 +214,27 @@ final class gameplay_service_test extends \basic_testcase {
             'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR,
         ];
         $this->assertSame(100.0, gameplay_service::calculate_ranking_points($instance, 1, true));
-        $this->assertEqualsWithDelta(83.3333, gameplay_service::calculate_ranking_points($instance, 2, true), 0.001);
-        $this->assertEqualsWithDelta(16.6667, gameplay_service::calculate_ranking_points($instance, 6, true), 0.001);
+        $this->assertSame(100.0, gameplay_service::calculate_ranking_points($instance, 2, true));
+        $this->assertEqualsWithDelta(80.0, gameplay_service::calculate_ranking_points($instance, 3, true), 0.001);
+        $this->assertEqualsWithDelta(20.0, gameplay_service::calculate_ranking_points($instance, 6, true), 0.001);
+    }
+
+    /**
+     * Tests that linear scoring degenerates to full credit on every attempt when
+     * max_attempts is 2 or fewer, since both allowed attempts fall within the
+     * full-credit plateau.
+     *
+     * @covers \mod_playerwords\local\gameplay_service::calculate_ranking_points
+     * @return void
+     */
+    public function test_calculate_ranking_points_linear_degenerates_at_low_max_attempts(): void {
+        $instance = (object)[
+            'grade'              => 100,
+            'max_attempts'       => 2,
+            'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR,
+        ];
+        $this->assertSame(100.0, gameplay_service::calculate_ranking_points($instance, 1, true));
+        $this->assertSame(100.0, gameplay_service::calculate_ranking_points($instance, 2, true));
     }
 
     /**

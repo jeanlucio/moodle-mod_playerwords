@@ -166,19 +166,21 @@ Turning one off never affects the other: an activity can be graded with no ranki
 | Mode | A won round is worth... | A lost, forfeited, or timed-out round |
 |---|---|---|
 | **Binary** (default) | The full activity grade | Zero |
-| **Linear** | A share of the full grade proportional to attempts spared: `grade × (max_attempts − attempts_used + 1) / max_attempts` | Zero |
+| **Linear** | Full credit on the first two attempts, then a share proportional to attempts spared: `grade × (max_attempts − attempts_used + 1) / (max_attempts − 1)` | Zero |
 
-Linear rewards guessing in fewer attempts, but never fully zeroes out a win — even winning on the very last allowed attempt still earns a small positive share. Example with a 100-point grade and 6 maximum attempts:
+Linear gives full credit on the first two attempts — a confident second guess is not treated as less deserving than a first-try one, since this is a non-punitive educational game rather than a luck-based guessing contest — then scales the remaining attempts down proportionally, never fully zeroing out a win: even winning on the very last allowed attempt still earns a positive share. Example with a 100-point grade and 6 maximum attempts:
 
 | Attempts used | Linear points |
 |---:|---:|
 | 1 | 100.00 |
-| 2 | 83.33 |
-| 3 | 66.67 |
-| 4 | 50.00 |
-| 5 | 33.33 |
-| 6 | 16.67 |
+| 2 | 100.00 |
+| 3 | 80.00 |
+| 4 | 60.00 |
+| 5 | 40.00 |
+| 6 | 20.00 |
 | Not completed | 0.00 |
+
+With `Maximum attempts` set to 2 or fewer, Linear is numerically identical to Binary — every allowed attempt already falls within the full-credit plateau.
 
 **Combining several rounds into one final grade** is a separate setting, `Grading method` (highest grade, average grade, first attempt, last attempt, or average over all required rounds — see [📖 Usage](#-usage)). It works the same regardless of whether the per-round scoring above is Binary or Linear: it only ever aggregates whatever value each round already recorded.
 
@@ -216,7 +218,7 @@ PlayerWords ships with a PHPUnit test suite covering business logic, repository 
 |-----------|------:|----------------|
 | `ai_word_generator_test.php` | 12 | AI response parsing (`words`/legacy `concepts` wrappers, bare list, markdown code fence stripped, malformed/non-array JSON, hint falls back to `definition`, non-array entries skipped) and untrusted-input term validation (single alphabetic word accepted; empty, multi-word, and non-alphabetic terms rejected) — all via reflection, no real AI call |
 | `attempts_history_service_test.php` | 9 | Own attempt history and current grade: empty with no finished rounds; excludes a still-pending reservation; rows shown most-recent-first while the grade calculation itself uses ascending order; the computed grade matches `playerwords_calculate_user_grade()` for the configured method; grade summary hidden for an ungraded activity; word text falls back from concept to the raw word; time used formatted as m:ss; the ranking-points column is shown, formatted to 2 decimals, when ranking is enabled, and omitted entirely when it is disabled |
-| `gameplay_service_test.php` | 18 | Letter feedback algorithm across 9 guess/target combinations (correct, absent, present, duplicate letters, pool exhaustion); score calculation for win, loss, and decimal grades under Binary mode; Linear mode for both the grade and the ranking-points calculation (full marks on the first attempt, a positive non-zero share on the last allowed attempt, zero when not completed) |
+| `gameplay_service_test.php` | 19 | Letter feedback algorithm across 9 guess/target combinations (correct, absent, present, duplicate letters, pool exhaustion); score calculation for win, loss, and decimal grades under Binary mode; Linear mode for both the grade and the ranking-points calculation (full marks on both of the first two attempts, scaled proportionally from the third attempt onward, a positive non-zero share on the last allowed attempt, degenerates to full credit on every attempt when max_attempts is 2 or fewer, zero when not completed) |
 | `hud_service_test.php` | 21 | Delegates to block_playerhud's `\block_playerhud\local\external_items` API for every item operation, validating ownership against the caller's own block instance instead of reading block_playerhud's tables directly: block lookup across courses; course availability (true with a block instance, false without one, ignores another course's instance); item name resolution (empty for an item belonging to a different block instance); item list retrieval; consume items (insufficient funds, success, FIFO order, zero-quantity short-circuit, waived — not blocked — for an item belonging to a different block instance); grant items (inventory rows tagged `source='playerwords'` plus XP awarded, XP withheld when the caller flags the source as unbounded, zero-XP items never change XP either way, unknown item, foreign-instance item, and zero quantity are all no-ops) |
 | `ranking_service_test.php` | 5 | Empty ranking; score-descending ordering; top-5 truncation with an outsider row for a lower-ranked current user; `SEPARATEGROUPS` filters to the student's own group; a still-pending reservation (round in progress or abandoned without finishing) is excluded from the ranking |
 | `round_presenter_test.php` | 35 | Grid row rendering; cooldown text; feedback messages (forfeited/timed out/lost/won, varying by attempts used); ranking context; round result context (blank until finished, reveals on finish, cooldown reflects a later settings change); lobby PlayerHUD balance/cost (shown/hidden by round state, start disabled below the required quantity, enabled once the balance covers it), lobby timer info; round panel hint-button PlayerHUD balance/cost (shown/hidden by reveal state, hint disabled below the required quantity, enabled once the balance covers it), timer stays at zero before the round starts; grade-so-far summary (absent before finished, absent when ungraded, shows method and computed grade once finished, ignores a still-pending attempt); lobby grading-method info line (shown when relevant, hidden for a single-round activity, hidden when ungraded); the keyboard's Ç key only appears once the activity's own word pool needs it; rounds-played counter shown in the lobby and in the round result, using the infinity symbol for an unlimited activity and the configured limit otherwise; the PlayerHUD win-grant label is shown only on an actual win with an item configured, blank on a loss or when unconfigured |
@@ -224,7 +226,7 @@ PlayerWords ships with a PHPUnit test suite covering business logic, repository 
 | `view_page_service_test.php` | 6 | Page-assembly branches: fresh lobby, picked word persists across calls, finished round computes a real cooldown, restriction notice shown when the round limit is reached; the toolbar's help/attempt-history URLs are always present; the forfeit action is shown only during an active round |
 | `word_normalizer_test.php` | 8 | Accent-insensitive normalisation across 8 diacritic combinations |
 | `words_repository_test.php` | 40 | Word picking (empty pool, unapproved/too-short/too-long/non-letter exclusion, random mode, shared-sequence determinism and cycling, avoids the excluded word when an alternative exists, allows it back in when it is the only candidate); `get_last_played_word_id` (0 with no finished rounds, ignores a pending reservation); manual and AI word insertion; `word_exists` duplicate check (case-insensitive match, no match, scoped to instance, matches regardless of source, ignores the excluded word id when renaming); word lookup, update and delete scoped to the owning instance; bulk delete and approve; recent-words listing with glossary name join; glossary sync (multi-word concept splitting, configurable stopword filtering, hint update on resync without duplicating, orphan cleanup when an entry disappears, `glossaryid = 0` covering every course glossary, skips a concept whose text already belongs to a manual/AI word without touching that word's hint); the on-screen keyboard's Ç key is only offered when an approved word actually contains one, scoped to its own activity and ignoring unapproved words |
-| **Subtotal** | **184** | |
+| **Subtotal** | **185** | |
 
 #### Web Services Tests (`tests/external/`)
 
@@ -237,7 +239,7 @@ PlayerWords ships with a PHPUnit test suite covering business logic, repository 
 | `submit_guess_test.php` | 7 | A wrong guess never reveals the word; a correct guess reveals it only once finished; a losing guess also reveals it; the `mod/playerwords:view` capability is required; `timeleft` reflects seconds remaining while in progress; `timeleft` is frozen at the moment the round finished, not the wall clock; a fractional ranking total survives the external API's return-value cleaning, against the real webservice call |
 | **Subtotal** | **25** | |
 
-| **Grand Total** | **247** | |
+| **Grand Total** | **248** | |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords
@@ -458,19 +460,21 @@ Desligar um nunca afeta o outro: uma atividade pode ter nota sem ranking, rankin
 | Modo | Uma rodada vencida vale... | Uma rodada perdida, desistida ou com tempo esgotado |
 |---|---|---|
 | **Binária** (padrão) | A nota cheia da atividade | Zero |
-| **Linear** | Uma fração da nota cheia proporcional às tentativas poupadas: `nota × (max_attempts − tentativas_usadas + 1) / max_attempts` | Zero |
+| **Linear** | Nota cheia nas duas primeiras tentativas, depois uma fração proporcional às tentativas poupadas: `nota × (max_attempts − tentativas_usadas + 1) / (max_attempts − 1)` | Zero |
 
-O modo linear recompensa acertar em menos tentativas, mas nunca zera totalmente uma vitória — até vencer na última tentativa permitida ainda rende uma fração positiva. Exemplo com nota máxima 100 e 6 tentativas:
+O modo linear dá nota cheia nas duas primeiras tentativas — um segundo palpite certeiro não é tratado como menos merecedor que um acerto de primeira, já que este é um jogo educativo não punitivo, não uma disputa de sorte — e só a partir daí distribui as tentativas restantes proporcionalmente, nunca zerando totalmente uma vitória: até vencer na última tentativa permitida ainda rende uma fração positiva. Exemplo com nota máxima 100 e 6 tentativas:
 
 | Tentativas usadas | Pontos (linear) |
 |---:|---:|
 | 1 | 100,00 |
-| 2 | 83,33 |
-| 3 | 66,67 |
-| 4 | 50,00 |
-| 5 | 33,33 |
-| 6 | 16,67 |
+| 2 | 100,00 |
+| 3 | 80,00 |
+| 4 | 60,00 |
+| 5 | 40,00 |
+| 6 | 20,00 |
 | Não completou | 0,00 |
+
+Com `Máximo de tentativas` igual a 2 ou menos, o modo Linear fica numericamente idêntico ao Binário — toda tentativa permitida já cai dentro do platô de nota cheia.
 
 **Combinar várias rodadas numa nota final** é uma configuração separada, `Método de avaliação` (maior nota, média, primeira tentativa, última tentativa ou média sobre todas as rodadas exigidas — veja [📖 Como Usar](#-como-usar)). Funciona igual independente de a pontuação por rodada acima ser Binária ou Linear: só agrega o valor que cada rodada já registrou.
 
@@ -508,7 +512,7 @@ O PlayerWords inclui uma suíte PHPUnit cobrindo lógica de negócio, consultas 
 |-----------------|------:|----------------|
 | `ai_word_generator_test.php` | 12 | Parsing da resposta de IA (wrapper `words`/legado `concepts`, lista nua, cerca de código markdown removida, JSON malformado/não-array, dica cai para `definition`, entradas não-array ignoradas) e validação de termo como entrada não confiável (palavra única alfabética aceita; termo vazio, multi-palavra e não-alfabético rejeitados) — tudo via reflection, sem chamada real de IA |
 | `attempts_history_service_test.php` | 9 | Registro de tentativas e nota atual do próprio estudante: vazio sem rodadas terminadas; exclui uma reserva ainda pendente; linhas exibidas da mais recente para a mais antiga, enquanto o cálculo da nota usa ordem crescente; a nota computada bate com `playerwords_calculate_user_grade()` para o método configurado; resumo de nota oculto em atividade não avaliada; texto da palavra cai do conceito para a palavra crua; tempo usado formatado como m:ss; a coluna de pontos no ranking aparece, formatada com 2 casas decimais, quando o ranking está ligado, e é omitida por completo quando está desligado |
-| `gameplay_service_test.php` | 18 | Algoritmo de feedback por letra em 9 combinações de chute/alvo (correto, ausente, presente, letras duplicadas, esgotamento do pool); cálculo de nota para vitória, derrota e notas decimais no modo Binário; modo Linear tanto pro cálculo da nota quanto do ranking (nota cheia na primeira tentativa, fração positiva não-zero na última tentativa permitida, zero quando não completou) |
+| `gameplay_service_test.php` | 19 | Algoritmo de feedback por letra em 9 combinações de chute/alvo (correto, ausente, presente, letras duplicadas, esgotamento do pool); cálculo de nota para vitória, derrota e notas decimais no modo Binário; modo Linear tanto pro cálculo da nota quanto do ranking (nota cheia nas duas primeiras tentativas, escala proporcionalmente a partir da terceira, fração positiva não-zero na última tentativa permitida, degenera pra nota cheia em toda tentativa quando max_attempts é 2 ou menos, zero quando não completou) |
 | `hud_service_test.php` | 21 | Delega pra API `\block_playerhud\local\external_items` do block_playerhud em toda operação de item, validando pertencimento contra a instância de bloco do próprio chamador em vez de ler as tabelas do PlayerHUD direto: localização do bloco PlayerHUD entre cursos; disponibilidade por curso (verdadeiro com instância do bloco, falso sem instância, ignora instância de outro curso); resolução de nome de item (vazio pra item de outra instância de bloco); listagem de itens; consumo de itens (fundos insuficientes, sucesso, ordem FIFO, curto-circuito com quantidade zero, dispensado — não bloqueado — pra item de outra instância de bloco); concessão de itens (linhas de inventário com `source='playerwords'` mais XP concedido, XP retido quando a chamada sinaliza origem sem limite, item sem XP nunca altera XP em nenhum dos casos, item inexistente, item de instância estranha e quantidade zero são todos no-op) |
 | `ranking_service_test.php` | 5 | Ranking vazio; ordenação decrescente por pontuação; truncamento top-5 com linha de "outsider" para o usuário atual fora do top; `SEPARATEGROUPS` filtra para o grupo do próprio estudante; uma reserva ainda pendente (rodada em andamento ou abandonada sem terminar) é excluída do ranking |
 | `round_presenter_test.php` | 35 | Renderização das linhas da grade; texto de cooldown; mensagens de feedback (desistiu/tempo esgotado/perdeu/venceu, variando pelas tentativas usadas); contexto de ranking; contexto de resultado da rodada (em branco até terminar, revela ao terminar, cooldown reflete mudança posterior de configuração); saldo/custo em item do PlayerHUD no lobby (exibido/oculto pelo estado da rodada, início desabilitado abaixo da quantidade exigida, habilitado quando o saldo cobre), informação de temporizador no lobby; saldo/custo em item do PlayerHUD no botão de dica do painel (exibido/oculto pelo estado de revelação, dica desabilitada abaixo da quantidade exigida, habilitada quando o saldo cobre), temporizador permanece zerado antes da rodada iniciar; resumo de nota até agora (ausente antes de terminar, ausente quando não avaliada, mostra método e nota computada ao terminar, ignora uma tentativa ainda pendente); linha de informação do método de avaliação no lobby (exibida quando relevante, oculta em atividade de rodada única, oculta quando não avaliada); a tecla Ç do teclado só aparece quando o próprio banco de palavras da atividade precisa dela; contador de rodadas jogadas exibido no lobby e no resultado da rodada, usando o símbolo de infinito numa atividade ilimitada e o limite configurado nos demais casos; o rótulo de item concedido pelo PlayerHUD só aparece numa vitória de verdade com item configurado, em branco numa derrota ou quando não configurado |
@@ -516,7 +520,7 @@ O PlayerWords inclui uma suíte PHPUnit cobrindo lógica de negócio, consultas 
 | `view_page_service_test.php` | 6 | Ramificações de montagem de página: lobby fresco, palavra sorteada persiste entre chamadas, rodada terminada calcula cooldown real, aviso de restrição exibido quando o limite de rodadas é atingido; as URLs de ajuda/registro de tentativas do toolbar sempre estão presentes; a ação de desistir só aparece durante uma rodada ativa |
 | `word_normalizer_test.php` | 8 | Normalização sem acentuação em 8 combinações de diacríticos |
 | `words_repository_test.php` | 40 | Seleção de palavra (pool vazio, exclusão de não aprovados/muito curtos/muito longos/caracteres não-letra, modo aleatório, determinismo e ciclagem da sequência compartilhada, evita a palavra excluída quando há alternativa, permite-a de volta quando é a única candidata); `get_last_played_word_id` (0 sem rodadas terminadas, ignora uma reserva pendente); inserção de palavra manual e por IA; checagem de duplicata `word_exists` (correspondência case-insensitive, sem correspondência, restrita à instância, corresponde independente da fonte, ignora o próprio id ao renomear); busca, atualização e exclusão de palavra restritas à instância dona; exclusão e aprovação em lote; listagem de palavras recentes com join do nome do glossário; sincronização de glossário (divisão de conceito multi-palavra, filtro de stopwords configuráveis, atualização de dica em re-sincronização sem duplicar, limpeza de órfãos quando uma entrada desaparece, modo `glossaryid = 0` cobrindo todos os glossários do curso, pula um conceito cujo texto já pertence a uma palavra manual/IA sem alterar a dica dela); a tecla Ç do teclado virtual só é oferecida quando uma palavra aprovada realmente contém uma, restrito à própria atividade e ignorando palavras não aprovadas |
-| **Subtotal** | **184** | |
+| **Subtotal** | **185** | |
 
 #### Testes de Web Services (`tests/external/`)
 
@@ -529,7 +533,7 @@ O PlayerWords inclui uma suíte PHPUnit cobrindo lógica de negócio, consultas 
 | `submit_guess_test.php` | 7 | Um chute errado nunca revela a palavra; um chute correto revela só quando termina; um chute perdedor também revela; a capability `mod/playerwords:view` é exigida; `timeleft` reflete os segundos restantes durante a rodada; `timeleft` fica congelado no momento em que a rodada terminou, não no relógio real; um total de ranking fracionado sobrevive à limpeza de retorno da API externa, contra a chamada real da webservice |
 | **Subtotal** | **25** | |
 
-| **Total Geral** | **247** | |
+| **Total Geral** | **248** | |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords

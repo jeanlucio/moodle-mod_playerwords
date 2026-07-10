@@ -130,10 +130,12 @@ class gameplay_service {
      * Shared points formula for both the grade and the ranking.
      *
      * Binary mode awards the full activity grade on a win, zero otherwise. Linear mode
-     * scales the full grade by how many attempts were spared out of max_attempts, so
-     * winning on the first attempt earns the full grade and winning on the last allowed
-     * attempt still earns a positive (non-zero) share. Not completing the round always
-     * earns zero, regardless of mode.
+     * awards full credit on the first two attempts — a confident second guess is not
+     * meaningfully less deserving than a first-try one — then scales the remaining
+     * attempts down proportionally, so winning on the last allowed attempt still earns a
+     * positive (non-zero) share. Not completing the round always earns zero, regardless
+     * of mode. Degenerates to Binary when max_attempts is 1 or 2, since every allowed
+     * attempt then falls within the full-credit plateau.
      *
      * @param \stdClass $instance Activity instance.
      * @param int $mode One of the PLAYERWORDS_SCORING_* constants.
@@ -157,6 +159,10 @@ class gameplay_service {
         }
 
         $attemptsused = min(max($attemptsused, 1), $maxattempts);
-        return $maxpoints * ($maxattempts - $attemptsused + 1) / $maxattempts;
+        if ($attemptsused <= 2) {
+            return $maxpoints;
+        }
+
+        return $maxpoints * ($maxattempts - $attemptsused + 1) / ($maxattempts - 1);
     }
 }
