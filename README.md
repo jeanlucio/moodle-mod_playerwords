@@ -153,6 +153,13 @@ See the author's [Moodle Plugins Directory profile](https://moodle.org/plugins/b
 
 PlayerWords computes a **grade** and a **ranking** total from the same finished rounds, but the two are configured completely independently — a teacher can keep the grade simple while still rewarding efficient play in the ranking, or the other way around.
 
+**Both are entirely optional, and each is switched on or off on its own:**
+
+* **Grade:** leave the standard `Grade` field set to *None* to run the activity fully ungraded — no grade is ever computed or written to the gradebook, and the `Grading method` / `Grade scoring` settings disappear from the form.
+* **Ranking:** leave `Show ranking` set to *No* to hide the ranking everywhere — in-game, on the dedicated ranking page, and the extra column in the attempt history — and the `Ranking scoring` setting disappears from the form too.
+
+Turning one off never affects the other: an activity can be graded with no ranking, ranked with no grade, both, or neither.
+
 **Per-round scoring** decides how much a single round is worth, chosen separately for the grade and for the ranking (`Grade scoring` / `Ranking scoring` settings, both default to **Binary**):
 
 | Mode | A won round is worth... | A lost, forfeited, or timed-out round |
@@ -434,6 +441,13 @@ Veja o [perfil do autor no Moodle Plugins Directory](https://moodle.org/plugins/
 ### 🧮 Nota e Ranking
 
 O PlayerWords calcula uma **nota** e um total de **ranking** a partir das mesmas rodadas terminadas, mas os dois são configurados de forma totalmente independente — o professor pode manter a nota simples e ainda assim recompensar jogadas eficientes no ranking, ou o contrário.
+
+**Os dois são totalmente opcionais, e cada um liga/desliga por conta própria:**
+
+* **Nota:** deixe o campo padrão `Nota` como *Nenhuma* pra rodar a atividade sem avaliação nenhuma — nenhuma nota é calculada ou gravada no livro de notas, e as configurações `Método de avaliação` / `Pontuação da nota` somem do formulário.
+* **Ranking:** deixe `Mostrar ranking` como *Não* pra esconder o ranking em todo lugar — no jogo, na página dedicada de ranking, e na coluna extra do registro de tentativas — e a configuração `Pontuação do ranking` some do formulário também.
+
+Desligar um nunca afeta o outro: uma atividade pode ter nota sem ranking, ranking sem nota, os dois, ou nenhum dos dois.
 
 **A pontuação por rodada** decide quanto vale uma única rodada, escolhida separadamente para a nota e para o ranking (configurações `Pontuação da nota` / `Pontuação do ranking`, ambas com padrão **Binária**):
 
