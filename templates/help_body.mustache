@@ -30,8 +30,12 @@
         "attemptstext": "You have a limited number of attempts per round.",
         "hinttext": "A hint may be available, depending on how the teacher configured the activity.",
         "timertext": "Some activities have a time limit per round.",
+        "showhud": true,
+        "hudtext": "This activity may require PlayerHUD items to start a round or reveal a hint, and can reward you with an item for winning a round.",
         "showgrading": true,
-        "gradingtext": "Grading method: Highest grade."
+        "gradingtext": "Grading method: Highest grade.",
+        "showranking": true,
+        "rankingtext": "The ranking adds up your points from every finished round. Ties are broken by fewer attempts used on average, then less time spent on average."
     }
 }}
 <div class="mod-playerwords-help-body">
@@ -45,7 +49,13 @@
     <p>{{attemptstext}}</p>
     <p>{{hinttext}}</p>
     <p>{{timertext}}</p>
+    {{#showhud}}
+        <p>{{hudtext}}</p>
+    {{/showhud}}
     {{#showgrading}}
         <p>{{gradingtext}}</p>
     {{/showgrading}}
+    {{#showranking}}
+        <p>{{rankingtext}}</p>
+    {{/showranking}}
 </div>

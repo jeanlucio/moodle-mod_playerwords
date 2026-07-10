@@ -151,6 +151,10 @@ class view_page_service {
      */
     private static function build_help_context(\stdClass $instance): array {
         $showgrading = (float)$instance->grade > 0;
+        $showranking = !empty($instance->show_ranking);
+        $showhud = ((int)($instance->hud_round_cost_item ?? 0) > 0)
+            || ((int)($instance->hud_hint_cost_item ?? 0) > 0)
+            || ((int)($instance->hud_win_grant_item ?? 0) > 0);
 
         return [
             'helptitle' => get_string('help_title', 'mod_playerwords'),
@@ -162,10 +166,14 @@ class view_page_service {
             'attemptstext' => get_string('help_attempts', 'mod_playerwords'),
             'hinttext' => get_string('help_hint', 'mod_playerwords'),
             'timertext' => get_string('help_timer', 'mod_playerwords'),
+            'showhud' => $showhud,
+            'hudtext' => $showhud ? get_string('help_hud', 'mod_playerwords') : '',
             'showgrading' => $showgrading,
             'gradingtext' => $showgrading
                 ? get_string('help_grading', 'mod_playerwords', round_presenter::grademethod_name($instance))
                 : '',
+            'showranking' => $showranking,
+            'rankingtext' => $showranking ? get_string('help_ranking', 'mod_playerwords') : '',
         ];
     }
 }

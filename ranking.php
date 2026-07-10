@@ -60,6 +60,7 @@ $templatecontext = [
     'rankingoutsiderrow'    => $ranking['outsiderrow'],
     'rankingempty'          => $ranking['isempty'],
     'rankingemptylabel'     => get_string('ranking_empty', 'mod_playerwords'),
+    'rankingtiebreaktext'   => get_string('ranking_tiebreak', 'mod_playerwords'),
 ];
 
 echo $OUTPUT->header();

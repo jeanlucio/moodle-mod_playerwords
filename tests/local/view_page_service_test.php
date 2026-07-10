@@ -207,6 +207,44 @@ final class view_page_service_test extends \advanced_testcase {
         $this->assertNotEmpty($ctx['helptitle']);
         $this->assertNotEmpty($ctx['introtext']);
         $this->assertNotEmpty($ctx['keyboardtext']);
+        $this->assertTrue($ctx['showranking']);
+        $this->assertNotEmpty($ctx['rankingtext']);
+        $this->assertFalse($ctx['showhud']);
+        $this->assertSame('', $ctx['hudtext']);
+    }
+
+    /**
+     * The help modal omits the ranking tie-break explanation when the teacher has
+     * turned ranking off for the activity.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_hides_ranking_help_when_ranking_disabled(): void {
+        [$instance, $cm, $context] = $this->make_instance(['show_ranking' => 0]);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $ctx = $pagedata['templatecontext'];
+
+        $this->assertFalse($ctx['showranking']);
+        $this->assertSame('', $ctx['rankingtext']);
+    }
+
+    /**
+     * The help modal shows the PlayerHUD explanation as soon as any of the round cost,
+     * hint cost, or win-grant settings is configured — one is enough to trigger it.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_shows_hud_help_when_win_grant_configured(): void {
+        [$instance, $cm, $context] = $this->make_instance(['hud_win_grant_item' => 999999]);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $ctx = $pagedata['templatecontext'];
+
+        $this->assertTrue($ctx['showhud']);
+        $this->assertNotEmpty($ctx['hudtext']);
     }
 
     /**
