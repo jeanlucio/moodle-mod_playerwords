@@ -522,9 +522,13 @@ class round_presenter {
         }
 
         $timeleft = 0;
-        if ((int)$instance->timer_seconds > 0 && !empty($state['roundstarted']) && !empty($state['starttime'])) {
-            $reference = $roundfinished && !empty($state['endtime']) ? (int)$state['endtime'] : time();
-            $timeleft = max(0, (int)$instance->timer_seconds - ($reference - (int)$state['starttime']));
+        if (
+            !$roundfinished
+            && (int)$instance->timer_seconds > 0
+            && !empty($state['roundstarted'])
+            && !empty($state['starttime'])
+        ) {
+            $timeleft = max(0, (int)$instance->timer_seconds - (time() - (int)$state['starttime']));
         }
 
         return [

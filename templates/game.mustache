@@ -122,7 +122,9 @@
     <div class="pw-header">
         {{> mod_playerwords/toolbar}}
         {{#timerenabled}}
-            <span id="playerwords-timer-wrapper" class="pw-header-timer"{{#showlobby}} hidden{{/showlobby}}>
+            <span id="playerwords-timer-wrapper" class="pw-header-timer"
+                {{#showlobby}}hidden{{/showlobby}}
+                {{#roundfinished}}hidden{{/roundfinished}}>
                 <i class="fa fa-clock-o" aria-hidden="true"></i>
                 <span id="playerwords-timer-countdown" aria-label="{{timerlabel}}">{{timeleft}}</span>
             </span>
