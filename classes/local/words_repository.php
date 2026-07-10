@@ -231,6 +231,37 @@ class words_repository {
     }
 
     /**
+     * Whether a word with the given text already exists in this activity's pool.
+     *
+     * Case-insensitive, scoped to the activity and checked across every source (manual,
+     * glossary, AI) so the same text is never approved twice under a different origin.
+     *
+     * @param int $instanceid Activity instance id.
+     * @param string $word Word text to check.
+     * @param int $excludewordid Word id to ignore, used when renaming an existing word.
+     * @return bool
+     */
+    public static function word_exists(int $instanceid, string $word, int $excludewordid = 0): bool {
+        global $DB;
+
+        $target = core_text::strtolower(trim($word));
+        $records = $DB->get_records_select(
+            'playerwords_words',
+            'playerwordsid = :instanceid',
+            ['instanceid' => $instanceid],
+            '',
+            'id, word'
+        );
+        foreach ($records as $record) {
+            if ((int)$record->id !== $excludewordid && core_text::strtolower($record->word) === $target) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Inserts one manual word as approved.
      *
      * @param int $instanceid Activity instance id.
@@ -259,8 +290,10 @@ class words_repository {
     /**
      * Imports approved glossary entries into the word pool for a given activity instance.
      *
-     * Existing words (matched case-insensitively by concept) have their hint updated.
-     * New words are inserted as approved. Words outside the configured length bounds are skipped.
+     * Existing glossary-sourced words (matched case-insensitively by concept) have their hint
+     * updated. New words are inserted as approved. A word whose text already belongs to a
+     * manual or AI-sourced entry is skipped instead, leaving that entry untouched — glossary
+     * sync never overwrites a word the teacher (or the AI flow) already owns.
      *
      * @param \stdClass $instance Activity instance.
      * @return int Number of new words imported.
@@ -308,6 +341,18 @@ class words_repository {
             $existingmap[core_text::strtolower($rec->word)] = $rec->id;
         }
 
+        $othersource = $DB->get_records_select(
+            'playerwords_words',
+            'playerwordsid = :pid AND source <> :source',
+            ['pid' => $instance->id, 'source' => 'glossary'],
+            '',
+            'id, word'
+        );
+        $othersourcemap = [];
+        foreach ($othersource as $rec) {
+            $othersourcemap[core_text::strtolower($rec->word)] = true;
+        }
+
         $imported = 0;
         foreach ($entries as $entry) {
             $concept = trim($entry->concept);
@@ -330,6 +375,10 @@ class words_repository {
                         ]);
                         $existingmap[$key] = true;
                     }
+                } else if (isset($othersourcemap[$key])) {
+                    // A manual/AI word already owns this text — leave it untouched, do not
+                    // duplicate it under a second, glossary-owned row.
+                    continue;
                 } else {
                     $DB->insert_record('playerwords_words', (object)[
                         'playerwordsid' => $instance->id,

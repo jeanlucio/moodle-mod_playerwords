@@ -78,6 +78,9 @@ if (optional_param('addword', 0, PARAM_BOOL)) {
             ['min' => (int)$instance->min_length, 'max' => (int)$instance->max_length]
         );
         $notificationtype = 'warning';
+    } else if (words_repository::word_exists((int)$instance->id, $manualword)) {
+        $notification = get_string('error_manualwordduplicate', 'mod_playerwords');
+        $notificationtype = 'warning';
     } else {
         words_repository::add_manual_word((int)$instance->id, (int)$USER->id, $manualword, $manualhint);
         $notification = get_string('manualwordadded', 'mod_playerwords');
@@ -103,6 +106,10 @@ if (optional_param('saveword', 0, PARAM_BOOL)) {
             'mod_playerwords',
             ['min' => (int)$instance->min_length, 'max' => (int)$instance->max_length]
         );
+        $notificationtype = 'warning';
+        $editwordid = $wordid;
+    } else if (words_repository::word_exists((int)$instance->id, $manualword, $wordid)) {
+        $notification = get_string('error_manualwordduplicate', 'mod_playerwords');
         $notificationtype = 'warning';
         $editwordid = $wordid;
     } else {

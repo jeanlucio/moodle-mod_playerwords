@@ -69,6 +69,7 @@ $string['error_cooldown'] = 'O cooldown deve ser 0 ou um valor positivo.';
 $string['error_grademethod_average_all'] = 'Este método de avaliação requer que o máximo de rodadas por estudante não esteja definido como Ilimitado.';
 $string['error_hud_cost_qty'] = 'A quantidade deve ser pelo menos 1.';
 $string['error_invalidchars'] = 'O palpite deve conter apenas letras.';
+$string['error_manualwordduplicate'] = 'Essa palavra já existe no banco de palavras desta atividade.';
 $string['error_manualwordlength'] = 'A palavra deve ter entre {$a->min} e {$a->max} caracteres.';
 $string['error_manualwordrequired'] = 'A palavra é obrigatória.';
 $string['error_maxattempts'] = 'O número máximo de tentativas deve ser no mínimo 1.';

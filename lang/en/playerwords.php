@@ -69,6 +69,7 @@ $string['error_cooldown'] = 'Cooldown must be 0 or a positive value.';
 $string['error_grademethod_average_all'] = 'This grading method requires the maximum rounds per student setting to not be Unlimited.';
 $string['error_hud_cost_qty'] = 'Quantity must be at least 1.';
 $string['error_invalidchars'] = 'The guess must contain letters only.';
+$string['error_manualwordduplicate'] = 'This word already exists in this activity\'s word pool.';
 $string['error_manualwordlength'] = 'Word length must be between {$a->min} and {$a->max} characters.';
 $string['error_manualwordrequired'] = 'Word is required.';
 $string['error_maxattempts'] = 'Maximum attempts must be at least 1.';

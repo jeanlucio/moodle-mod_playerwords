@@ -442,6 +442,66 @@ final class words_repository_test extends \advanced_testcase {
     }
 
     /**
+     * word_exists() matches an existing word case-insensitively.
+     *
+     * @covers \mod_playerwords\local\words_repository::word_exists
+     * @return void
+     */
+    public function test_word_exists_matches_case_insensitively(): void {
+        $instance = $this->make_instance();
+        $this->make_word($instance->id, 'Planeta');
+
+        $this->assertTrue(words_repository::word_exists($instance->id, 'planeta'));
+        $this->assertTrue(words_repository::word_exists($instance->id, 'PLANETA'));
+    }
+
+    /**
+     * word_exists() is false when no word matches, and scoped to the given instance.
+     *
+     * @covers \mod_playerwords\local\words_repository::word_exists
+     * @return void
+     */
+    public function test_word_exists_false_when_no_match_or_wrong_instance(): void {
+        $instancea = $this->make_instance();
+        $instanceb = $this->make_instance();
+        $this->make_word($instancea->id, 'planeta');
+
+        $this->assertFalse(words_repository::word_exists($instancea->id, 'estrela'));
+        $this->assertFalse(words_repository::word_exists($instanceb->id, 'planeta'));
+    }
+
+    /**
+     * word_exists() ignores a source: a word inserted as manual is matched by a check
+     * that carries no source of its own, which is exactly what a duplicate-guard call
+     * needs regardless of where the colliding text came from.
+     *
+     * @covers \mod_playerwords\local\words_repository::word_exists
+     * @return void
+     */
+    public function test_word_exists_matches_regardless_of_source(): void {
+        $instance = $this->make_instance();
+        words_repository::add_ai_word($instance->id, $this->user->id, 'planeta', 'corpo celeste');
+
+        $this->assertTrue(words_repository::word_exists($instance->id, 'planeta'));
+    }
+
+    /**
+     * word_exists() ignores the excluded word id, so renaming a word to its own current
+     * text is not reported as a collision with itself.
+     *
+     * @covers \mod_playerwords\local\words_repository::word_exists
+     * @return void
+     */
+    public function test_word_exists_ignores_excluded_word_id(): void {
+        global $DB;
+        $instance = $this->make_instance();
+        $this->make_word($instance->id, 'planeta');
+        $wordid = (int)$DB->get_field('playerwords_words', 'id', ['playerwordsid' => $instance->id], MUST_EXIST);
+
+        $this->assertFalse(words_repository::word_exists($instance->id, 'planeta', $wordid));
+    }
+
+    /**
      * An AI-generated word is saved as pending approval, never pre-approved.
      *
      * @covers \mod_playerwords\local\words_repository::add_ai_word
@@ -811,5 +871,28 @@ final class words_repository_test extends \advanced_testcase {
         $imported = words_repository::sync_glossary_words($instance);
 
         $this->assertSame(2, $imported);
+    }
+
+    /**
+     * A glossary concept whose text already belongs to a manually added word is skipped:
+     * no duplicate row is inserted, and the manual word's own hint is left untouched.
+     *
+     * @covers \mod_playerwords\local\words_repository::sync_glossary_words
+     * @return void
+     */
+    public function test_sync_glossary_words_skips_word_owned_by_another_source(): void {
+        global $DB;
+        [$glossary] = $this->make_glossary_entry('planeta', 'corpo celeste que orbita uma estrela');
+        $instance = $this->make_full_instance(['glossaryid' => $glossary->id]);
+        words_repository::add_manual_word($instance->id, $this->user->id, 'planeta', 'dica do professor');
+
+        $imported = words_repository::sync_glossary_words($instance);
+
+        $this->assertSame(0, $imported);
+        $records = $DB->get_records('playerwords_words', ['playerwordsid' => $instance->id]);
+        $this->assertCount(1, $records);
+        $record = reset($records);
+        $this->assertSame('manual', $record->source);
+        $this->assertSame('dica do professor', $record->hint);
     }
 }
