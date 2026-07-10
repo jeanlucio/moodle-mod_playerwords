@@ -98,6 +98,65 @@ final class backup_restore_test extends \advanced_testcase {
     }
 
     /**
+     * A full course backup/restore must carry the scoring-mode settings and each
+     * attempt's score AND rankingpoints — a regression test for the backup/restore
+     * checklist rule that every install.xml column must be mirrored into the matching
+     * backup_nested_element() attribute list; a column added after the initial backup
+     * implementation silently reverts to its DB default on restore otherwise, with
+     * nothing in PHPCS/moodlecheck/PHPStan catching the omission.
+     *
+     * @covers \backup_playerwords_activity_structure_step::define_structure
+     * @return void
+     */
+    public function test_backup_restore_preserves_scoring_settings_and_ranking_points(): void {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $course->id, 'student');
+        $instance = $this->getDataGenerator()->create_module('playerwords', [
+            'course'             => $course->id,
+            'gradescoringmode'   => PLAYERWORDS_SCORING_LINEAR,
+            'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR,
+        ]);
+        $wordid = $DB->insert_record('playerwords_words', (object)[
+            'playerwordsid' => $instance->id,
+            'word'          => 'teste',
+            'concept'       => 'teste',
+            'hint'          => 'dica',
+            'source'        => 'manual',
+            'glossaryid'    => 0,
+            'approved'      => 1,
+            'timecreated'   => time(),
+            'addedby'       => $user->id,
+        ]);
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $user->id,
+            'wordid'        => $wordid,
+            'attempts_used' => 2,
+            'time_used'     => 30,
+            'completed'     => 1,
+            'score'         => 100.0,
+            'rankingpoints' => 83.33333,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+
+        $newcourse = $this->backup_and_restore_into_new_course($course);
+
+        $newinstance = $DB->get_record('playerwords', ['course' => $newcourse->id], '*', MUST_EXIST);
+        $this->assertSame(PLAYERWORDS_SCORING_LINEAR, (int)$newinstance->gradescoringmode);
+        $this->assertSame(PLAYERWORDS_SCORING_LINEAR, (int)$newinstance->rankingscoringmode);
+
+        $newattempt = $DB->get_record('playerwords_attempts', ['playerwordsid' => $newinstance->id], '*', MUST_EXIST);
+        $this->assertEqualsWithDelta(100.0, (float)$newattempt->score, 0.001);
+        $this->assertEqualsWithDelta(83.33333, (float)$newattempt->rankingpoints, 0.001);
+    }
+
+    /**
      * Skips the current test when block_playerhud is not installed.
      *
      * @return void

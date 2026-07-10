@@ -53,6 +53,8 @@ class backup_playerwords_activity_structure_step extends backup_activity_structu
             'grade',
             'gradepass',
             'grademethod',
+            'gradescoringmode',
+            'rankingscoringmode',
             'hud_round_cost_item',
             'hud_round_cost_qty',
             'hud_hint_cost_item',
@@ -85,6 +87,7 @@ class backup_playerwords_activity_structure_step extends backup_activity_structu
             'time_used',
             'completed',
             'score',
+            'rankingpoints',
             'timecreated',
             'timefinished',
         ]);
