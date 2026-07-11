@@ -1,25 +1,25 @@
 # 📦 Requirements
 
-[English](#english) | [Português](#português)
+[English](#requirements-english) | [Português](#requirements-português)
 
 ---
 
-## English
+## Requirements — English
 
 | Component | Version |
 |-----------|---------|
 | Moodle    | 4.5+    |
 | PHP       | 8.1+    |
 
-[⬆️ Back to top](#english)
+[⬆️ Back to top](#requirements-english)
 
 ---
 
-## Português
+## Requirements — Português
 
 | Componente | Versão |
 |------------|--------|
 | Moodle     | 4.5+   |
 | PHP        | 8.1+   |
 
-[⬆️ Back to top](#português)
+[⬆️ Back to top](#requirements-português)

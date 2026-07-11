@@ -1,10 +1,10 @@
 # 🕹️ PlayerGames Ecosystem
 
-[English](#english) | [Português](#português)
+[English](#playergames-ecosystem-english) | [Português](#playergames-ecosystem-português)
 
 ---
 
-## English
+## PlayerGames Ecosystem — English
 
 PlayerWords is part of the **PlayerGames** gamification ecosystem for Moodle. Its main direct integration is with the PlayerHUD block:
 
@@ -16,11 +16,11 @@ PlayerWords is part of the **PlayerGames** gamification ecosystem for Moodle. It
 
 See the author's [Moodle Plugins Directory profile](https://moodle.org/plugins/browse.php?list=contributor&id=3970322) for the full PlayerGames family.
 
-[⬆️ Back to top](#english)
+[⬆️ Back to top](#playergames-ecosystem-english)
 
 ---
 
-## Português
+## PlayerGames Ecosystem — Português
 
 O PlayerWords faz parte do ecossistema de gamificação **PlayerGames** para Moodle. Sua principal integração direta é com o bloco PlayerHUD:
 
@@ -32,4 +32,4 @@ O PlayerWords faz parte do ecossistema de gamificação **PlayerGames** para Moo
 
 Veja o [perfil do autor no Moodle Plugins Directory](https://moodle.org/plugins/browse.php?list=contributor&id=3970322) para a família PlayerGames completa.
 
-[⬆️ Back to top](#português)
+[⬆️ Back to top](#playergames-ecosystem-português)

@@ -1,10 +1,10 @@
 # 📖 Usage
 
-[English](#english) | [Português](#português)
+[English](#usage-english) | [Português](#usage-português)
 
 ---
 
-## English
+## Usage — English
 
 1. Add a **PlayerWords** activity to your course.
 2. Configure:
@@ -18,11 +18,11 @@
 4. Students play directly from the activity page — guessing, revealing hints, and forfeiting rounds, with no page reload. The page's own toolbar gives access to the rules (help), attempt history, and the ranking.
 5. Grades and ranking update automatically after each round.
 
-[⬆️ Back to top](#english)
+[⬆️ Back to top](#usage-english)
 
 ---
 
-## Português
+## Usage — Português
 
 1. Adicione uma atividade **PlayerWords** ao seu curso.
 2. Configure:
@@ -36,4 +36,4 @@
 4. Os estudantes jogam diretamente na página da atividade — chutando, revelando dicas e desistindo de rodadas, sem recarregar a página. O toolbar da própria página dá acesso às regras (ajuda), ao registro de tentativas e ao ranking.
 5. Notas e ranking são atualizados automaticamente após cada rodada.
 
-[⬆️ Back to top](#português)
+[⬆️ Back to top](#usage-português)

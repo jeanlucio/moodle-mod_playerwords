@@ -1,10 +1,10 @@
 # 🧪 Automated Tests
 
-[English](#english) | [Português](#português)
+[English](#automated-tests-english) | [Português](#automated-tests-português)
 
 ---
 
-## English
+## Automated Tests — English
 
 PlayerWords ships with a PHPUnit test suite covering business logic, repository queries, web
 services, and Privacy API compliance. Every CI push runs against the full matrix (Moodle 4.5 →
@@ -100,11 +100,11 @@ the capability guard, and (where applicable) the PlayerHUD insufficient-item bra
 capability-guard test necessarily stops at `require_capability()` and never reaches the lines
 after it, so it cannot raise the percentage of a class that is mostly "lines after the guard".
 
-[⬆️ Back to top](#english)
+[⬆️ Back to top](#automated-tests-english)
 
 ---
 
-## Português
+## Automated Tests — Português
 
 O PlayerWords inclui uma suíte PHPUnit cobrindo lógica de negócio, consultas ao repositório, web
 services e conformidade com a Privacy API. Todo push de CI executa a matriz completa (Moodle
@@ -202,4 +202,4 @@ PlayerHUD — mas um teste de guarda de capability necessariamente para em `requ
 nunca alcança as linhas depois dela, então ele não consegue elevar o percentual de uma classe que
 é majoritariamente "linhas depois da guarda".
 
-[⬆️ Back to top](#português)
+[⬆️ Back to top](#automated-tests-português)

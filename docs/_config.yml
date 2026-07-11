@@ -1,3 +1,4 @@
-theme: jekyll-theme-cayman
+theme: jekyll-theme-leap-day
 title: PlayerWords
 description: Word-guessing vocabulary activity for Moodle — full documentation.
+show_downloads: true

@@ -1,10 +1,10 @@
 # 🔐 Security & Compliance
 
-[English](#english) | [Português](#português)
+[English](#security-compliance-english) | [Português](#security-compliance-português)
 
 ---
 
-## English
+## Security & Compliance — English
 
 * Capability-based access control (`mod/playerwords:view`, `mod/playerwords:addinstance`)
 * `require_sesskey()` protection on all POST actions; AJAX calls are validated by Moodle's `core/ajax` dispatcher
@@ -16,11 +16,11 @@
 * Moodle External API compliant
 * Privacy API fully implemented (GDPR/LGPD)
 
-[⬆️ Back to top](#english)
+[⬆️ Back to top](#security-compliance-english)
 
 ---
 
-## Português
+## Security & Compliance — Português
 
 * Controle de acesso por capabilities (`mod/playerwords:view`, `mod/playerwords:addinstance`)
 * Proteção com `require_sesskey()` em todas as ações POST; chamadas AJAX são validadas pelo dispatcher `core/ajax` do Moodle
@@ -32,4 +32,4 @@
 * Compatível com a API externa do Moodle
 * Privacy API completamente implementada (LGPD/GDPR)
 
-[⬆️ Back to top](#português)
+[⬆️ Back to top](#security-compliance-português)

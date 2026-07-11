@@ -1,10 +1,10 @@
 # 🎓 Educational Purpose
 
-[English](#english) | [Português](#português)
+[English](#educational-purpose-english) | [Português](#educational-purpose-português)
 
 ---
 
-## English
+## Educational Purpose — English
 
 PlayerWords is designed to:
 
@@ -23,11 +23,11 @@ Suitable for:
 * Formative assessment and self-study reinforcement
 * Engagement reinforcement strategies
 
-[⬆️ Back to top](#english)
+[⬆️ Back to top](#educational-purpose-english)
 
 ---
 
-## Português
+## Educational Purpose — Português
 
 O PlayerWords foi projetado para:
 
@@ -46,4 +46,4 @@ Indicado para:
 * Avaliação formativa e reforço de autoestudo
 * Estratégias de reforço de engajamento
 
-[⬆️ Back to top](#português)
+[⬆️ Back to top](#educational-purpose-português)

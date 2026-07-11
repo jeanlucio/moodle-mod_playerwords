@@ -1,10 +1,10 @@
 # ✨ Features
 
-[English](#english) | [Português](#português)
+[English](#features-english) | [Português](#features-português)
 
 ---
 
-## English
+## Features — English
 
 * 🟩 **Word-Guessing Gameplay:** Colour-coded + symbol feedback per letter (correct position, wrong position, absent).
 * 📖 **Glossary Integration:** Import concepts from one or all course glossaries as the word pool, with definitions used as hints.
@@ -35,11 +35,11 @@
 * 📦 **Backup & Restore:** Full Moodle 2 backup/restore support, including the "Duplicate activity" action, word pool, attempts, user/glossary id remapping, and safe PlayerHUD item remapping (dropped rather than kept pointing at another course's item when it isn't part of the same restore).
 * 🔐 **Privacy API:** GDPR/LGPD compliant — complete data export and deletion for all stored personal data.
 
-[⬆️ Back to top](#english)
+[⬆️ Back to top](#features-english)
 
 ---
 
-## Português
+## Features — Português
 
 * 🟩 **Jogo de adivinhação de palavras:** Feedback por letra com código de cores + símbolos (posição correta, posição errada, ausente).
 * 📖 **Integração com Glossário:** Importa conceitos de um ou todos os glossários do curso como pool de palavras, usando as definições como dicas.
@@ -70,4 +70,4 @@
 * 📦 **Backup & Restauração:** Suporte completo ao backup Moodle 2, incluindo a ação "Duplicar atividade", pool de palavras, tentativas, remapeamento de ids de usuário/glossário, e remapeamento seguro de itens do PlayerHUD (descartado, em vez de mantido apontando pro item de outro curso, quando não faz parte da mesma restauração).
 * 🔐 **Privacy API:** Compatível com LGPD/GDPR — exportação e exclusão completas de dados pessoais armazenados.
 
-[⬆️ Back to top](#português)
+[⬆️ Back to top](#features-português)

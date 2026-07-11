@@ -1,23 +1,23 @@
 # 📄 License
 
-[English](#english) | [Português](#português)
+[English](#license-english) | [Português](#license-português)
 
 ---
 
-## English
+## License — English
 
 This project is licensed under the **GNU General Public License v3 (GPLv3)**.
 
 **Copyright:** 2026 Jean Lúcio
 
-[⬆️ Back to top](#english)
+[⬆️ Back to top](#license-english)
 
 ---
 
-## Português
+## License — Português
 
 Este projeto é licenciado sob a **GNU General Public License v3 (GPLv3)**.
 
 **Copyright:** 2026 Jean Lúcio
 
-[⬆️ Back to top](#português)
+[⬆️ Back to top](#license-português)
