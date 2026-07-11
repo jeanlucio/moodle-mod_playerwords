@@ -1,4 +1,4 @@
-# 🎓 Educational Purpose
+# 🎓 Finalidade Educacional
 
 O PlayerWords foi projetado para:
 

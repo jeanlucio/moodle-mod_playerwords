@@ -1,4 +1,4 @@
-# 🧮 Grading & Ranking
+# 🧮 Nota e Ranking
 
 O PlayerWords calcula uma **nota** e um total de **ranking** a partir das mesmas rodadas
 terminadas, mas os dois são configurados de forma totalmente independente — o professor pode

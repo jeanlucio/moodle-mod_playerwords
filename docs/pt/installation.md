@@ -1,4 +1,4 @@
-# 🛠️ Installation
+# 🛠️ Instalação
 
 1. Baixe o arquivo `.zip` ou clone este repositório.
 2. Extraia na pasta `mod/` do seu Moodle.

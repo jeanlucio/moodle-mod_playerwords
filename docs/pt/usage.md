@@ -1,4 +1,4 @@
-# 📖 Usage
+# 📖 Como Usar
 
 1. Adicione uma atividade **PlayerWords** ao seu curso.
 2. Configure:

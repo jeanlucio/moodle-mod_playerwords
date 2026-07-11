@@ -1,4 +1,4 @@
-# 🔐 Security & Compliance
+# 🔐 Segurança e Conformidade
 
 * Controle de acesso por capabilities (`mod/playerwords:view`, `mod/playerwords:addinstance`)
 * Proteção com `require_sesskey()` em todas as ações POST; chamadas AJAX são validadas pelo dispatcher `core/ajax` do Moodle

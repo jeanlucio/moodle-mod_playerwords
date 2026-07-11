@@ -1,4 +1,4 @@
-# 📄 License
+# 📄 Licença
 
 Este projeto é licenciado sob a **GNU General Public License v3 (GPLv3)**.
 

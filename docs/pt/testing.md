@@ -1,4 +1,4 @@
-# 🧪 Automated Tests
+# 🧪 Testes Automatizados
 
 O PlayerWords inclui uma suíte PHPUnit cobrindo lógica de negócio, consultas ao repositório, web
 services e conformidade com a Privacy API. Todo push de CI executa a matriz completa (Moodle
