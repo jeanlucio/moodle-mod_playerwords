@@ -102,6 +102,36 @@ class behat_mod_playerwords extends behat_base {
     }
 
     /**
+     * Overrides timer_seconds or cooldown_seconds directly in the database.
+     *
+     * playerwords_add_instance() always recomputes both columns from the transient
+     * timer_minutes / cooldown_amount+cooldown_unit form fields (see lib.php), ignoring
+     * any value passed straight through the generic "activities exist" step — the same
+     * reason the PHPUnit suite works around it this way instead (see round_service_test.php,
+     * submit_guess_test.php). timer_minutes-only granularity cannot express a short enough
+     * timer for a fast Behat scenario, so this is the only way to set an exact value.
+     *
+     * @param string $activityname PlayerWords activity name.
+     * @param string $field Either "timer_seconds" or "cooldown_seconds".
+     * @param int $seconds Value to store.
+     * @Given the PlayerWords activity :activityname has :field set to :seconds seconds
+     */
+    public function the_playerwords_activity_has_field_set_to_seconds(
+        string $activityname,
+        string $field,
+        int $seconds
+    ): void {
+        global $DB;
+
+        if ($field !== 'timer_seconds' && $field !== 'cooldown_seconds') {
+            throw new \coding_exception('Unsupported field: ' . $field);
+        }
+
+        $playerwordsid = $this->get_playerwords_id($activityname);
+        $DB->set_field('playerwords', $field, $seconds, ['id' => $playerwordsid]);
+    }
+
+    /**
      * Resolves a PlayerWords activity name to its instance id.
      *
      * @param string $activityname Activity name as configured in the instance.

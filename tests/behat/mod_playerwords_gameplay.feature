@@ -19,8 +19,8 @@ Feature: PlayerWords core gameplay loop
 
   Scenario: Student wins a round on the first try and the timer badge disappears
     Given the following "activities" exist:
-      | activity    | course | name     | min_length | max_length | max_attempts | timer_seconds | cooldown_seconds |
-      | playerwords | C1     | Word Win | 5          | 5          | 6             | 60             | 0                 |
+      | activity    | course | name     | min_length | max_length | max_attempts | timer_minutes |
+      | playerwords | C1     | Word Win | 5          | 5          | 6             | 1              |
     And the following PlayerWords words exist in activity "Word Win":
       | word  | hint             |
       | codar | Write source code |
@@ -37,8 +37,8 @@ Feature: PlayerWords core gameplay loop
 
   Scenario: Student loses a round after exhausting all attempts
     Given the following "activities" exist:
-      | activity    | course | name      | min_length | max_length | max_attempts | cooldown_seconds |
-      | playerwords | C1     | Word Lose | 5          | 5          | 1             | 0                 |
+      | activity    | course | name      | min_length | max_length | max_attempts |
+      | playerwords | C1     | Word Lose | 5          | 5          | 1             |
     And the following PlayerWords words exist in activity "Word Lose":
       | word  |
       | codar |
@@ -51,8 +51,8 @@ Feature: PlayerWords core gameplay loop
 
   Scenario: Student forfeits an active round with a confirmation dialog
     Given the following "activities" exist:
-      | activity    | course | name         | min_length | max_length | max_attempts | cooldown_seconds |
-      | playerwords | C1     | Word Forfeit | 5          | 5          | 6             | 0                 |
+      | activity    | course | name         | min_length | max_length | max_attempts |
+      | playerwords | C1     | Word Forfeit | 5          | 5          | 6             |
     And the following PlayerWords words exist in activity "Word Forfeit":
       | word  |
       | codar |
@@ -65,21 +65,22 @@ Feature: PlayerWords core gameplay loop
 
   Scenario: Student's round ends automatically when the timer runs out
     Given the following "activities" exist:
-      | activity    | course | name        | min_length | max_length | max_attempts | timer_seconds | cooldown_seconds |
-      | playerwords | C1     | Word Timer  | 5          | 5          | 6             | 2              | 0                 |
+      | activity    | course | name        | min_length | max_length | max_attempts |
+      | playerwords | C1     | Word Timer  | 5          | 5          | 6             |
     And the following PlayerWords words exist in activity "Word Timer":
       | word  |
       | codar |
+    And the PlayerWords activity "Word Timer" has "timer_seconds" set to "2" seconds
     And I log in as "student1"
     And I am on the "Word Timer" "playerwords activity" page
     And I click on "Start round" "button"
     When I wait until "#playerwords-round-result" "css_element" exists
     Then I should see "Time is up!"
 
-  Scenario: Reaching the round limit shows a visible rejection notification
+  Scenario: Reaching the round limit shows a visible rejection notification on next visit
     Given the following "activities" exist:
-      | activity    | course | name        | min_length | max_length | max_attempts | max_rounds | cooldown_seconds |
-      | playerwords | C1     | Word Limit  | 5          | 5          | 6             | 1          | 0                 |
+      | activity    | course | name        | min_length | max_length | max_attempts | max_rounds |
+      | playerwords | C1     | Word Limit  | 5          | 5          | 6             | 1          |
     And the following PlayerWords words exist in activity "Word Limit":
       | word  |
       | codar |
@@ -88,17 +89,18 @@ Feature: PlayerWords core gameplay loop
     And I click on "Start round" "button"
     And I set the field "Your guess" to "codar"
     And I click on "[data-key=\"ENTER\"]" "css_element"
-    And I should see "Start a new round"
-    When I click on "Start a new round" "button"
+    And I should see "Genius!"
+    When I reload the page
     Then I should see "You have reached the maximum number of rounds (1) for this activity."
 
   Scenario: A configured cooldown shows a countdown instead of the new-round button
     Given the following "activities" exist:
-      | activity    | course | name          | min_length | max_length | max_attempts | cooldown_seconds |
-      | playerwords | C1     | Word Cooldown | 5          | 5          | 6             | 99999             |
+      | activity    | course | name          | min_length | max_length | max_attempts |
+      | playerwords | C1     | Word Cooldown | 5          | 5          | 6             |
     And the following PlayerWords words exist in activity "Word Cooldown":
       | word  |
       | codar |
+    And the PlayerWords activity "Word Cooldown" has "cooldown_seconds" set to "99999" seconds
     And I log in as "student1"
     And I am on the "Word Cooldown" "playerwords activity" page
     And I click on "Start round" "button"
