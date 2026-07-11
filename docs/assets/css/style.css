@@ -23,18 +23,26 @@ body {
   color: var(--text);
 }
 
-.ecosystem-banner {
-  display: block;
-  width: 100%;
-  height: auto;
+.page-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 260px;
+  color: #fff;
+  background-color: #1a1a1a;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  padding: 2rem 1.5rem;
 }
 
-.page-header {
-  color: #fff;
+.page-header-overlay {
+  max-width: 380px;
   text-align: center;
-  background-color: var(--accent);
-  background-image: linear-gradient(120deg, var(--accent-dark), var(--accent));
-  padding: 3rem 1.5rem;
+  background-color: rgba(0, 0, 0, 0.55);
+  border-radius: 0.5rem;
+  padding: 1.5rem 2rem;
 }
 
 .project-name {
@@ -204,5 +212,14 @@ body {
     position: static;
     max-height: none;
     width: 100%;
+  }
+
+  .page-header {
+    justify-content: center;
+    min-height: 200px;
+  }
+
+  .page-header-overlay {
+    max-width: 100%;
   }
 }
