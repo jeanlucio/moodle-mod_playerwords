@@ -1,28 +1,10 @@
 <!doctype html>
 <html lang="{{ page.lang | default: 'en' }}">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ page.title | default: site.title }}</title>
-  <meta name="description" content="{{ site.description }}">
-  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  {% include head.html %}
 </head>
 <body>
-  <header class="page-header" style="background-image: url('{{ '/assets/img/playergames-banner.png' | relative_url }}');">
-    <div class="page-header-overlay">
-      <h1 class="project-name">{{ site.title }}</h1>
-      <p class="project-tagline">{{ site.description }}</p>
-      <p class="lang-switch">
-        {% if page.lang == 'pt' %}
-          <a href="{{ '/' | relative_url }}">English</a> | <strong>Português</strong>
-        {% else %}
-          <strong>English</strong> | <a href="{{ '/pt.html' | relative_url }}">Português</a>
-        {% endif %}
-      </p>
-      <a class="btn" href="https://github.com/{{ site.repository }}">View on GitHub</a>
-      <a class="btn" href="https://github.com/{{ site.repository }}/archive/refs/heads/main.zip">Download .zip</a>
-    </div>
-  </header>
+  {% include header.html %}
 
   <div class="layout">
     <nav class="sidebar" aria-label="Table of contents">
@@ -64,10 +46,6 @@
     </main>
   </div>
 
-  <footer class="site-footer">
-    <p>Hosted on GitHub Pages. Source: <a href="https://github.com/{{ site.repository }}">{{ site.repository }}</a></p>
-  </footer>
-
-  <script src="{{ '/assets/js/scrollspy.js' | relative_url }}"></script>
+  {% include footer.html %}
 </body>
 </html>

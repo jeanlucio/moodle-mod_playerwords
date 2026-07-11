@@ -43,7 +43,7 @@ Source code: [github.com/jeanlucio/moodle-mod_playerwords](https://github.com/je
 {% include_relative en/grading.md %}
 
 <span id="testing"></span>
-{% include_relative en/testing.md %}
+{% include_relative en/testing-summary.md %}
 
 <span id="security"></span>
 {% include_relative en/security.md %}
