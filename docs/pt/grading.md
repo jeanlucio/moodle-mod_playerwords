@@ -5,6 +5,8 @@ parent: Português
 nav_order: 7
 ---
 
+# 🧮 Grading & Ranking
+
 O PlayerWords calcula uma **nota** e um total de **ranking** a partir das mesmas rodadas
 terminadas, mas os dois são configurados de forma totalmente independente — o professor pode
 manter a nota simples e ainda assim recompensar jogadas eficientes no ranking, ou o contrário.

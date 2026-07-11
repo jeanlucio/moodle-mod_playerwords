@@ -5,6 +5,8 @@ parent: Português
 nav_order: 8
 ---
 
+# 🧪 Automated Tests
+
 O PlayerWords inclui uma suíte PHPUnit cobrindo lógica de negócio, consultas ao repositório, web
 services e conformidade com a Privacy API. Todo push de CI executa a matriz completa (Moodle
 4.5 → 5.x, PostgreSQL e MariaDB).

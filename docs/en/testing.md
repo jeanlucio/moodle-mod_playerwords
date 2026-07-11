@@ -5,6 +5,8 @@ parent: English
 nav_order: 8
 ---
 
+# 🧪 Automated Tests
+
 PlayerWords ships with a PHPUnit test suite covering business logic, repository queries, web
 services, and Privacy API compliance. Every CI push runs against the full matrix (Moodle 4.5 →
 5.x, PostgreSQL & MariaDB).

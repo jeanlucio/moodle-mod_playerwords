@@ -5,6 +5,8 @@ parent: English
 nav_order: 7
 ---
 
+# 🧮 Grading & Ranking
+
 PlayerWords computes a **grade** and a **ranking** total from the same finished rounds, but the
 two are configured completely independently — a teacher can keep the grade simple while still
 rewarding efficient play in the ranking, or the other way around.

@@ -5,6 +5,8 @@ parent: Português
 nav_order: 1
 ---
 
+# ✨ Features
+
 * 🟩 **Jogo de adivinhação de palavras:** Feedback por letra com código de cores + símbolos (posição correta, posição errada, ausente).
 * 📖 **Integração com Glossário:** Importa conceitos de um ou todos os glossários do curso como pool de palavras, usando as definições como dicas.
 * 🤖 **Geração de palavras por IA (Opcional):** Gera candidatas a palavra e dica para um tópico livre via `local_aihub` (chave própria) ou fallback para o `core_ai` do Moodle. A resposta é tratada como entrada não confiável — só termos de um único token, puramente alfabéticos e dentro do comprimento configurado são salvos, e entram no pool pendentes de aprovação do professor.

@@ -5,6 +5,8 @@ parent: English
 nav_order: 2
 ---
 
+# 🎓 Educational Purpose
+
 PlayerWords is designed to:
 
 * Reinforce learning of concepts covered in the course or subject

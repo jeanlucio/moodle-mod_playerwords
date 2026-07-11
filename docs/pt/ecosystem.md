@@ -5,6 +5,8 @@ parent: Português
 nav_order: 3
 ---
 
+# 🕹️ PlayerGames Ecosystem
+
 O PlayerWords faz parte do ecossistema de gamificação **PlayerGames** para Moodle. Sua principal integração direta é com o bloco PlayerHUD:
 
 * **Bloco PlayerHUD (Opcional):** Configure custos em itens para iniciar uma rodada ou revelar a dica, e uma concessão de item por rodada vencida.

@@ -5,6 +5,8 @@ parent: English
 nav_order: 4
 ---
 
+# 📦 Requirements
+
 | Component | Version |
 |-----------|---------|
 | Moodle    | 4.5+    |

@@ -5,6 +5,8 @@ parent: English
 nav_order: 9
 ---
 
+# 🔐 Security & Compliance
+
 * Capability-based access control (`mod/playerwords:view`, `mod/playerwords:addinstance`)
 * `require_sesskey()` protection on all POST actions; AJAX calls are validated by Moodle's `core/ajax` dispatcher
 * Server-side enforcement of round limits and cooldown, always recomputed from current settings

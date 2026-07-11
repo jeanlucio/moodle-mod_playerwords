@@ -5,6 +5,8 @@ parent: English
 nav_order: 6
 ---
 
+# 📖 Usage
+
 1. Add a **PlayerWords** activity to your course.
 2. Configure:
    * Word length range and maximum attempts

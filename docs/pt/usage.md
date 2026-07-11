@@ -5,6 +5,8 @@ parent: Português
 nav_order: 6
 ---
 
+# 📖 Usage
+
 1. Adicione uma atividade **PlayerWords** ao seu curso.
 2. Configure:
    - Faixa de comprimento de palavras e máximo de tentativas

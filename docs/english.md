@@ -5,4 +5,6 @@ nav_order: 1
 has_children: true
 ---
 
+# English
+
 Full documentation for the **PlayerWords** Moodle activity, in English.

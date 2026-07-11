@@ -5,6 +5,8 @@ parent: Português
 nav_order: 9
 ---
 
+# 🔐 Security & Compliance
+
 * Controle de acesso por capabilities (`mod/playerwords:view`, `mod/playerwords:addinstance`)
 * Proteção com `require_sesskey()` em todas as ações POST; chamadas AJAX são validadas pelo dispatcher `core/ajax` do Moodle
 * Validação no servidor dos limites de rodadas e tempo de recarga, sempre recalculados a partir da configuração atual

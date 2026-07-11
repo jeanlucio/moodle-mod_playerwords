@@ -5,6 +5,8 @@ parent: English
 nav_order: 1
 ---
 
+# ✨ Features
+
 * 🟩 **Word-Guessing Gameplay:** Colour-coded + symbol feedback per letter (correct position, wrong position, absent).
 * 📖 **Glossary Integration:** Import concepts from one or all course glossaries as the word pool, with definitions used as hints.
 * 🤖 **AI Word Generation (Optional):** Generate candidate words and hints for a given topic via `local_aihub` (BYOK) or Moodle's `core_ai` fallback. Generated words are treated as untrusted input — only single-token, purely alphabetic terms within the configured length bounds are saved, and they enter the pool pending teacher approval.
