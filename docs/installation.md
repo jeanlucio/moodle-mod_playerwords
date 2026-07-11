@@ -1,6 +1,6 @@
 # 🛠️ Installation
 
-[English](#installation-english) | [Português](#installation-português)
+[English](#installation--english) | [Português](#installation--português)
 
 ---
 
@@ -14,7 +14,7 @@
 4. Visit **Site administration > Notifications** to complete installation.
 5. Add a **PlayerWords** activity to any course.
 
-[⬆️ Back to top](#installation-english)
+[⬆️ Back to top](#installation--english)
 
 ---
 
@@ -28,4 +28,4 @@
 4. Acesse **Administração do site > Notificações** para concluir a instalação.
 5. Adicione uma atividade **PlayerWords** a qualquer curso.
 
-[⬆️ Back to top](#installation-português)
+[⬆️ Back to top](#installation--português)

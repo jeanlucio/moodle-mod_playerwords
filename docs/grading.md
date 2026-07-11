@@ -1,6 +1,6 @@
 # 🧮 Grading & Ranking
 
-[English](#grading-ranking-english) | [Português](#grading-ranking-português)
+[English](#grading--ranking--english) | [Português](#grading--ranking--português)
 
 ---
 
@@ -86,7 +86,7 @@ student instead: one table, 30 rows per page, sortable by clicking any column he
 filterable to a single student. Like the ranking, it never includes a manager's own attempts,
 even if they played the activity themselves.
 
-[⬆️ Back to top](#grading-ranking-english)
+[⬆️ Back to top](#grading--ranking--english)
 
 ---
 
@@ -175,4 +175,4 @@ ordenável clicando em qualquer cabeçalho de coluna, e filtrável para um únic
 como no ranking, nunca inclui as próprias tentativas de quem gerencia, mesmo que essa pessoa
 tenha jogado a atividade.
 
-[⬆️ Back to top](#grading-ranking-português)
+[⬆️ Back to top](#grading--ranking--português)

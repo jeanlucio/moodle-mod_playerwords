@@ -1,6 +1,6 @@
 # 📄 License
 
-[English](#license-english) | [Português](#license-português)
+[English](#license--english) | [Português](#license--português)
 
 ---
 
@@ -10,7 +10,7 @@ This project is licensed under the **GNU General Public License v3 (GPLv3)**.
 
 **Copyright:** 2026 Jean Lúcio
 
-[⬆️ Back to top](#license-english)
+[⬆️ Back to top](#license--english)
 
 ---
 
@@ -20,4 +20,4 @@ Este projeto é licenciado sob a **GNU General Public License v3 (GPLv3)**.
 
 **Copyright:** 2026 Jean Lúcio
 
-[⬆️ Back to top](#license-português)
+[⬆️ Back to top](#license--português)

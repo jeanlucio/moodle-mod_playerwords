@@ -1,6 +1,6 @@
 # 📖 Usage
 
-[English](#usage-english) | [Português](#usage-português)
+[English](#usage--english) | [Português](#usage--português)
 
 ---
 
@@ -18,7 +18,7 @@
 4. Students play directly from the activity page — guessing, revealing hints, and forfeiting rounds, with no page reload. The page's own toolbar gives access to the rules (help), attempt history, and the ranking.
 5. Grades and ranking update automatically after each round.
 
-[⬆️ Back to top](#usage-english)
+[⬆️ Back to top](#usage--english)
 
 ---
 
@@ -36,4 +36,4 @@
 4. Os estudantes jogam diretamente na página da atividade — chutando, revelando dicas e desistindo de rodadas, sem recarregar a página. O toolbar da própria página dá acesso às regras (ajuda), ao registro de tentativas e ao ranking.
 5. Notas e ranking são atualizados automaticamente após cada rodada.
 
-[⬆️ Back to top](#usage-português)
+[⬆️ Back to top](#usage--português)

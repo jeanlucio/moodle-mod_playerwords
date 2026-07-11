@@ -1,6 +1,6 @@
 # 📦 Requirements
 
-[English](#requirements-english) | [Português](#requirements-português)
+[English](#requirements--english) | [Português](#requirements--português)
 
 ---
 
@@ -11,7 +11,7 @@
 | Moodle    | 4.5+    |
 | PHP       | 8.1+    |
 
-[⬆️ Back to top](#requirements-english)
+[⬆️ Back to top](#requirements--english)
 
 ---
 
@@ -22,4 +22,4 @@
 | Moodle     | 4.5+   |
 | PHP        | 8.1+   |
 
-[⬆️ Back to top](#requirements-português)
+[⬆️ Back to top](#requirements--português)

@@ -1,6 +1,6 @@
 # 🔐 Security & Compliance
 
-[English](#security-compliance-english) | [Português](#security-compliance-português)
+[English](#security--compliance--english) | [Português](#security--compliance--português)
 
 ---
 
@@ -16,7 +16,7 @@
 * Moodle External API compliant
 * Privacy API fully implemented (GDPR/LGPD)
 
-[⬆️ Back to top](#security-compliance-english)
+[⬆️ Back to top](#security--compliance--english)
 
 ---
 
@@ -32,4 +32,4 @@
 * Compatível com a API externa do Moodle
 * Privacy API completamente implementada (LGPD/GDPR)
 
-[⬆️ Back to top](#security-compliance-português)
+[⬆️ Back to top](#security--compliance--português)

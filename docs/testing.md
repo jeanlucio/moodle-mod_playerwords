@@ -1,6 +1,6 @@
 # 🧪 Automated Tests
 
-[English](#automated-tests-english) | [Português](#automated-tests-português)
+[English](#automated-tests--english) | [Português](#automated-tests--português)
 
 ---
 
@@ -100,7 +100,7 @@ the capability guard, and (where applicable) the PlayerHUD insufficient-item bra
 capability-guard test necessarily stops at `require_capability()` and never reaches the lines
 after it, so it cannot raise the percentage of a class that is mostly "lines after the guard".
 
-[⬆️ Back to top](#automated-tests-english)
+[⬆️ Back to top](#automated-tests--english)
 
 ---
 
@@ -202,4 +202,4 @@ PlayerHUD — mas um teste de guarda de capability necessariamente para em `requ
 nunca alcança as linhas depois dela, então ele não consegue elevar o percentual de uma classe que
 é majoritariamente "linhas depois da guarda".
 
-[⬆️ Back to top](#automated-tests-português)
+[⬆️ Back to top](#automated-tests--português)

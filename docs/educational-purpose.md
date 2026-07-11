@@ -1,6 +1,6 @@
 # 🎓 Educational Purpose
 
-[English](#educational-purpose-english) | [Português](#educational-purpose-português)
+[English](#educational-purpose--english) | [Português](#educational-purpose--português)
 
 ---
 
@@ -23,7 +23,7 @@ Suitable for:
 * Formative assessment and self-study reinforcement
 * Engagement reinforcement strategies
 
-[⬆️ Back to top](#educational-purpose-english)
+[⬆️ Back to top](#educational-purpose--english)
 
 ---
 
@@ -46,4 +46,4 @@ Indicado para:
 * Avaliação formativa e reforço de autoestudo
 * Estratégias de reforço de engajamento
 
-[⬆️ Back to top](#educational-purpose-português)
+[⬆️ Back to top](#educational-purpose--português)
