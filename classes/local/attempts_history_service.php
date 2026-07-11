@@ -29,6 +29,20 @@ namespace mod_playerwords\local;
  * grade, for the "my attempts" page.
  */
 class attempts_history_service {
+    /** @var int Default rows per page for the all-students attempt report. */
+    const REPORT_PERPAGE = 30;
+
+    /** @var array<string,string> Allow-listed sortable columns for the all-students report. */
+    private const SORTABLE_COLUMNS = [
+        'student'       => 'studentname',
+        'word'          => 'pw.word',
+        'attempts'      => 'pa.attempts_used',
+        'time'          => 'pa.time_used',
+        'score'         => 'pa.score',
+        'rankingpoints' => 'pa.rankingpoints',
+        'date'          => 'pa.timefinished',
+    ];
+
     /**
      * Returns the finished-round history and current grade for one student.
      *
@@ -92,7 +106,7 @@ class attempts_history_service {
         $minutes = intdiv((int)$attempt->time_used, 60);
         $seconds = (int)$attempt->time_used % 60;
 
-        return [
+        $row = [
             'word'          => $attempt->concept ?: ($attempt->word ?: ''),
             'attemptsused'  => (int)$attempt->attempts_used,
             'timeused'      => sprintf('%d:%02d', $minutes, $seconds),
@@ -101,5 +115,133 @@ class attempts_history_service {
             'rankingpoints' => $showranking ? format_float((float)$attempt->rankingpoints, 2) : '',
             'datefinished'  => userdate((int)$attempt->timefinished, get_string('strftimedatetime', 'langconfig')),
         ];
+
+        if (isset($attempt->studentname)) {
+            $row['student'] = $attempt->studentname;
+        }
+
+        return $row;
+    }
+
+    /**
+     * Returns the manager exclusion SQL fragment and params, or empty values when nobody
+     * with the manage capability holds it in this context.
+     *
+     * Excludes anyone who can manage the activity (editingteacher, manager) from the report,
+     * the same rule ranking_service::get_ranking() applies — a teacher previewing the activity
+     * should not be tracked as a player in a student-facing report either.
+     *
+     * @param \context $context Module context.
+     * @return array{0: string, 1: array} SQL fragment (empty string if none) and its params.
+     */
+    private static function manager_exclusion(\context $context): array {
+        $managers = get_users_by_capability($context, 'mod/playerwords:addinstance', 'u.id');
+        if (empty($managers)) {
+            return ['', []];
+        }
+
+        global $DB;
+        [$notinsql, $notinparams] = $DB->get_in_or_equal(array_keys($managers), SQL_PARAMS_NAMED, 'mgr', false);
+        return ["AND pa.userid $notinsql", $notinparams];
+    }
+
+    /**
+     * Returns one page of finished-round attempts across every student, for the
+     * teacher/manager-facing report.
+     *
+     * @param \stdClass $instance Activity instance record.
+     * @param \context $context Module context.
+     * @param int $page Zero-based page number.
+     * @param int $perpage Rows per page.
+     * @param string $sort Sort key, must be one of the SORTABLE_COLUMNS keys.
+     * @param string $dir Sort direction, 'ASC' or 'DESC'.
+     * @param int $filteruserid Restrict to one student id, 0 for every student.
+     * @return array {rows, isempty, total, showranking}
+     */
+    public static function get_all_history(
+        \stdClass $instance,
+        \context $context,
+        int $page,
+        int $perpage,
+        string $sort,
+        string $dir,
+        int $filteruserid
+    ): array {
+        global $DB;
+
+        $sortcolumn = self::SORTABLE_COLUMNS[$sort] ?? self::SORTABLE_COLUMNS['date'];
+        $dir = (strtoupper($dir) === 'ASC') ? 'ASC' : 'DESC';
+
+        $params = ['instanceid' => (int)$instance->id];
+        $userwhere = '';
+        if ($filteruserid > 0) {
+            $userwhere = 'AND pa.userid = :filteruserid';
+            $params['filteruserid'] = $filteruserid;
+        }
+
+        [$managerwhere, $managerparams] = self::manager_exclusion($context);
+        $params = array_merge($params, $managerparams);
+
+        $fullname = $DB->sql_fullname('u.firstname', 'u.lastname');
+        $wheresql = "pa.playerwordsid = :instanceid
+                       AND pa.timefinished > 0
+                       $userwhere
+                       $managerwhere";
+
+        $total = $DB->count_records_sql(
+            "SELECT COUNT(*)
+               FROM {playerwords_attempts} pa
+               JOIN {user} u ON u.id = pa.userid
+              WHERE $wheresql",
+            $params
+        );
+
+        $sql = "SELECT pa.*, pw.word, pw.concept, $fullname AS studentname
+                  FROM {playerwords_attempts} pa
+                  JOIN {user} u ON u.id = pa.userid
+             LEFT JOIN {playerwords_words} pw ON pw.id = pa.wordid
+                 WHERE $wheresql
+              ORDER BY $sortcolumn $dir, pa.id $dir";
+
+        $records = $DB->get_records_sql($sql, $params, $page * $perpage, $perpage);
+
+        $showranking = !empty($instance->show_ranking);
+        $rows = array_map(
+            fn(\stdClass $attempt): array => self::build_row($attempt, $showranking),
+            array_values($records)
+        );
+
+        return [
+            'rows'        => $rows,
+            'isempty'     => ($total === 0),
+            'total'       => (int)$total,
+            'showranking' => $showranking,
+        ];
+    }
+
+    /**
+     * Returns students with at least one finished attempt, for the report's filter dropdown.
+     * Excludes the same manager set get_all_history() excludes from the report itself.
+     *
+     * @param \stdClass $instance Activity instance record.
+     * @param \context $context Module context.
+     * @return \stdClass[] Objects with id and fullname, ordered by fullname.
+     */
+    public static function get_players_for_filter(\stdClass $instance, \context $context): array {
+        global $DB;
+
+        [$managerwhere, $managerparams] = self::manager_exclusion($context);
+        $params = array_merge(['instanceid' => (int)$instance->id], $managerparams);
+
+        $fullname = $DB->sql_fullname('u.firstname', 'u.lastname');
+        $sql = "SELECT DISTINCT u.id, $fullname AS fullname
+                  FROM {playerwords_attempts} pa
+                  JOIN {user} u ON u.id = pa.userid
+                 WHERE pa.playerwordsid = :instanceid
+                       AND pa.timefinished > 0
+                       $managerwhere
+              ORDER BY fullname ASC";
+
+        return array_values($DB->get_records_sql($sql, $params));
     }
 }

@@ -265,4 +265,137 @@ final class attempts_history_service_test extends \advanced_testcase {
         $this->assertFalse($history['showranking']);
         $this->assertSame('', $history['rows'][0]['rankingpoints']);
     }
+
+    /**
+     * get_all_history() returns every student's finished attempts, ordered most-recent-first
+     * by default, with the student's full name attached to each row.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
+     * @return void
+     */
+    public function test_get_all_history_includes_every_student_most_recent_first(): void {
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = get_coursemodule_from_instance('playerwords', $instance->id, 0, false, MUST_EXIST);
+        $context = \context_module::instance($cm->id);
+        $other = $this->getDataGenerator()->create_user();
+
+        $this->add_attempt($instance, $this->user, 30, 0, true, -20);
+        $this->add_attempt($instance, $other, 70, 0, true, -10);
+
+        $history = attempts_history_service::get_all_history($instance, $context, 0, 30, 'date', 'DESC', 0);
+
+        $this->assertSame(2, $history['total']);
+        $this->assertSame(fullname($other), $history['rows'][0]['student']);
+        $this->assertSame(fullname($this->user), $history['rows'][1]['student']);
+    }
+
+    /**
+     * A user who can manage the activity (editingteacher) never appears in the report,
+     * even with attempts of their own — same rule as ranking_service::get_ranking().
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
+     * @covers \mod_playerwords\local\attempts_history_service::get_players_for_filter
+     * @return void
+     */
+    public function test_get_all_history_excludes_users_who_can_manage_the_activity(): void {
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = get_coursemodule_from_instance('playerwords', $instance->id, 0, false, MUST_EXIST);
+        $context = \context_module::instance($cm->id);
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $this->course->id, 'editingteacher');
+
+        $this->add_attempt($instance, $this->user, 50);
+        $this->add_attempt($instance, $teacher, 999);
+
+        $history = attempts_history_service::get_all_history($instance, $context, 0, 30, 'date', 'DESC', 0);
+        $players = attempts_history_service::get_players_for_filter($instance, $context);
+
+        $this->assertSame(1, $history['total']);
+        $this->assertSame(fullname($this->user), $history['rows'][0]['student']);
+        $this->assertCount(1, $players);
+        $this->assertSame(fullname($this->user), $players[0]->fullname);
+    }
+
+    /**
+     * The studentid filter restricts the report to a single student's own rows.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
+     * @return void
+     */
+    public function test_get_all_history_filters_by_student(): void {
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = get_coursemodule_from_instance('playerwords', $instance->id, 0, false, MUST_EXIST);
+        $context = \context_module::instance($cm->id);
+        $other = $this->getDataGenerator()->create_user();
+
+        $this->add_attempt($instance, $this->user, 30);
+        $this->add_attempt($instance, $other, 70);
+
+        $history = attempts_history_service::get_all_history(
+            $instance,
+            $context,
+            0,
+            30,
+            'date',
+            'DESC',
+            $this->user->id
+        );
+
+        $this->assertSame(1, $history['total']);
+        $this->assertSame(fullname($this->user), $history['rows'][0]['student']);
+    }
+
+    /**
+     * Sorting by score ascending puts the lowest-scoring row first, and an unknown sort
+     * key falls back to the default (date) instead of causing a SQL error.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
+     * @return void
+     */
+    public function test_get_all_history_sorts_by_allowed_column(): void {
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = get_coursemodule_from_instance('playerwords', $instance->id, 0, false, MUST_EXIST);
+        $context = \context_module::instance($cm->id);
+
+        $this->add_attempt($instance, $this->user, 70, 0, true, -20);
+        $this->add_attempt($instance, $this->user, 30, 0, true, -10);
+
+        $ascending = attempts_history_service::get_all_history($instance, $context, 0, 30, 'score', 'ASC', 0);
+        $this->assertSame('30.00', $ascending['rows'][0]['score']);
+
+        $unknownkey = attempts_history_service::get_all_history(
+            $instance,
+            $context,
+            0,
+            30,
+            'not_a_real_column; DROP TABLE',
+            'DESC',
+            0
+        );
+        $this->assertSame(2, $unknownkey['total']);
+    }
+
+    /**
+     * Pagination returns distinct slices of the full result set.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
+     * @return void
+     */
+    public function test_get_all_history_paginates(): void {
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = get_coursemodule_from_instance('playerwords', $instance->id, 0, false, MUST_EXIST);
+        $context = \context_module::instance($cm->id);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->add_attempt($instance, $this->user, (float)$i, 0, true, -$i);
+        }
+
+        $firstpage = attempts_history_service::get_all_history($instance, $context, 0, 2, 'date', 'DESC', 0);
+        $secondpage = attempts_history_service::get_all_history($instance, $context, 1, 2, 'date', 'DESC', 0);
+
+        $this->assertSame(5, $firstpage['total']);
+        $this->assertCount(2, $firstpage['rows']);
+        $this->assertCount(2, $secondpage['rows']);
+        $this->assertNotSame($firstpage['rows'][0]['score'], $secondpage['rows'][0]['score']);
+    }
 }
