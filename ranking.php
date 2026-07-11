@@ -15,7 +15,8 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Full ranking page for a PlayerWords activity.
+ * Top-5 ranking page for a PlayerWords activity — deliberately capped, not paginated, to
+ * avoid publicly ranking every student (see ranking_service::TOP_N).
  *
  * @package    mod_playerwords
  * @copyright  2026 Jean Lúcio
