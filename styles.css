@@ -31,6 +31,26 @@
     padding: 1rem 1.25rem;
 }
 
+/*
+ * Bootstrap 4 (Moodle 4.5) does not define ".visually-hidden" at all, and Bootstrap 5's own
+ * ".sr-only" bridge class is flagged deprecated by theme_boost (MDL-84465, removal planned
+ * for Moodle 6.0) — using it trips the "Deprecated style in use" warning in both Behat CI
+ * (--scss-deprecations) and themedesignermode. Defining the class ourselves, scoped to this
+ * plugin, hides text identically on both Bootstrap versions without depending on either
+ * one's utilities. Same fix already shipped in block_playerhud's styles.css.
+ */
+.path-mod-playerwords .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .path-mod-playerwords .pw-header {
     display: flex;
     flex-wrap: wrap;
