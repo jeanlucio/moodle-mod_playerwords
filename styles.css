@@ -353,6 +353,19 @@
     animation: pw-shake 0.45s ease-in-out;
 }
 
+.path-mod-playerwords .pw-ranking-you {
+    font-weight: 700;
+    background-color: var(--gray-100, #f8f9fa);
+}
+
+.path-mod-playerwords .pw-ranking-you td:first-child {
+    box-shadow: inset 3px 0 0 var(--primary, #0f6cbf);
+}
+
+.path-mod-playerwords .pw-ranking-sep {
+    padding-block: 0.125rem;
+}
+
 @media (max-width: 576px) {
     .path-mod-playerwords .modal-dialog {
         margin-inline: 0.75rem;
