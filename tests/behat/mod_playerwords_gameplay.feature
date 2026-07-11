@@ -77,7 +77,7 @@ Feature: PlayerWords core gameplay loop
     When I wait until "#playerwords-round-result" "css_element" exists
     Then I should see "Time is up!"
 
-  Scenario: Reaching the round limit shows a visible rejection notification on next visit
+  Scenario: Reaching the round limit hides the new-round action instead of offering a dead end
     Given the following "activities" exist:
       | activity    | course | name        | min_length | max_length | max_attempts | max_rounds |
       | playerwords | C1     | Word Limit  | 5          | 5          | 6             | 1          |
@@ -89,9 +89,9 @@ Feature: PlayerWords core gameplay loop
     And I click on "Start round" "button"
     And I set the field "Your guess" to "codar"
     And I click on "[data-key=\"ENTER\"]" "css_element"
-    And I should see "Genius!"
-    When I reload the page
-    Then I should see "You have reached the maximum number of rounds (1) for this activity."
+    Then I should see "Genius!"
+    And I should see "Rounds played: 1 / 1."
+    And "#playerwords-new-round-button" "css_element" should not exist
 
   Scenario: A configured cooldown shows a countdown instead of the new-round button
     Given the following "activities" exist:
