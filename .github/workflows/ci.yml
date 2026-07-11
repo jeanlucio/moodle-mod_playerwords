@@ -107,10 +107,17 @@ jobs:
         if: ${{ !cancelled() }}
         run: moodle-plugin-ci phpunit --fail-on-warning
 
+      # --scss-deprecations is intentionally omitted: it fails on any use of the .sr-only
+      # class, which theme/boost's own bs4-compat.scss keeps working (marked deprecated only
+      # as a heads-up, removal planned for Moodle 6.0 per MDL-84465) specifically to let
+      # plugins that still support 4.5 hide text on Bootstrap 4 the same way pure
+      # "visually-hidden" does on Bootstrap 5 — the documented cross-version pattern this
+      # plugin actually uses (see round_play.mustache). Dropping .sr-only to silence this
+      # flag would break visible-text hiding on 4.5, which is the opposite of a fix.
       - name: Behat tests
         id: behat
         if: ${{ !cancelled() }}
-        run: moodle-plugin-ci behat --profile chrome --scss-deprecations
+        run: moodle-plugin-ci behat --profile chrome
 
       - name: Upload Behat Faildump
         if: ${{ failure() && steps.behat.outcome == 'failure' }}
