@@ -66,4 +66,70 @@ class mod_playerwords_generator extends testing_module_generator {
 
         return parent::create_instance($record, $options);
     }
+
+    /**
+     * Inserts an already-approved manual word directly into an instance's pool.
+     *
+     * Bypasses managewords.php and the approval flow entirely, so Behat scenarios can seed
+     * a deterministic pool (e.g. a single word within the instance's length bounds) instead
+     * of depending on the pseudo-random round selection.
+     *
+     * @param int $playerwordsid Instance id (playerwords.id, not the course module id).
+     * @param string $word Game word; caller is responsible for keeping it within the
+     *     instance's min_length/max_length.
+     * @param string $hint Optional hint text.
+     * @return \stdClass Created playerwords_words record.
+     */
+    public function create_word(int $playerwordsid, string $word, string $hint = ''): \stdClass {
+        global $DB;
+
+        $record = (object) [
+            'playerwordsid' => $playerwordsid,
+            'word'          => $word,
+            'hint'          => $hint,
+            'source'        => 'manual',
+            'glossaryid'    => 0,
+            'approved'      => 1,
+            'timecreated'   => time(),
+            'timemodified'  => time(),
+            'addedby'       => 0,
+        ];
+        $record->id = $DB->insert_record('playerwords_words', $record);
+
+        return $record;
+    }
+
+    /**
+     * Inserts a finished attempt row directly, without playing a real round.
+     *
+     * Used to seed volume for report/ranking Behat scenarios (pagination, sorting) where
+     * driving dozens of real rounds through the UI would be slow and flaky.
+     *
+     * @param int $playerwordsid Instance id.
+     * @param int $userid Student user id.
+     * @param int $wordid Word id the attempt is tied to.
+     * @param array $data Optional field overrides: attempts_used, time_used, completed,
+     *     score, rankingpoints, timecreated, timefinished.
+     * @return \stdClass Created playerwords_attempts record.
+     */
+    public function create_attempt(int $playerwordsid, int $userid, int $wordid, array $data = []): \stdClass {
+        global $DB;
+
+        $now = time();
+        $record = (object) array_merge([
+            'playerwordsid' => $playerwordsid,
+            'userid'        => $userid,
+            'wordid'        => $wordid,
+            'attempts_used' => 1,
+            'time_used'     => 30,
+            'completed'     => 1,
+            'score'         => 100.0,
+            'rankingpoints' => 100.0,
+            'timecreated'   => $now,
+            'timefinished'  => $now,
+        ], $data);
+        $record->id = $DB->insert_record('playerwords_attempts', $record);
+
+        return $record;
+    }
 }
