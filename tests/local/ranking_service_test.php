@@ -215,9 +215,12 @@ final class ranking_service_test extends \advanced_testcase {
         $groupa = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
         $groupb = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
 
-        $usera = $this->getDataGenerator()->create_user();
-        $userb = $this->getDataGenerator()->create_user();
-        $userc = $this->getDataGenerator()->create_user();
+        // Explicit, guaranteed-distinct names — the generator's default random pool can
+        // otherwise draw the same fullname for two of these three users, making the
+        // fullname-based assertions below flaky (MDL random name generator collision).
+        $usera = $this->getDataGenerator()->create_user(['firstname' => 'Alpha', 'lastname' => 'Groupmembera']);
+        $userb = $this->getDataGenerator()->create_user(['firstname' => 'Beta', 'lastname' => 'Groupmemberb']);
+        $userc = $this->getDataGenerator()->create_user(['firstname' => 'Gamma', 'lastname' => 'Outsider']);
 
         // Adding a group member silently no-ops for a user who isn't enrolled in the
         // group's course (is_enrolled() guard inside groups_add_member()) — enrol first
