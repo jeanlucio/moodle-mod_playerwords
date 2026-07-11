@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ page.lang | default: 'en' }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,6 +12,13 @@
     <div class="page-header-overlay">
       <h1 class="project-name">{{ site.title }}</h1>
       <p class="project-tagline">{{ site.description }}</p>
+      <p class="lang-switch">
+        {% if page.lang == 'pt' %}
+          <a href="{{ '/' | relative_url }}">English</a> | <strong>Português</strong>
+        {% else %}
+          <strong>English</strong> | <a href="{{ '/pt.html' | relative_url }}">Português</a>
+        {% endif %}
+      </p>
       <a class="btn" href="https://github.com/{{ site.repository }}">View on GitHub</a>
       <a class="btn" href="https://github.com/{{ site.repository }}/archive/refs/heads/main.zip">Download .zip</a>
     </div>
@@ -19,36 +26,37 @@
 
   <div class="layout">
     <nav class="sidebar" aria-label="Table of contents">
-      <div class="sidebar-group">
-        <p class="sidebar-heading">English</p>
-        <ul>
-          <li><a class="sidebar-link" href="#en-features">✨ Features</a></li>
-          <li><a class="sidebar-link" href="#en-educational-purpose">🎓 Educational Purpose</a></li>
-          <li><a class="sidebar-link" href="#en-ecosystem">🕹️ PlayerGames Ecosystem</a></li>
-          <li><a class="sidebar-link" href="#en-requirements">📦 Requirements</a></li>
-          <li><a class="sidebar-link" href="#en-installation">🛠️ Installation</a></li>
-          <li><a class="sidebar-link" href="#en-usage">📖 Usage</a></li>
-          <li><a class="sidebar-link" href="#en-grading">🧮 Grading &amp; Ranking</a></li>
-          <li><a class="sidebar-link" href="#en-testing">🧪 Automated Tests</a></li>
-          <li><a class="sidebar-link" href="#en-security">🔐 Security &amp; Compliance</a></li>
-          <li><a class="sidebar-link" href="#en-license">📄 License</a></li>
-        </ul>
-      </div>
-      <div class="sidebar-group">
-        <p class="sidebar-heading">Português</p>
-        <ul>
-          <li><a class="sidebar-link" href="#pt-features">✨ Funcionalidades</a></li>
-          <li><a class="sidebar-link" href="#pt-educational-purpose">🎓 Finalidade Educacional</a></li>
-          <li><a class="sidebar-link" href="#pt-ecosystem">🕹️ Ecossistema PlayerGames</a></li>
-          <li><a class="sidebar-link" href="#pt-requirements">📦 Requisitos</a></li>
-          <li><a class="sidebar-link" href="#pt-installation">🛠️ Instalação</a></li>
-          <li><a class="sidebar-link" href="#pt-usage">📖 Como Usar</a></li>
-          <li><a class="sidebar-link" href="#pt-grading">🧮 Nota e Ranking</a></li>
-          <li><a class="sidebar-link" href="#pt-testing">🧪 Testes Automatizados</a></li>
-          <li><a class="sidebar-link" href="#pt-security">🔐 Segurança e Conformidade</a></li>
-          <li><a class="sidebar-link" href="#pt-license">📄 Licença</a></li>
-        </ul>
-      </div>
+      {% if page.lang == 'pt' %}
+        <div class="sidebar-group">
+          <ul>
+            <li><a class="sidebar-link" href="#features">✨ Funcionalidades</a></li>
+            <li><a class="sidebar-link" href="#educational-purpose">🎓 Finalidade Educacional</a></li>
+            <li><a class="sidebar-link" href="#ecosystem">🕹️ Ecossistema PlayerGames</a></li>
+            <li><a class="sidebar-link" href="#requirements">📦 Requisitos</a></li>
+            <li><a class="sidebar-link" href="#installation">🛠️ Instalação</a></li>
+            <li><a class="sidebar-link" href="#usage">📖 Como Usar</a></li>
+            <li><a class="sidebar-link" href="#grading">🧮 Nota e Ranking</a></li>
+            <li><a class="sidebar-link" href="#testing">🧪 Testes Automatizados</a></li>
+            <li><a class="sidebar-link" href="#security">🔐 Segurança e Conformidade</a></li>
+            <li><a class="sidebar-link" href="#license">📄 Licença</a></li>
+          </ul>
+        </div>
+      {% else %}
+        <div class="sidebar-group">
+          <ul>
+            <li><a class="sidebar-link" href="#features">✨ Features</a></li>
+            <li><a class="sidebar-link" href="#educational-purpose">🎓 Educational Purpose</a></li>
+            <li><a class="sidebar-link" href="#ecosystem">🕹️ PlayerGames Ecosystem</a></li>
+            <li><a class="sidebar-link" href="#requirements">📦 Requirements</a></li>
+            <li><a class="sidebar-link" href="#installation">🛠️ Installation</a></li>
+            <li><a class="sidebar-link" href="#usage">📖 Usage</a></li>
+            <li><a class="sidebar-link" href="#grading">🧮 Grading &amp; Ranking</a></li>
+            <li><a class="sidebar-link" href="#testing">🧪 Automated Tests</a></li>
+            <li><a class="sidebar-link" href="#security">🔐 Security &amp; Compliance</a></li>
+            <li><a class="sidebar-link" href="#license">📄 License</a></li>
+          </ul>
+        </div>
+      {% endif %}
     </nav>
 
     <main class="content">
