@@ -1,2 +1,6 @@
-cli/seed_pt_br.php export-ignore
+# cli/ currently holds only dev-only seed scripts (no production CLI script yet), so the
+# whole directory is excluded here to avoid shipping an empty cli/ folder in the zip. If a
+# real production CLI script is ever added here, narrow this back down to a per-file/glob
+# pattern (e.g. cli/seed*.php export-ignore) so that script ships normally.
+cli/ export-ignore
 docs/ export-ignore
