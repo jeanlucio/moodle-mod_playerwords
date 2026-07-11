@@ -1,10 +1,3 @@
----
-layout: default
-title: 🎓 Educational Purpose
-parent: English
-nav_order: 2
----
-
 # 🎓 Educational Purpose
 
 PlayerWords is designed to:

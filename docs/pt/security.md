@@ -1,10 +1,3 @@
----
-layout: default
-title: 🔐 Security & Compliance
-parent: Português
-nav_order: 9
----
-
 # 🔐 Security & Compliance
 
 * Controle de acesso por capabilities (`mod/playerwords:view`, `mod/playerwords:addinstance`)

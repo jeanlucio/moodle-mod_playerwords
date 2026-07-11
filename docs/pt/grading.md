@@ -1,10 +1,3 @@
----
-layout: default
-title: 🧮 Grading & Ranking
-parent: Português
-nav_order: 7
----
-
 # 🧮 Grading & Ranking
 
 O PlayerWords calcula uma **nota** e um total de **ranking** a partir das mesmas rodadas

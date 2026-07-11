@@ -1,10 +1,3 @@
----
-layout: default
-title: 🎓 Educational Purpose
-parent: Português
-nav_order: 2
----
-
 # 🎓 Educational Purpose
 
 O PlayerWords foi projetado para:

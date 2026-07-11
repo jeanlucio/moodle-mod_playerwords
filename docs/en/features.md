@@ -1,10 +1,3 @@
----
-layout: default
-title: ✨ Features
-parent: English
-nav_order: 1
----
-
 # ✨ Features
 
 * 🟩 **Word-Guessing Gameplay:** Colour-coded + symbol feedback per letter (correct position, wrong position, absent).

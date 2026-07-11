@@ -1,10 +1,3 @@
----
-layout: default
-title: 🧮 Grading & Ranking
-parent: English
-nav_order: 7
----
-
 # 🧮 Grading & Ranking
 
 PlayerWords computes a **grade** and a **ranking** total from the same finished rounds, but the

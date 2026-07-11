@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | default: site.title }}</title>
+  <meta name="description" content="{{ site.description }}">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+</head>
+<body>
+  <header class="page-header">
+    <h1 class="project-name">{{ site.title }}</h1>
+    <p class="project-tagline">{{ site.description }}</p>
+    <a class="btn" href="https://github.com/{{ site.repository }}">View on GitHub</a>
+    <a class="btn" href="https://github.com/{{ site.repository }}/archive/refs/heads/main.zip">Download .zip</a>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar" aria-label="Table of contents">
+      <div class="sidebar-group">
+        <p class="sidebar-heading">English</p>
+        <ul>
+          <li><a class="sidebar-link" href="#en-features">✨ Features</a></li>
+          <li><a class="sidebar-link" href="#en-educational-purpose">🎓 Educational Purpose</a></li>
+          <li><a class="sidebar-link" href="#en-ecosystem">🕹️ PlayerGames Ecosystem</a></li>
+          <li><a class="sidebar-link" href="#en-requirements">📦 Requirements</a></li>
+          <li><a class="sidebar-link" href="#en-installation">🛠️ Installation</a></li>
+          <li><a class="sidebar-link" href="#en-usage">📖 Usage</a></li>
+          <li><a class="sidebar-link" href="#en-grading">🧮 Grading &amp; Ranking</a></li>
+          <li><a class="sidebar-link" href="#en-testing">🧪 Automated Tests</a></li>
+          <li><a class="sidebar-link" href="#en-security">🔐 Security &amp; Compliance</a></li>
+          <li><a class="sidebar-link" href="#en-license">📄 License</a></li>
+        </ul>
+      </div>
+      <div class="sidebar-group">
+        <p class="sidebar-heading">Português</p>
+        <ul>
+          <li><a class="sidebar-link" href="#pt-features">✨ Features</a></li>
+          <li><a class="sidebar-link" href="#pt-educational-purpose">🎓 Educational Purpose</a></li>
+          <li><a class="sidebar-link" href="#pt-ecosystem">🕹️ PlayerGames Ecosystem</a></li>
+          <li><a class="sidebar-link" href="#pt-requirements">📦 Requirements</a></li>
+          <li><a class="sidebar-link" href="#pt-installation">🛠️ Installation</a></li>
+          <li><a class="sidebar-link" href="#pt-usage">📖 Usage</a></li>
+          <li><a class="sidebar-link" href="#pt-grading">🧮 Grading &amp; Ranking</a></li>
+          <li><a class="sidebar-link" href="#pt-testing">🧪 Automated Tests</a></li>
+          <li><a class="sidebar-link" href="#pt-security">🔐 Security &amp; Compliance</a></li>
+          <li><a class="sidebar-link" href="#pt-license">📄 License</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <main class="content">
+      {{ content }}
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <p>Hosted on GitHub Pages. Source: <a href="https://github.com/{{ site.repository }}">{{ site.repository }}</a></p>
+  </footer>
+
+  <script src="{{ '/assets/js/scrollspy.js' | relative_url }}"></script>
+</body>
+</html>

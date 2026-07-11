@@ -1,10 +1,3 @@
----
-layout: default
-title: 🛠️ Installation
-parent: Português
-nav_order: 5
----
-
 # 🛠️ Installation
 
 1. Baixe o arquivo `.zip` ou clone este repositório.

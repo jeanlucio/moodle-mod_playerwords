@@ -1,10 +1,3 @@
----
-layout: default
-title: ✨ Features
-parent: Português
-nav_order: 1
----
-
 # ✨ Features
 
 * 🟩 **Jogo de adivinhação de palavras:** Feedback por letra com código de cores + símbolos (posição correta, posição errada, ausente).

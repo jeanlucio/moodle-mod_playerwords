@@ -1,10 +1,3 @@
----
-layout: default
-title: 📖 Usage
-parent: English
-nav_order: 6
----
-
 # 📖 Usage
 
 1. Add a **PlayerWords** activity to your course.

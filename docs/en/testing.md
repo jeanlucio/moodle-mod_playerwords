@@ -1,10 +1,3 @@
----
-layout: default
-title: 🧪 Automated Tests
-parent: English
-nav_order: 8
----
-
 # 🧪 Automated Tests
 
 PlayerWords ships with a PHPUnit test suite covering business logic, repository queries, web

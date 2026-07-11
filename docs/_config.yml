@@ -1,6 +1,3 @@
-remote_theme: just-the-docs/just-the-docs
 title: PlayerWords
 description: Word-guessing vocabulary activity for Moodle — full documentation.
-search_enabled: true
-nav_sort: case_insensitive
-heading_anchors: true
+repository: jeanlucio/moodle-mod_playerwords

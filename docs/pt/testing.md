@@ -1,10 +1,3 @@
----
-layout: default
-title: 🧪 Automated Tests
-parent: Português
-nav_order: 8
----
-
 # 🧪 Automated Tests
 
 O PlayerWords inclui uma suíte PHPUnit cobrindo lógica de negócio, consultas ao repositório, web
