@@ -1,3 +1,9 @@
+---
+layout: default
+title: Home
+nav_exclude: true
+---
+
 [![Moodle Plugin CI](https://github.com/jeanlucio/moodle-mod_playerwords/actions/workflows/ci.yml/badge.svg)](https://github.com/jeanlucio/moodle-mod_playerwords/actions/workflows/ci.yml)
 ![Moodle](https://img.shields.io/badge/Moodle-4.5%2B-orange?style=flat-square&logo=moodle&logoColor=white)
 ![License](https://img.shields.io/badge/License-GPLv3-blue?style=flat-square)
@@ -13,44 +19,6 @@ O **PlayerWords** é uma atividade de adivinhação de palavras para o Moodle. O
 uma palavra oculta letra por letra dentro de um número configurável de tentativas, recebendo
 feedback visual em cores e símbolos a cada chute.
 
-Source code / código-fonte: https://github.com/jeanlucio/moodle-mod_playerwords
+Use the sidebar to browse the full documentation, in **English** or **Português**.
 
----
-
-{% include_relative features.md %}
-
----
-
-{% include_relative educational-purpose.md %}
-
----
-
-{% include_relative ecosystem.md %}
-
----
-
-{% include_relative requirements.md %}
-
----
-
-{% include_relative installation.md %}
-
----
-
-{% include_relative usage.md %}
-
----
-
-{% include_relative grading.md %}
-
----
-
-{% include_relative testing.md %}
-
----
-
-{% include_relative security.md %}
-
----
-
-{% include_relative license.md %}
+Source code / código-fonte: [github.com/jeanlucio/moodle-mod_playerwords](https://github.com/jeanlucio/moodle-mod_playerwords)

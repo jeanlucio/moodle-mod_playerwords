@@ -1,0 +1,35 @@
+---
+layout: default
+title: ✨ Features
+parent: English
+nav_order: 1
+---
+
+* 🟩 **Word-Guessing Gameplay:** Colour-coded + symbol feedback per letter (correct position, wrong position, absent).
+* 📖 **Glossary Integration:** Import concepts from one or all course glossaries as the word pool, with definitions used as hints.
+* 🤖 **AI Word Generation (Optional):** Generate candidate words and hints for a given topic via `local_aihub` (BYOK) or Moodle's `core_ai` fallback. Generated words are treated as untrusted input — only single-token, purely alphabetic terms within the configured length bounds are saved, and they enter the pool pending teacher approval.
+* ✍️ **Manual Word Pool:** Teachers can add, edit, approve, and delete words directly from the management page.
+* 🔀 **Word Modes:** Random word per round (default) or shared sequence mode, where every student receives the same words in the same order.
+* 🎲 **Word Rotation:** In random mode, the same word never repeats on the very next round for a student, unless it is the only word left in the pool.
+* 🚫 **Duplicate Prevention:** The same word text can only exist once per activity pool, regardless of which source added it — a manual entry blocks a colliding glossary import (and vice versa), so random selection is never skewed toward one accidentally-duplicated word.
+* 💡 **Hidden Hint System:** Hint is hidden by default; students must explicitly reveal it (optionally at an item cost via PlayerHUD).
+* 🏳️ **Give Up:** Students can forfeit the current round at any time — the correct word is revealed immediately.
+* ⏱️ **Configurable Cooldown:** Minimum wait between rounds (minutes, hours, or days), always recomputed from the activity's current setting — a teacher's change applies immediately, even to a cooldown already in progress.
+* 🔢 **Round Limit:** Teachers can cap the total number of rounds per student (1–10 or unlimited). Students see a rounds-played counter (e.g. "3 / 10" or "3 / ∞") both in the lobby and after each round.
+* 🛡️ **Round-Limit Integrity:** A round abandoned mid-play (closed tab, lost session) still counts against the round limit — reserved the moment it starts, not only once it finishes, so it can never grant a free re-roll.
+* 🔡 **Accent-Insensitive Matching:** Diacritics are always stripped before comparing guess and target.
+* 📊 **Grading Methods:** Highest grade, average grade, first attempt, last attempt, or average over all required rounds.
+* ⚖️ **Configurable Scoring Mode:** Choose Binary (all-or-nothing) or Linear (proportional to attempts spared) independently for the grade and for the ranking — see [Grading & Ranking](grading.html). Locked once the activity has recorded a real grade, so every round is guaranteed to be scored under the same rules.
+* 🧮 **Grading Transparency:** Students see the active grading method before playing and their live computed grade after each round, the same way mod_quiz communicates its own grading method.
+* 📋 **Gradebook Integration:** Grades are written automatically on every round completion.
+* ✅ **Custom Completion Rule:** Minimum number of attempts completed, evaluated and applied immediately after each round.
+* 🔄 **Course Reset Support:** "Reset course" clears student attempts and resets grades for the activity, scoped to the target course only.
+* 🏆 **Top 5 Ranking:** Leaderboard scoped to the activity, deliberately capped to the top 5 — never a public ranking of the whole class — with an outsider row so a lower-ranked student still sees their own real position. Respects `SEPARATEGROUPS`.
+* 📋 **Attempt History:** Students can review every finished round of their own — word, attempts used, time, score, and date — plus their currently computed grade, at any time via the toolbar. Whoever can manage the activity sees every student's history instead, in one paginated, sortable, per-student-filterable report.
+* ❓ **In-Game Help:** A dedicated help page explains the letter-feedback colours, attempts, hints, timer, and the activity's grading method.
+* ♿ **Accessibility:** WCAG AA contrast on all grid states; non-colour indicators (✓ correct, ~ present); `aria-label` on every cell; a live region announces state changes for screen readers.
+* ⚡ **AJAX-Powered:** Every round transition (guess, hint, forfeit, timeout, start, new round) happens without a page reload.
+* 🎮 **PlayerHUD Integration (Optional):** Require inventory items to start a round or to reveal a hint, with atomic FIFO consumption. The student's current balance against the required quantity is always shown up front, and the action is disabled — not just rejected after the click — when they can't afford it; a cost pointing at a deleted or another course's item is waived rather than locking the student out. Can also **grant** an item for each round won; matching PlayerHUD's own anti-farming rule, no XP is awarded from that item while the activity allows unlimited rounds — the item is still delivered, just without XP — and the potential win-grant XP is reflected in PlayerHUD's own "Total XP in the game" ceiling estimate.
+* 🛡️ **Safe Cross-Course Integration:** Every PlayerHUD item reference is validated against the course's own block instance, never a stale or another course's item — even after backup/restore or course duplication. Settings preserve a disabled or deleted item as a clearly labelled option instead of silently resetting the field.
+* 📦 **Backup & Restore:** Full Moodle 2 backup/restore support, including the "Duplicate activity" action, word pool, attempts, user/glossary id remapping, and safe PlayerHUD item remapping (dropped rather than kept pointing at another course's item when it isn't part of the same restore).
+* 🔐 **Privacy API:** GDPR/LGPD compliant — complete data export and deletion for all stored personal data.
