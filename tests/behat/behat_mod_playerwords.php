@@ -102,6 +102,46 @@ class behat_mod_playerwords extends behat_base {
     }
 
     /**
+     * Seeds many identical finished attempt rows for one student, for pagination scenarios.
+     *
+     * Writing 31 rows by hand in a Gherkin table just to cross the 30-per-page boundary
+     * would be unreadable noise — this generates them instead, one second apart in table
+     * order (newest first, matching the report's default date-descending sort).
+     *
+     * @param int $count Number of attempts to create.
+     * @param string $username Student username.
+     * @param string $word Word text; must already exist in the activity's pool.
+     * @param string $activityname PlayerWords activity name.
+     * @Given :count PlayerWords attempts exist for :username with word :word in activity :activityname
+     */
+    public function n_playerwords_attempts_exist_for_user(
+        int $count,
+        string $username,
+        string $word,
+        string $activityname
+    ): void {
+        global $DB;
+
+        $playerwordsid = $this->get_playerwords_id($activityname);
+        $generator = behat_util::get_data_generator()->get_plugin_generator('mod_playerwords');
+        $userid = $DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
+        $wordid = $DB->get_field_sql(
+            'SELECT id FROM {playerwords_words} WHERE playerwordsid = :pwid AND word = :word',
+            ['pwid' => $playerwordsid, 'word' => $word],
+            MUST_EXIST
+        );
+        $now = time();
+
+        for ($i = 0; $i < $count; $i++) {
+            $created = $now - $i;
+            $generator->create_attempt($playerwordsid, (int) $userid, (int) $wordid, [
+                'timecreated'  => $created,
+                'timefinished' => $created,
+            ]);
+        }
+    }
+
+    /**
      * Overrides timer_seconds or cooldown_seconds directly in the database.
      *
      * playerwords_add_instance() always recomputes both columns from the transient
