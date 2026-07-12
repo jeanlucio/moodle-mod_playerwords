@@ -32,8 +32,7 @@ Feature: PlayerWords teacher-facing settings behaviour
     And I should see "Genius!"
     And I log in as "teacher1"
     And I am on the "Word Freeze" "playerwords activity editing" page
-    And I wait "1" seconds
-    And I click on "Expand all" "link"
+    And I click on "a.collapseexpand" "css_element"
     Then I should see "Because this activity has already recorded a real grade"
     And the "#id_max_attempts" element should be disabled
     And "select#id_gradescoringmode" "css_element" should not exist
@@ -62,11 +61,9 @@ Feature: PlayerWords teacher-facing settings behaviour
     And I am on "Course 1" course homepage with editing mode on
     And I add the "PlayerHUD" block
     And I am on the "Word Hud" "playerwords activity editing" page
-    And I wait "1" seconds
-    And I click on "Expand all" "link"
+    And I click on "a.collapseexpand" "css_element"
     Then I should see "Deleted item (please reconfigure)"
     When I press "Save and return to course"
     And I am on the "Word Hud" "playerwords activity editing" page
-    And I wait "1" seconds
-    And I click on "Expand all" "link"
+    And I click on "a.collapseexpand" "css_element"
     Then I should see "Deleted item (please reconfigure)"
