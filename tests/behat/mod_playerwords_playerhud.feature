@@ -54,7 +54,7 @@ Feature: PlayerWords PlayerHUD integration
     And I click on "Start round" "button"
     When I click on "#playerwords-hint-button" "css_element"
     Then I should see "Costs 1× Magnifying Glass (you have 0)."
-    And the "[data-action=\"save\"]" element should be disabled
+    And the "[data-action=save]" element should be disabled
     When I click on "[data-action=\"cancel\"]" "css_element"
     And "student1" has 1 PlayerHUD item "Magnifying Glass" in course "C1"
     And I reload the page
