@@ -172,6 +172,23 @@ class behat_mod_playerwords extends behat_base {
     }
 
     /**
+     * Asserts that the given CSS element has the disabled attribute.
+     *
+     * Custom rather than relying on core's own "should be disabled" step: that step is not
+     * defined on every Moodle version this plugin supports (confirmed missing on 4.5/5.0/5.2
+     * for block_playerhud, same ecosystem) — matches the pattern already established there.
+     *
+     * @param string $selector CSS selector.
+     * @Then the :selector element is disabled
+     */
+    public function element_is_disabled(string $selector): void {
+        $node = $this->find('css', $selector);
+        if (!$node->hasAttribute('disabled')) {
+            throw new \Exception("Element '{$selector}' is expected to be disabled but is not.");
+        }
+    }
+
+    /**
      * Resolves a PlayerWords activity name to its instance id.
      *
      * @param string $activityname Activity name as configured in the instance.
