@@ -91,7 +91,8 @@ Feature: PlayerWords toolbar and modals
     And I click on "Start round" "button"
     When I click on "#playerwords-forfeit-button" "css_element"
     Then I should see "Are you sure you want to give up?"
-    When I click on "Cancel" "button"
+    And I wait "1" seconds
+    When I click on "[data-action=\"cancel\"]" "css_element"
     Then "#playerwords-round-play" "css_element" should exist
     When I set the field "Your guess" to "codar"
     And I click on "[data-key=\"ENTER\"]" "css_element"
