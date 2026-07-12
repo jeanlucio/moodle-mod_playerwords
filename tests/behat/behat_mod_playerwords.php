@@ -189,6 +189,156 @@ class behat_mod_playerwords extends behat_base {
     }
 
     /**
+     * Creates a PlayerHUD item in the block already added to the given course.
+     *
+     * Direct $DB insert rather than going through the block's own management UI, matching
+     * the pattern already established in behat_block_playerhud.php for the same reason:
+     * the item's existence is a precondition for the scenario, not the thing under test.
+     *
+     * @param string $itemname Display name for the item.
+     * @param string $shortname Course shortname. The PlayerHUD block must already be added.
+     * @Given a PlayerHUD item :itemname exists in course :shortname
+     */
+    public function a_playerhud_item_exists_in_course(string $itemname, string $shortname): void {
+        global $DB;
+
+        $DB->insert_record('block_playerhud_items', (object) [
+            'blockinstanceid' => $this->get_playerhud_block_id($shortname),
+            'name'            => $itemname,
+            'description'     => '',
+            'image'           => '🔑',
+            'xp'              => 10,
+            'secret'          => 0,
+            'enabled'         => 1,
+            'timecreated'     => time(),
+            'timemodified'    => time(),
+        ]);
+    }
+
+    /**
+     * Wires an existing PlayerHUD item as the item cost to start a round.
+     *
+     * @param string $activityname PlayerWords activity name.
+     * @param int $qty Quantity required.
+     * @param string $itemname PlayerHUD item name; must already exist in the activity's course.
+     * @Given the PlayerWords activity :activityname charges :qty PlayerHUD item :itemname to start a round
+     */
+    public function playerwords_activity_charges_item_to_start(string $activityname, int $qty, string $itemname): void {
+        $this->set_playerwords_hud_field($activityname, $itemname, 'hud_round_cost_item', 'hud_round_cost_qty', $qty);
+    }
+
+    /**
+     * Wires an existing PlayerHUD item as the item cost to reveal the hint.
+     *
+     * @param string $activityname PlayerWords activity name.
+     * @param int $qty Quantity required.
+     * @param string $itemname PlayerHUD item name; must already exist in the activity's course.
+     * @Given the PlayerWords activity :activityname charges :qty PlayerHUD item :itemname to reveal the hint
+     */
+    public function playerwords_activity_charges_item_for_hint(string $activityname, int $qty, string $itemname): void {
+        $this->set_playerwords_hud_field($activityname, $itemname, 'hud_hint_cost_item', 'hud_hint_cost_qty', $qty);
+    }
+
+    /**
+     * Wires an existing PlayerHUD item as the reward for winning a round.
+     *
+     * @param string $activityname PlayerWords activity name.
+     * @param int $qty Quantity granted.
+     * @param string $itemname PlayerHUD item name; must already exist in the activity's course.
+     * @Given the PlayerWords activity :activityname grants :qty PlayerHUD item :itemname for winning a round
+     */
+    public function playerwords_activity_grants_item_on_win(string $activityname, int $qty, string $itemname): void {
+        $this->set_playerwords_hud_field($activityname, $itemname, 'hud_win_grant_item', 'hud_win_grant_qty', $qty);
+    }
+
+    /**
+     * Grants a user a starting balance of a PlayerHUD item, bypassing external_items::grant()
+     * (and therefore any XP side effect) since the scenario only cares about the balance
+     * itself, not how it was acquired — mirrors block_playerhud's own inventory-seeding step.
+     *
+     * @param string $username Moodle username.
+     * @param int $qty Quantity to grant.
+     * @param string $itemname PlayerHUD item name.
+     * @param string $shortname Course shortname.
+     * @Given :username has :qty PlayerHUD item :itemname in course :shortname
+     */
+    public function user_has_playerhud_item(string $username, int $qty, string $itemname, string $shortname): void {
+        global $DB;
+
+        $userid = $DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
+        $blockinstanceid = $this->get_playerhud_block_id($shortname);
+        $itemid = $DB->get_field(
+            'block_playerhud_items',
+            'id',
+            ['blockinstanceid' => $blockinstanceid, 'name' => $itemname],
+            MUST_EXIST
+        );
+
+        for ($i = 0; $i < $qty; $i++) {
+            $DB->insert_record('block_playerhud_inventory', (object) [
+                'userid'      => $userid,
+                'itemid'      => $itemid,
+                'dropid'      => 0,
+                'source'      => 'behat',
+                'timecreated' => time(),
+                'xpawarded'   => 0,
+            ]);
+        }
+    }
+
+    /**
+     * Shared setter for the three hud_*_item/hud_*_qty column pairs.
+     *
+     * @param string $activityname PlayerWords activity name.
+     * @param string $itemname PlayerHUD item name; resolved within the activity's own course.
+     * @param string $itemfield Column name for the item id (e.g. hud_round_cost_item).
+     * @param string $qtyfield Column name for the quantity (e.g. hud_round_cost_qty).
+     * @param int $qty Quantity value to store.
+     */
+    private function set_playerwords_hud_field(
+        string $activityname,
+        string $itemname,
+        string $itemfield,
+        string $qtyfield,
+        int $qty
+    ): void {
+        global $DB;
+
+        $playerwordsid = $this->get_playerwords_id($activityname);
+        $courseid = (int) $DB->get_field('playerwords', 'course', ['id' => $playerwordsid], MUST_EXIST);
+        $shortname = (string) $DB->get_field('course', 'shortname', ['id' => $courseid], MUST_EXIST);
+        $blockinstanceid = $this->get_playerhud_block_id($shortname);
+        $itemid = $DB->get_field(
+            'block_playerhud_items',
+            'id',
+            ['blockinstanceid' => $blockinstanceid, 'name' => $itemname],
+            MUST_EXIST
+        );
+
+        $DB->set_field('playerwords', $itemfield, $itemid, ['id' => $playerwordsid]);
+        $DB->set_field('playerwords', $qtyfield, $qty, ['id' => $playerwordsid]);
+    }
+
+    /**
+     * Resolves the PlayerHUD block instance id for a course. The block must already have
+     * been added (e.g. via "I add the PlayerHUD block" while editing the course).
+     *
+     * @param string $shortname Course shortname.
+     * @return int
+     */
+    private function get_playerhud_block_id(string $shortname): int {
+        global $DB;
+
+        $courseid = $DB->get_field('course', 'id', ['shortname' => $shortname], MUST_EXIST);
+        $context = \context_course::instance($courseid);
+
+        return (int) $DB->get_field('block_instances', 'id', [
+            'blockname'       => 'playerhud',
+            'parentcontextid' => $context->id,
+        ], MUST_EXIST);
+    }
+
+    /**
      * Resolves a PlayerWords activity name to its instance id.
      *
      * @param string $activityname Activity name as configured in the instance.
