@@ -35,8 +35,9 @@ Feature: PlayerWords teacher-facing settings behaviour
     And I click on "Expand all" "link"
     Then I should see "Because this activity has already recorded a real grade"
     And the "#id_max_attempts" element should be disabled
-    And the "#id_gradescoringmode" element should be disabled
-    And the "#id_rankingscoringmode" element should be disabled
+    And "select#id_gradescoringmode" "css_element" should not exist
+    And "select#id_rankingscoringmode" "css_element" should not exist
+    And I should see "Binary (all or nothing)"
 
   Scenario: Adding a manual word that already exists in the pool is rejected
     Given the following "activities" exist:
