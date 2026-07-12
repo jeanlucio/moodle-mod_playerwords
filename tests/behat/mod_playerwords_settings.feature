@@ -33,9 +33,9 @@ Feature: PlayerWords teacher-facing settings behaviour
     And I log in as "teacher1"
     And I am on the "Word Freeze" "playerwords activity editing" page
     Then I should see "Because this activity has already recorded a real grade"
-    And the "#id_max_attempts" element is disabled
-    And the "#id_gradescoringmode" element is disabled
-    And the "#id_rankingscoringmode" element is disabled
+    And the "#id_max_attempts" element should be disabled
+    And the "#id_gradescoringmode" element should be disabled
+    And the "#id_rankingscoringmode" element should be disabled
 
   Scenario: Adding a manual word that already exists in the pool is rejected
     Given the following "activities" exist:

@@ -179,7 +179,7 @@ class behat_mod_playerwords extends behat_base {
      * for block_playerhud, same ecosystem) — matches the pattern already established there.
      *
      * @param string $selector CSS selector.
-     * @Then the :selector element is disabled
+     * @Then the :selector element should be disabled
      */
     public function element_is_disabled(string $selector): void {
         $node = $this->find('css', $selector);
