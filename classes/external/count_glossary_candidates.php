@@ -50,6 +50,12 @@ class count_glossary_candidates extends external_api {
             'glossaryid' => new external_value(PARAM_INT, 'Glossary id, or 0 for every course glossary'),
             'minlength'  => new external_value(PARAM_INT, 'Candidate minimum word length'),
             'maxlength'  => new external_value(PARAM_INT, 'Candidate maximum word length'),
+            'stopwords'  => new external_value(
+                PARAM_TEXT,
+                'Comma-separated words to ignore when splitting multi-word concepts',
+                VALUE_DEFAULT,
+                ''
+            ),
         ]);
     }
 
@@ -60,26 +66,35 @@ class count_glossary_candidates extends external_api {
      * @param int $glossaryid Glossary id, or 0 for every course glossary.
      * @param int $minlength Candidate minimum word length.
      * @param int $maxlength Candidate maximum word length.
+     * @param string $stopwords Comma-separated words to ignore when splitting multi-word concepts.
      * @return array
      */
-    public static function execute(int $courseid, int $glossaryid, int $minlength, int $maxlength): array {
+    public static function execute(
+        int $courseid,
+        int $glossaryid,
+        int $minlength,
+        int $maxlength,
+        string $stopwords = ''
+    ): array {
         [
             'courseid'   => $courseid,
             'glossaryid' => $glossaryid,
             'minlength'  => $minlength,
             'maxlength'  => $maxlength,
+            'stopwords'  => $stopwords,
         ] = self::validate_parameters(self::execute_parameters(), [
             'courseid'   => $courseid,
             'glossaryid' => $glossaryid,
             'minlength'  => $minlength,
             'maxlength'  => $maxlength,
+            'stopwords'  => $stopwords,
         ]);
 
         $context = context_course::instance($courseid);
         self::validate_context($context);
         require_capability('mod/playerwords:addinstance', $context);
 
-        $count = words_repository::count_glossary_candidates($courseid, $glossaryid, $minlength, $maxlength);
+        $count = words_repository::count_glossary_candidates($courseid, $glossaryid, $minlength, $maxlength, $stopwords);
 
         return ['count' => $count];
     }

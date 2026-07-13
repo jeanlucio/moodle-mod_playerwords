@@ -25,18 +25,15 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    $settings->add(new admin_setting_configtextarea(
-        'mod_playerwords/glossarystopwords',
-        get_string('glossarystopwords', 'mod_playerwords'),
-        get_string('glossarystopwords_desc', 'mod_playerwords'),
-        ''
-    ));
-
     if (!\mod_playerwords\local\hud_service::is_installed()) {
         $settings->add(new admin_setting_heading(
             'mod_playerwords/hudnotinstalled',
             get_string('hud_notinstalled_heading', 'mod_playerwords'),
             get_string('hud_notinstalled_desc', 'mod_playerwords')
         ));
+    } else {
+        // Nothing left to configure site-wide once PlayerHUD is installed — skip the
+        // otherwise-empty settings page instead of leaving a dead link in the admin tree.
+        $settings = null;
     }
 }

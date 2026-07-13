@@ -41,6 +41,7 @@ class backup_playerwords_activity_structure_step extends backup_activity_structu
             'introformat',
             'sources',
             'glossaryid',
+            'stopwords',
             'min_length',
             'max_length',
             'max_attempts',

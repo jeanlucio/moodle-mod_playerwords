@@ -97,6 +97,11 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setDefault('glossaryid', 0);
         $mform->hideIf('glossaryid', 'source_glossary', 'notchecked');
 
+        $mform->addElement('textarea', 'stopwords', get_string('stopwords', 'mod_playerwords'), ['rows' => 3]);
+        $mform->setType('stopwords', PARAM_TEXT);
+        $mform->addHelpButton('stopwords', 'stopwords', 'mod_playerwords');
+        $mform->hideIf('stopwords', 'source_glossary', 'notchecked');
+
         $mform->addElement('header', 'gameplayheader', get_string('gameplayheader', 'mod_playerwords'));
         $mform->setExpanded('gameplayheader');
 
@@ -336,6 +341,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
                 'id_glossaryid',
                 'id_min_length',
                 'id_max_length',
+                'id_stopwords',
                 'playerwords-glossary-preview-count',
             ]);
         }

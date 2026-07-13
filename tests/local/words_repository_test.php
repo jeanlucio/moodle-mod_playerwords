@@ -779,7 +779,6 @@ final class words_repository_test extends \advanced_testcase {
      * @return void
      */
     public function test_sync_glossary_words_splits_multiword_concept_without_stopwords(): void {
-        set_config('glossarystopwords', '', 'mod_playerwords');
         [$glossary] = $this->make_glossary_entry('sistema solar', 'conjunto de planetas');
         $instance = $this->make_full_instance(['glossaryid' => $glossary->id]);
 
@@ -799,9 +798,8 @@ final class words_repository_test extends \advanced_testcase {
      */
     public function test_sync_glossary_words_filters_configured_stopwords(): void {
         global $DB;
-        set_config('glossarystopwords', 'o', 'mod_playerwords');
         [$glossary] = $this->make_glossary_entry('o brasil', 'pais da america do sul');
-        $instance = $this->make_full_instance(['glossaryid' => $glossary->id]);
+        $instance = $this->make_full_instance(['glossaryid' => $glossary->id, 'stopwords' => 'o']);
 
         $imported = words_repository::sync_glossary_words($instance);
 
@@ -904,7 +902,6 @@ final class words_repository_test extends \advanced_testcase {
      * @return void
      */
     public function test_get_fragmented_concepts_reports_split_multiword_concept(): void {
-        set_config('glossarystopwords', '', 'mod_playerwords');
         [$glossary] = $this->make_glossary_entry('sistema solar', 'conjunto de planetas');
         $instance = $this->make_full_instance(['glossaryid' => $glossary->id]);
         words_repository::sync_glossary_words($instance);
@@ -954,7 +951,6 @@ final class words_repository_test extends \advanced_testcase {
      * @return void
      */
     public function test_get_fragmented_concepts_is_scoped_to_its_own_instance(): void {
-        set_config('glossarystopwords', '', 'mod_playerwords');
         [$glossary] = $this->make_glossary_entry('sistema solar', 'conjunto de planetas');
         $instance = $this->make_full_instance(['glossaryid' => $glossary->id]);
         $otherinstance = $this->make_full_instance(['glossaryid' => $glossary->id]);
@@ -1130,7 +1126,6 @@ final class words_repository_test extends \advanced_testcase {
      * @return void
      */
     public function test_count_glossary_candidates_counts_within_range(): void {
-        set_config('glossarystopwords', '', 'mod_playerwords');
         [$glossary] = $this->make_glossary_entry('sistema solar', 'conjunto de planetas');
 
         $count = words_repository::count_glossary_candidates($this->course->id, $glossary->id, 5, 6);
@@ -1147,7 +1142,6 @@ final class words_repository_test extends \advanced_testcase {
      * @return void
      */
     public function test_count_glossary_candidates_zero_covers_all_course_glossaries(): void {
-        set_config('glossarystopwords', '', 'mod_playerwords');
         $this->make_glossary_entry('planeta', 'corpo celeste');
         $secondglossary = $this->getDataGenerator()->create_module('glossary', ['course' => $this->course->id]);
         $this->getDataGenerator()->get_plugin_generator('mod_glossary')->create_content($secondglossary, [
@@ -1169,7 +1163,6 @@ final class words_repository_test extends \advanced_testcase {
      * @return void
      */
     public function test_count_glossary_candidates_deduplicates_repeated_tokens(): void {
-        set_config('glossarystopwords', '', 'mod_playerwords');
         $glossary = $this->getDataGenerator()->create_module('glossary', ['course' => $this->course->id]);
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_glossary');
         $generator->create_content($glossary, ['concept' => 'planeta', 'definition' => 'um', 'approved' => 1]);

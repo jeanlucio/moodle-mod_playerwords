@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/playerwords/db" VERSION="20260709" COMMENT="XMLDB file for mod_playerwords"
+<XMLDB PATH="mod/playerwords/db" VERSION="20260713" COMMENT="XMLDB file for mod_playerwords"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -15,6 +15,8 @@
             COMMENT="Bitmask for enabled sources: 1=manual, 2=glossary. AI words are not gated by this bitmask; they are always saved as pending regardless of its value"/>
 <FIELD NAME="glossaryid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
             COMMENT="Glossary to sync words from; 0 means all glossaries in the course"/>
+        <FIELD NAME="stopwords" TYPE="text" NOTNULL="false" SEQUENCE="false"
+            COMMENT="Comma-separated words to ignore when splitting multi-word glossary concepts"/>
         <FIELD NAME="min_length" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="4" SEQUENCE="false"
             COMMENT="Minimum allowed word length"/>
         <FIELD NAME="max_length" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="6" SEQUENCE="false"

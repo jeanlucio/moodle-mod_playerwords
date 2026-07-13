@@ -42,15 +42,17 @@ let debounceHandle = null;
  * @param {string} glossarySelectId Element id of the glossary picker select.
  * @param {string} minFieldId Element id of the minimum-length field.
  * @param {string} maxFieldId Element id of the maximum-length field.
+ * @param {string} stopwordsFieldId Element id of the stopwords textarea.
  * @param {string} outputId Element id of the output element the count is written into.
  */
-const init = (courseid, sourceCheckboxId, glossarySelectId, minFieldId, maxFieldId, outputId) => {
+const init = (courseid, sourceCheckboxId, glossarySelectId, minFieldId, maxFieldId, stopwordsFieldId, outputId) => {
     const sourceCheckbox = document.getElementById(sourceCheckboxId);
     const glossarySelect = document.getElementById(glossarySelectId);
     const minField = document.getElementById(minFieldId);
     const maxField = document.getElementById(maxFieldId);
+    const stopwordsField = document.getElementById(stopwordsFieldId);
     const output = document.getElementById(outputId);
-    if (!sourceCheckbox || !glossarySelect || !minField || !maxField || !output) {
+    if (!sourceCheckbox || !glossarySelect || !minField || !maxField || !stopwordsField || !output) {
         return;
     }
 
@@ -62,11 +64,12 @@ const init = (courseid, sourceCheckboxId, glossarySelectId, minFieldId, maxField
         const glossaryid = parseInt(glossarySelect.value, 10) || 0;
         const minlength = parseInt(minField.value, 10) || 0;
         const maxlength = parseInt(maxField.value, 10) || 0;
+        const stopwords = stopwordsField.value;
 
         try {
             const result = await Ajax.call([{
                 methodname: 'mod_playerwords_count_glossary_candidates',
-                args: {courseid, glossaryid, minlength, maxlength},
+                args: {courseid, glossaryid, minlength, maxlength, stopwords},
             }])[0];
             output.textContent = await getString('glossarywordscount', 'mod_playerwords', result.count);
         } catch (error) {
@@ -85,6 +88,7 @@ const init = (courseid, sourceCheckboxId, glossarySelectId, minFieldId, maxField
     glossarySelect.addEventListener('change', scheduleRefresh);
     minField.addEventListener('input', scheduleRefresh);
     maxField.addEventListener('input', scheduleRefresh);
+    stopwordsField.addEventListener('input', scheduleRefresh);
     refresh();
 };
 

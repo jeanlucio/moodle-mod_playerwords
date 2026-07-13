@@ -74,15 +74,17 @@ final class count_glossary_candidates_test extends \advanced_testcase {
      * @param int $glossaryid Glossary id, or 0 for every course glossary.
      * @param int $minlength Candidate minimum word length.
      * @param int $maxlength Candidate maximum word length.
+     * @param string $stopwords Comma-separated words to ignore when splitting multi-word concepts.
      * @return array Response shaped as ['error' => bool, 'data' => array|null, ...].
      */
-    private function call_count(int $glossaryid, int $minlength, int $maxlength): array {
+    private function call_count(int $glossaryid, int $minlength, int $maxlength, string $stopwords = ''): array {
         $_POST['sesskey'] = sesskey();
         return external_api::call_external_function('mod_playerwords_count_glossary_candidates', [
             'courseid'   => $this->course->id,
             'glossaryid' => $glossaryid,
             'minlength'  => $minlength,
             'maxlength'  => $maxlength,
+            'stopwords'  => $stopwords,
         ]);
     }
 
@@ -93,7 +95,6 @@ final class count_glossary_candidates_test extends \advanced_testcase {
      * @return void
      */
     public function test_counts_candidates_for_a_specific_glossary(): void {
-        set_config('glossarystopwords', '', 'mod_playerwords');
         $glossary = $this->make_glossary('planeta');
 
         $this->setUser($this->teacher);
@@ -116,6 +117,24 @@ final class count_glossary_candidates_test extends \advanced_testcase {
         $response = $this->call_count($glossary->id, 20, 30);
 
         $this->assertSame(0, $response['data']['count']);
+    }
+
+    /**
+     * A stopword passed straight from the settings form (not yet saved to any
+     * instance) drops the matching token from a multi-word concept before counting.
+     *
+     * @covers \mod_playerwords\external\count_glossary_candidates::execute
+     * @return void
+     */
+    public function test_counts_candidates_respecting_stopwords_param(): void {
+        $glossary = $this->make_glossary('sistema solar');
+
+        $this->setUser($this->teacher);
+        $withoutstopwords = $this->call_count($glossary->id, 1, 30);
+        $withstopwords = $this->call_count($glossary->id, 1, 30, 'solar');
+
+        $this->assertSame(2, $withoutstopwords['data']['count']);
+        $this->assertSame(1, $withstopwords['data']['count']);
     }
 
     /**

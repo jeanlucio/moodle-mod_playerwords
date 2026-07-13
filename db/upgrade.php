@@ -143,5 +143,16 @@ function xmldb_playerwords_upgrade(int $oldversion): bool {
         upgrade_mod_savepoint(true, 2026070900, 'playerwords');
     }
 
+    if ($oldversion < 2026071302) {
+        $table = new xmldb_table('playerwords');
+        $field = new xmldb_field('stopwords', XMLDB_TYPE_TEXT, null, null, null, null, null, 'glossaryid');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026071302, 'playerwords');
+    }
+
     return true;
 }
