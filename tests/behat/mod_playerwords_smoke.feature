@@ -22,6 +22,7 @@ Feature: PlayerWords smoke test
     And the following PlayerWords words exist in activity "Word Game":
       | word  | hint             |
       | codar | Write source code |
+    And "student1" has already seen the playerwords intro
 
   Scenario: Student opens the lobby and can start a round
     When I log in as "student1"

@@ -16,6 +16,8 @@ Feature: PlayerWords teacher-facing settings behaviour
       | user     | course | role           |
       | teacher1 | C1     | editingteacher |
       | student1 | C1     | student        |
+    And "teacher1" has already seen the playerwords intro
+    And "student1" has already seen the playerwords intro
 
   Scenario: The scoring mode and attempt-count settings freeze once a real grade exists
     Given the following "activities" exist:

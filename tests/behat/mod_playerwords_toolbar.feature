@@ -16,6 +16,8 @@ Feature: PlayerWords toolbar and modals
       | user     | course | role           |
       | teacher1 | C1     | editingteacher |
       | student1 | C1     | student        |
+    And "teacher1" has already seen the playerwords intro
+    And "student1" has already seen the playerwords intro
 
   Scenario: The manage-words icon only appears for whoever can manage the activity
     Given the following "activities" exist:
@@ -78,6 +80,25 @@ Feature: PlayerWords toolbar and modals
     And I should not see "This activity may require PlayerHUD items"
     And I should not see "Grading method for this activity"
     And I should not see "The ranking adds up your points"
+
+  Scenario: The how-to-play modal opens automatically on a player's very first visit, once ever
+    Given the following "users" exist:
+      | username | firstname | lastname | email                 |
+      | student2 | Student   | Two      | student2@example.com  |
+    And the following "course enrolments" exist:
+      | user     | course | role    |
+      | student2 | C1     | student |
+    And the following "activities" exist:
+      | activity    | course | name           | min_length | max_length |
+      | playerwords | C1     | Word AutoIntro | 5          | 5          |
+    When I log in as "student2"
+    And I am on the "Word AutoIntro" "playerwords activity" page
+    Then I should see "How to play"
+    And I should see "You can review these instructions anytime by clicking the help icon at the top of the game."
+    When I am on the "Word AutoIntro" "playerwords activity" page
+    Then I should not see "How to play"
+    When I click on "#playerwords-help-button" "css_element"
+    Then I should see "How to play"
 
   Scenario: Cancelling the forfeit confirmation leaves the round untouched
     Given the following "activities" exist:

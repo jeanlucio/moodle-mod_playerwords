@@ -16,6 +16,8 @@ Feature: PlayerWords PlayerHUD integration
       | user     | course | role           |
       | teacher1 | C1     | editingteacher |
       | student1 | C1     | student        |
+    And "teacher1" has already seen the playerwords intro
+    And "student1" has already seen the playerwords intro
     And I log in as "teacher1"
     And I am on "Course 1" course homepage with editing mode on
     And I add the "PlayerHUD" block

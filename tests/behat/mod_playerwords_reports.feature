@@ -16,6 +16,8 @@ Feature: PlayerWords attempt history and ranking
       | user     | course | role           |
       | teacher1 | C1     | editingteacher |
       | student1 | C1     | student        |
+    And "teacher1" has already seen the playerwords intro
+    And "student1" has already seen the playerwords intro
 
   Scenario: A student sees only their own attempt history, never another student's
     Given the following "users" exist:

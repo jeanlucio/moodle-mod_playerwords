@@ -172,6 +172,25 @@ class behat_mod_playerwords extends behat_base {
     }
 
     /**
+     * Marks a user as having already seen the automatic how-to-play introduction
+     * (see mod_playerwords\local\intro_service), so scenarios about anything else are
+     * not incidentally interrupted by the modal opening on its own on a fresh user's
+     * first visit to any PlayerWords activity — a precondition for the scenario, not
+     * the thing under test, same reasoning already used for PlayerHUD items below.
+     * The auto-show behaviour itself has its own dedicated scenario in
+     * mod_playerwords_toolbar.feature, using a user this step is never applied to.
+     *
+     * @param string $username Moodle username.
+     * @Given :username has already seen the playerwords intro
+     */
+    public function user_has_already_seen_the_playerwords_intro(string $username): void {
+        global $DB;
+
+        $userid = (int) $DB->get_field('user', 'id', ['username' => $username], MUST_EXIST);
+        \mod_playerwords\local\intro_service::mark_intro_seen($userid);
+    }
+
+    /**
      * Asserts that the given CSS element has the disabled attribute.
      *
      * Custom rather than relying on core's own "should be disabled" step: that step is not

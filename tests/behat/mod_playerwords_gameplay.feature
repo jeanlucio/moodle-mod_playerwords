@@ -16,6 +16,8 @@ Feature: PlayerWords core gameplay loop
       | user     | course | role           |
       | teacher1 | C1     | editingteacher |
       | student1 | C1     | student        |
+    And "teacher1" has already seen the playerwords intro
+    And "student1" has already seen the playerwords intro
 
   Scenario: Student wins a round on the first try and the timer badge disappears
     Given the following "activities" exist:
