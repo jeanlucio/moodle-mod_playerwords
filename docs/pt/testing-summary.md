@@ -13,8 +13,8 @@ services e conformidade com a Privacy API. Todo push de CI executa a matriz comp
 | `lib_grant_potential_test.php` | 6 |
 | `lib_reset_userdata_test.php` | 4 |
 | `completion/custom_completion_test.php` | 7 |
-| `privacy/provider_test.php` | 12 |
-| **Subtotal** | **38** |
+| `privacy/provider_test.php` | 14 |
+| **Subtotal** | **40** |
 
 ### Testes de Lógica de Negócio (`tests/local/`)
 
@@ -24,26 +24,28 @@ services e conformidade com a Privacy API. Todo push de CI executa a matriz comp
 | `attempts_history_service_test.php` | 14 |
 | `gameplay_service_test.php` | 19 |
 | `hud_service_test.php` | 21 |
+| `intro_service_test.php` | 5 |
 | `ranking_service_test.php` | 6 |
 | `round_presenter_test.php` | 35 |
 | `round_service_test.php` | 30 |
-| `view_page_service_test.php` | 8 |
-| `word_normalizer_test.php` | 8 |
-| `words_repository_test.php` | 40 |
-| **Subtotal** | **193** |
+| `view_page_service_test.php` | 16 |
+| `word_normalizer_test.php` | 16 |
+| `words_repository_test.php` | 51 |
+| **Subtotal** | **225** |
 
 ### Testes de Web Services (`tests/external/`)
 
 | Arquivo de teste | Casos |
 |-----------------|------:|
+| `count_eligible_words_test.php` | 5 |
 | `end_round_test.php` | 4 |
 | `new_round_test.php` | 3 |
 | `reveal_hint_test.php` | 6 |
 | `start_round_test.php` | 5 |
 | `submit_guess_test.php` | 7 |
-| **Subtotal** | **25** |
+| **Subtotal** | **30** |
 
-| **Total Geral** | **256** |
+| **Total Geral** | **295** |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords
