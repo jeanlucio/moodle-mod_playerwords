@@ -64,6 +64,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $this->standard_intro_elements();
 
         $mform->addElement('header', 'playersourcesheader', get_string('playersourcesheader', 'mod_playerwords'));
+        $mform->setExpanded('playersourcesheader');
 
         $mform->addElement(
             'advcheckbox',
@@ -97,6 +98,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->hideIf('glossaryid', 'source_glossary', 'notchecked');
 
         $mform->addElement('header', 'gameplayheader', get_string('gameplayheader', 'mod_playerwords'));
+        $mform->setExpanded('gameplayheader');
 
         $mform->addElement(
             'select',
