@@ -65,4 +65,12 @@ $functions = [
         'capabilities'  => 'mod/playerwords:view',
         'loginrequired' => true,
     ],
+    'mod_playerwords_count_eligible_words' => [
+        'classname'     => 'mod_playerwords\external\count_eligible_words',
+        'description'   => 'Count approved pool words within a given length range for the settings form.',
+        'type'          => 'read',
+        'ajax'          => true,
+        'capabilities'  => 'mod/playerwords:addinstance',
+        'loginrequired' => true,
+    ],
 ];

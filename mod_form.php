@@ -125,6 +125,17 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setDefault('max_length', 6);
         $mform->addRule('max_length', null, 'numeric', null, 'client');
 
+        // Only meaningful once the activity already has a pool to count — on first
+        // creation there is no instance id yet and no words have been imported/added.
+        if (!empty($this->_instance)) {
+            $mform->addElement(
+                'static',
+                'eligiblewordscount',
+                '',
+                html_writer::span('', 'text-muted', ['id' => 'playerwords-eligible-count'])
+            );
+        }
+
         $mform->addElement('text', 'timer_minutes', get_string('timer_minutes', 'mod_playerwords'));
         $mform->setType('timer_minutes', PARAM_INT);
         $mform->setDefault('timer_minutes', 0);
@@ -279,6 +290,15 @@ class mod_playerwords_mod_form extends moodleform_mod {
             (string) PLAYERWORDS_GRADE_AVERAGE_ALL,
             (string) PLAYERWORDS_GRADE_HIGHEST,
         ]);
+
+        if (!empty($this->_instance)) {
+            $PAGE->requires->js_call_amd('mod_playerwords/eligiblewords', 'init', [
+                (int) $this->_cm->id,
+                'id_min_length',
+                'id_max_length',
+                'playerwords-eligible-count',
+            ]);
+        }
 
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();

@@ -63,6 +63,7 @@ $string['deletewordconfirm'] = 'Tem certeza que deseja excluir esta palavra? Est
 $string['deletewordtitle'] = 'Excluir palavra';
 $string['editwordbutton'] = 'Editar';
 $string['editwordlabel'] = 'Editar palavra';
+$string['eligiblewordscount'] = 'Palavras elegíveis no banco para este intervalo: {$a}.';
 $string['error_atleastonesource'] = 'Selecione ao menos uma fonte de palavras.';
 $string['error_completionattempts'] = 'As tentativas exigidas devem ser no mínimo 1.';
 $string['error_cooldown'] = 'O cooldown deve ser 0 ou um valor positivo.';

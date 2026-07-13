@@ -63,6 +63,7 @@ $string['deletewordconfirm'] = 'Are you sure you want to delete this word? This 
 $string['deletewordtitle'] = 'Delete word';
 $string['editwordbutton'] = 'Edit';
 $string['editwordlabel'] = 'Edit word';
+$string['eligiblewordscount'] = 'Eligible words in the pool for this range: {$a}.';
 $string['error_atleastonesource'] = 'Select at least one word source.';
 $string['error_completionattempts'] = 'Required attempts must be at least 1.';
 $string['error_cooldown'] = 'Cooldown must be 0 or a positive value.';
