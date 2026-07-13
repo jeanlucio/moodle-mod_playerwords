@@ -55,20 +55,30 @@ class hud_service {
     }
 
     /**
-     * Whether PlayerHUD integration should be offered for this course: the block
-     * plugin must be installed, and a block_playerhud instance must actually exist
-     * at course level in this specific course.
+     * Whether the block_playerhud plugin is installed on this site at all, regardless of
+     * whether any course has actually added a block instance yet.
      *
      * Note: class_exists() is called without disabling autoloading — a previous
      * version of this check passed false as the second argument, which only
      * returns true if something else already loaded block_playerhud\game earlier
      * in the same request, and therefore was always false in practice.
      *
+     * @return bool
+     */
+    public static function is_installed(): bool {
+        return class_exists('\block_playerhud\game');
+    }
+
+    /**
+     * Whether PlayerHUD integration should be offered for this course: the block
+     * plugin must be installed, and a block_playerhud instance must actually exist
+     * at course level in this specific course.
+     *
      * @param int $courseid Course ID.
      * @return bool
      */
     public static function is_available_for_course(int $courseid): bool {
-        return class_exists('\block_playerhud\game') && self::get_block_instance_id($courseid) !== null;
+        return self::is_installed() && self::get_block_instance_id($courseid) !== null;
     }
 
     /**

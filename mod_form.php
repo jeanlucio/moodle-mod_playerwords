@@ -277,6 +277,17 @@ class mod_playerwords_mod_form extends moodleform_mod {
             $mform->setDefault('hud_win_grant_qty', 1);
             $mform->addRule('hud_win_grant_qty', null, 'numeric', null, 'client');
             $mform->hideIf('hud_win_grant_qty', 'hud_win_grant_item', 'eq', 0);
+        } else if (\mod_playerwords\local\hud_service::is_installed()) {
+            // The block plugin is installed on this site, but no instance was added to this
+            // course yet — tell the teacher the option exists instead of leaving it silently
+            // absent.
+            $mform->addElement('header', 'hudheader', get_string('hud_header', 'mod_playerwords'));
+            $mform->addElement(
+                'static',
+                'hudnotincourse',
+                '',
+                html_writer::div(get_string('hud_notincourse', 'mod_playerwords'), 'alert alert-info py-2 mb-0')
+            );
         }
 
         $this->standard_grading_coursemodule_elements();

@@ -153,6 +153,17 @@ final class hud_service_test extends \advanced_testcase {
         $this->assertNull(hud_service::get_block_instance_id($course2->id));
     }
 
+    /**
+     * Tests that is_installed reflects whether the block_playerhud plugin is present on
+     * this site, independently of any course having added a block instance.
+     *
+     * @covers \mod_playerwords\local\hud_service::is_installed
+     * @return void
+     */
+    public function test_is_installed_matches_class_presence(): void {
+        $this->assertSame(class_exists('\block_playerhud\game'), hud_service::is_installed());
+    }
+
     // Tests that require block_playerhud tables.
 
     /**

@@ -31,4 +31,12 @@ if ($hassiteconfig) {
         get_string('glossarystopwords_desc', 'mod_playerwords'),
         ''
     ));
+
+    if (!\mod_playerwords\local\hud_service::is_installed()) {
+        $settings->add(new admin_setting_heading(
+            'mod_playerwords/hudnotinstalled',
+            get_string('hud_notinstalled_heading', 'mod_playerwords'),
+            get_string('hud_notinstalled_desc', 'mod_playerwords')
+        ));
+    }
 }
