@@ -23,29 +23,30 @@ services, and Privacy API compliance. Every CI push runs against the full matrix
 | `ai_word_generator_test.php` | 12 |
 | `attempts_history_service_test.php` | 14 |
 | `gameplay_service_test.php` | 19 |
-| `hud_service_test.php` | 21 |
+| `hud_service_test.php` | 22 |
 | `intro_service_test.php` | 5 |
 | `ranking_service_test.php` | 6 |
 | `round_presenter_test.php` | 35 |
 | `round_service_test.php` | 30 |
 | `view_page_service_test.php` | 16 |
 | `word_normalizer_test.php` | 16 |
-| `words_repository_test.php` | 51 |
-| **Subtotal** | **225** |
+| `words_repository_test.php` | 56 |
+| **Subtotal** | **231** |
 
 ### Web Services Tests (`tests/external/`)
 
 | Test file | Cases |
 |-----------|------:|
 | `count_eligible_words_test.php` | 5 |
+| `count_glossary_candidates_test.php` | 3 |
 | `end_round_test.php` | 4 |
 | `new_round_test.php` | 3 |
 | `reveal_hint_test.php` | 6 |
 | `start_round_test.php` | 5 |
 | `submit_guess_test.php` | 7 |
-| **Subtotal** | **30** |
+| **Subtotal** | **33** |
 
-| **Grand Total** | **295** |
+| **Grand Total** | **304** |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords
