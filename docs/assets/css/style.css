@@ -38,10 +38,34 @@ body {
 
 .page-header-info {
   position: absolute;
-  right: 0;
+  top: 44%;
   bottom: 0;
-  left: 0;
-  padding: 0 1.5rem 2rem;
+  left: 6%;
+  right: 0;
+  padding: 0.4rem 0 1.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.page-header-side-buttons {
+  position: absolute;
+  top: 0;
+  height: 43%;
+  right: 0;
+  width: 20%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.page-header-side-buttons .btn {
+  margin: 0;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.35rem;
 }
 
 .project-name {
@@ -217,13 +241,13 @@ body {
   border-top: 1px solid var(--border);
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 900px) {
   /* Below this width the banner shrinks too much for the overlaid text to
-     fit over its dark footer band without covering the wordmark above it —
-     fall back to a plain bar under the image instead, cropping away the
-     footer band the banner file reserves for the overlay at wider widths. */
+     clear the wordmark above it — fall back to a plain bar under the image
+     instead, cropping the banner to just its logo band (discarding the
+     otherwise-empty area the overlay uses at wider widths). */
   .page-header-banner {
-    aspect-ratio: 2560 / 460;
+    aspect-ratio: 2560 / 350;
     object-fit: cover;
     object-position: top;
   }
@@ -232,6 +256,21 @@ body {
     position: static;
     background-color: #0a0000;
     padding: 1.5rem 1.5rem 2rem;
+  }
+
+  .page-header-side-buttons {
+    position: static;
+    width: auto;
+    height: auto;
+    display: block;
+    background-color: #0a0000;
+    padding: 0 1rem 1.5rem;
+  }
+
+  .page-header-side-buttons .btn {
+    margin: 0 0.4rem;
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
   }
 }
 
@@ -244,9 +283,5 @@ body {
     position: static;
     max-height: none;
     width: 100%;
-  }
-
-  .page-header-info {
-    padding: 1.25rem 1rem 1.5rem;
   }
 }
