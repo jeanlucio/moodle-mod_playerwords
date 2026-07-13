@@ -269,7 +269,7 @@ function seed_create_module(stdClass $course, string $modulename, array $extra):
  *
  * @param int $glossaryid Glossary instance id.
  * @param int $userid Author user id.
- * @param string $concept Single word the entry is about.
+ * @param string $concept Word or phrase the entry is about.
  * @param string $definition Definition text shown as the PlayerWords hint.
  * @return void
  */
@@ -309,7 +309,17 @@ if ($cmglossary) {
     seed_add_glossary_entry($glossaryid, $teacher->id, 'Tempo', 'Sucessão de momentos: passado, presente e futuro.');
     seed_add_glossary_entry($glossaryid, $teacher->id, 'Flor', 'Parte colorida e perfumada de uma planta.');
     seed_add_glossary_entry($glossaryid, $teacher->id, 'Janela', 'Abertura na parede por onde entra luz e ar.');
-    cli_writeln("Glossário criado: id={$glossaryid}, 6 termos aprovados.");
+    // Multi-word concept on purpose: sync_glossary_words() splits it into three sibling
+    // word rows ("segunda", "guerra", "mundial"), each carrying this same definition as
+    // its hint — the exact scenario classes/local/words_repository.php's
+    // get_fragmented_concepts() warns the teacher about on the word management screen.
+    seed_add_glossary_entry(
+        $glossaryid,
+        $teacher->id,
+        'Segunda Guerra Mundial',
+        'Conflito militar global que durou de 1939 a 1945.'
+    );
+    cli_writeln("Glossário criado: id={$glossaryid}, 7 termos aprovados.");
 } else {
     cli_writeln("Módulo 'glossary' indisponível — pulei a criação do glossário.");
 }

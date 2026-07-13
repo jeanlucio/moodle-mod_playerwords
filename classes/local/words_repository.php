@@ -562,11 +562,40 @@ class words_repository {
         string $dir = 'DESC'
     ): array {
         global $DB;
-        $sql = "SELECT w.id, w.word, w.source, w.approved, g.name AS glossaryname"
+        $sql = "SELECT w.id, w.word, w.source, w.approved, w.concept, g.name AS glossaryname"
             . " FROM {playerwords_words} w"
             . " LEFT JOIN {glossary} g ON g.id = w.glossaryid"
             . " WHERE w.playerwordsid = :playerwordsid"
             . " ORDER BY w.$sort $dir";
         return $DB->get_records_sql($sql, ['playerwordsid' => $instanceid], 0, $limit);
+    }
+
+    /**
+     * Returns the glossary concepts that produced more than one word row for this
+     * instance — i.e. multi-word concepts extract_candidate_words() split into
+     * several sibling tokens (see sync_glossary_words()).
+     *
+     * Each sibling word still carries the full original concept's definition as its
+     * hint, so guessing one in isolation only tests a fragment of what the hint
+     * actually describes — the teacher is expected to review these before publishing.
+     * Scoped to source = 'glossary' on purpose: manual and AI-added words always store
+     * concept = word (a single token, enforced at insert time), so they can never
+     * collide here.
+     *
+     * @param int $instanceid Activity instance id.
+     * @return string[] Concepts (as stored) shared by more than one word row.
+     */
+    public static function get_fragmented_concepts(int $instanceid): array {
+        global $DB;
+
+        $sql = "SELECT concept
+                  FROM {playerwords_words}
+                 WHERE playerwordsid = :playerwordsid
+                       AND source = :source
+                       AND concept IS NOT NULL
+                       AND concept <> ''
+              GROUP BY concept
+                HAVING COUNT(*) > 1";
+        return array_values($DB->get_fieldset_sql($sql, ['playerwordsid' => $instanceid, 'source' => 'glossary']));
     }
 }

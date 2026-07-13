@@ -165,6 +165,7 @@ if (optional_param('generateai', 0, PARAM_BOOL)) {
 }
 
 $recentwords = words_repository::get_recent_words((int)$instance->id, 0, $sort, $dir);
+$fragmentedconcepts = words_repository::get_fragmented_concepts((int)$instance->id);
 
 $editworddata = null;
 if ($editwordid > 0) {
@@ -209,13 +210,28 @@ foreach ($recentwords as $recentword) {
     $editurl->param('dir', $dir);
     $editurl->param('editwordid', $recentword->id);
 
+    $isfragmentedconcept = $recentword->source === 'glossary'
+        && !empty($recentword->concept)
+        && in_array($recentword->concept, $fragmentedconcepts, true);
+
+    $fragmentedconceptwarning = '';
+    if ($isfragmentedconcept) {
+        $fragmentedconceptwarning = get_string(
+            'managewords_fragmentedconcept_warning',
+            'mod_playerwords',
+            format_string($recentword->concept)
+        );
+    }
+
     $templaterows[] = [
-        'id'          => (int)$recentword->id,
-        'word'        => $recentword->word,
-        'source'      => $sourcelabel,
-        'approved'    => $statuslabel,
-        'ispending'   => ((int)$recentword->approved !== 1),
-        'editwordurl' => $editurl->out(false),
+        'id'                       => (int)$recentword->id,
+        'word'                     => $recentword->word,
+        'source'                   => $sourcelabel,
+        'approved'                 => $statuslabel,
+        'ispending'                => ((int)$recentword->approved !== 1),
+        'editwordurl'              => $editurl->out(false),
+        'isfragmentedconcept'      => $isfragmentedconcept,
+        'fragmentedconceptwarning' => $fragmentedconceptwarning,
     ];
 }
 

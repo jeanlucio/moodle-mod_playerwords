@@ -147,6 +147,7 @@ $string['keyboard_enter'] = 'Confirmar';
 $string['keyboard_enter_text'] = 'Enter';
 $string['keyboard_label'] = 'Teclado virtual';
 $string['lobby_timerinfo'] = 'Você tem {$a} para adivinhar a palavra.';
+$string['managewords_fragmentedconcept_warning'] = 'Esta palavra é uma das várias extraídas do mesmo conceito de glossário ("{$a}") — revise se ela faz sentido sozinha.';
 $string['managewordsbutton'] = 'Gerenciar palavras';
 $string['managewordslabel'] = 'Palavras manuais';
 $string['manualhintlabel'] = 'Dica';

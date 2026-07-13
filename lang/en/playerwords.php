@@ -147,6 +147,7 @@ $string['keyboard_enter'] = 'Submit';
 $string['keyboard_enter_text'] = 'Enter';
 $string['keyboard_label'] = 'Virtual keyboard';
 $string['lobby_timerinfo'] = 'You have {$a} to guess the word.';
+$string['managewords_fragmentedconcept_warning'] = 'This word is one of several extracted from the same glossary concept ("{$a}") — review whether it makes sense on its own.';
 $string['managewordsbutton'] = 'Manage words';
 $string['managewordslabel'] = 'Manual words';
 $string['manualhintlabel'] = 'Hint';

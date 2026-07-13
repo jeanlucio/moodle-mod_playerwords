@@ -79,7 +79,9 @@
                 "source": "Manual insertion",
                 "approved": "Approved",
                 "ispending": false,
-                "editwordurl": "https://example.com/mod/playerwords/managewords.php?id=1&editwordid=1"
+                "editwordurl": "https://example.com/mod/playerwords/managewords.php?id=1&editwordid=1",
+                "isfragmentedconcept": false,
+                "fragmentedconceptwarning": ""
             },
             {
                 "id": 2,
@@ -87,7 +89,19 @@
                 "source": "AI extraction",
                 "approved": "Pending",
                 "ispending": true,
-                "editwordurl": "https://example.com/mod/playerwords/managewords.php?id=1&editwordid=2"
+                "editwordurl": "https://example.com/mod/playerwords/managewords.php?id=1&editwordid=2",
+                "isfragmentedconcept": false,
+                "fragmentedconceptwarning": ""
+            },
+            {
+                "id": 3,
+                "word": "second",
+                "source": "Glossary sync (Course glossary)",
+                "approved": "Approved",
+                "ispending": false,
+                "editwordurl": "https://example.com/mod/playerwords/managewords.php?id=1&editwordid=3",
+                "isfragmentedconcept": true,
+                "fragmentedconceptwarning": "This word is one of several extracted from the same glossary concept (\"Second World War\") — review whether it makes sense on its own."
             }
         ]
     }
@@ -298,7 +312,15 @@
                                                aria-label="{{selectword}} {{word}}"
                                                {{#ispending}}data-pending="1"{{/ispending}}>
                                     </td>
-                                    <td>{{word}}</td>
+                                    <td>
+                                        {{word}}
+                                        {{#isfragmentedconcept}}
+                                            <i class="fa fa-exclamation-triangle pw-fragmented-concept-icon"
+                                               role="img"
+                                               aria-label="{{fragmentedconceptwarning}}"
+                                               title="{{fragmentedconceptwarning}}"></i>
+                                        {{/isfragmentedconcept}}
+                                    </td>
                                     <td>{{source}}</td>
                                     <td>{{approved}}</td>
                                     <td>

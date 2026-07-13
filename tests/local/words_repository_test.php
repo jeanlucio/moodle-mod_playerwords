@@ -895,4 +895,72 @@ final class words_repository_test extends \advanced_testcase {
         $this->assertSame('manual', $record->source);
         $this->assertSame('dica do professor', $record->hint);
     }
+
+    /**
+     * A multi-word glossary concept split into several sibling word rows is
+     * reported by get_fragmented_concepts(), keyed by the shared concept text.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_fragmented_concepts
+     * @return void
+     */
+    public function test_get_fragmented_concepts_reports_split_multiword_concept(): void {
+        set_config('glossarystopwords', '', 'mod_playerwords');
+        [$glossary] = $this->make_glossary_entry('sistema solar', 'conjunto de planetas');
+        $instance = $this->make_full_instance(['glossaryid' => $glossary->id]);
+        words_repository::sync_glossary_words($instance);
+
+        $fragmented = words_repository::get_fragmented_concepts($instance->id);
+
+        $this->assertSame(['sistema solar'], $fragmented);
+    }
+
+    /**
+     * A single-word glossary concept never appears in get_fragmented_concepts(),
+     * since it produced only one word row — nothing was actually split.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_fragmented_concepts
+     * @return void
+     */
+    public function test_get_fragmented_concepts_excludes_single_word_concept(): void {
+        [$glossary] = $this->make_glossary_entry('planeta', 'corpo celeste que orbita uma estrela');
+        $instance = $this->make_full_instance(['glossaryid' => $glossary->id]);
+        words_repository::sync_glossary_words($instance);
+
+        $this->assertSame([], words_repository::get_fragmented_concepts($instance->id));
+    }
+
+    /**
+     * Manual and AI words always store concept = word (a single token, enforced at
+     * insert time), so they can never collide into a false positive here even when
+     * two of them happen to share the same text as their concept.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_fragmented_concepts
+     * @return void
+     */
+    public function test_get_fragmented_concepts_ignores_non_glossary_sources(): void {
+        $instance = $this->make_full_instance();
+        words_repository::add_manual_word($instance->id, $this->user->id, 'planeta', 'dica manual');
+        words_repository::add_ai_word($instance->id, $this->user->id, 'estrela', 'dica da ia');
+
+        $this->assertSame([], words_repository::get_fragmented_concepts($instance->id));
+    }
+
+    /**
+     * The fragmented-concept check is scoped to its own activity instance — a
+     * split concept in one instance must not leak into another instance's report,
+     * even when both import from glossaries in the same course.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_fragmented_concepts
+     * @return void
+     */
+    public function test_get_fragmented_concepts_is_scoped_to_its_own_instance(): void {
+        set_config('glossarystopwords', '', 'mod_playerwords');
+        [$glossary] = $this->make_glossary_entry('sistema solar', 'conjunto de planetas');
+        $instance = $this->make_full_instance(['glossaryid' => $glossary->id]);
+        $otherinstance = $this->make_full_instance(['glossaryid' => $glossary->id]);
+        words_repository::sync_glossary_words($instance);
+
+        $this->assertSame(['sistema solar'], words_repository::get_fragmented_concepts($instance->id));
+        $this->assertSame([], words_repository::get_fragmented_concepts($otherinstance->id));
+    }
 }

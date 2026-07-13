@@ -386,6 +386,12 @@
     padding-block: 0.125rem;
 }
 
+.path-mod-playerwords .pw-fragmented-concept-icon {
+    color: var(--warning, #ffc107);
+    margin-inline-start: 0.35rem;
+    cursor: help;
+}
+
 @media (max-width: 576px) {
     .path-mod-playerwords .modal-dialog {
         margin-inline: 0.75rem;
