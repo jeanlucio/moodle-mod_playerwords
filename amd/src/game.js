@@ -427,6 +427,8 @@ const wireKeyboardClicks = (input, form) => {
             const max = parseInt(input.getAttribute('maxlength'), 10);
             if (input.value.length < max) {
                 input.value += key;
+            } else {
+                shakeElement(input);
             }
         }
         input.dispatchEvent(new Event('input'));
@@ -480,13 +482,39 @@ const initGridPreview = () => {
 };
 
 /**
- * Briefly shakes a grid row to signal a wrong guess.
+ * Briefly shakes an element — used both for a wrong guess (grid row) and for a
+ * rejected keystroke past the guess input's maxlength.
  *
- * @param {HTMLElement} row Row element to shake.
+ * @param {HTMLElement} el Element to shake.
  */
-const shakeRow = (row) => {
-    row.classList.add('pw-shake');
-    window.setTimeout(() => row.classList.remove('pw-shake'), 450);
+const shakeElement = (el) => {
+    el.classList.add('pw-shake');
+    window.setTimeout(() => el.classList.remove('pw-shake'), 450);
+};
+
+/**
+ * Shakes the guess input when the player tries to type past its maxlength. The native
+ * HTML attribute already blocks the character on a physical keyboard, but does so
+ * silently — this makes the rejection visible instead of leaving the player wondering
+ * why the letter never appeared. The on-screen keyboard's own length check triggers the
+ * same shake directly in wireKeyboardClicks.
+ */
+const initGuessLengthFeedback = () => {
+    const input = document.getElementById('playerwords-guess');
+    if (!input) {
+        return;
+    }
+    input.addEventListener('keydown', (e) => {
+        // A key name longer than one character means a control/navigation key
+        // (Backspace, ArrowLeft, Shift...) rather than a printable character.
+        if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) {
+            return;
+        }
+        const max = parseInt(input.getAttribute('maxlength'), 10);
+        if (input.value.length >= max) {
+            shakeElement(input);
+        }
+    });
 };
 
 /**
@@ -555,6 +583,7 @@ const wireRoundPanel = (cmid, timertotal) => {
     recolorKeyboard();
     initGridPreview();
     initGuessForm(cmid, timertotal);
+    initGuessLengthFeedback();
     initHintButton(cmid);
 };
 
@@ -796,7 +825,7 @@ const initGuessForm = (cmid, timertotal) => {
 
         startTimer(payload.timeleft, timertotal, cmid);
         if (row) {
-            shakeRow(row);
+            shakeElement(row);
         }
         input.focus();
     });
