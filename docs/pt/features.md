@@ -2,6 +2,7 @@
 
 * 🟩 **Jogo de adivinhação de palavras:** Feedback por letra com código de cores + símbolos (posição correta, posição errada, ausente); o campo de palpite treme quando uma tecla — física ou do teclado virtual na tela — é rejeitada por ultrapassar o comprimento da palavra-alvo, em vez de falhar silenciosamente.
 * 📖 **Integração com Glossário:** Importa conceitos de um ou todos os glossários do curso como pool de palavras, usando as definições como dicas.
+* 🚧 **Stopwords configuráveis:** Uma lista de palavras separadas por vírgula, por atividade (ex.: "de, da, e"), para ignorar ao dividir um conceito de glossário com várias palavras em candidatas — assim um conceito como "Reino dos Países Baixos" ainda gera o termo relevante em vez de sortear "dos" como palavra isolada.
 * 🤖 **Geração de palavras por IA (Opcional):** Gera candidatas a palavra e dica para um tópico livre via `local_aihub` (chave própria) ou fallback para o `core_ai` do Moodle. A resposta é tratada como entrada não confiável — só termos de um único token, puramente alfabéticos e dentro do comprimento configurado são salvos, e entram no pool pendentes de aprovação do professor.
 * ✍️ **Pool de palavras manual:** O professor pode adicionar, editar, aprovar e excluir palavras diretamente na página de gerenciamento.
 * 🔀 **Modos de palavra:** Palavra aleatória por rodada (padrão) ou sequência compartilhada — todos os estudantes recebem as mesmas palavras na mesma ordem.

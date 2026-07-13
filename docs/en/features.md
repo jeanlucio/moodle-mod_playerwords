@@ -2,6 +2,7 @@
 
 * 🟩 **Word-Guessing Gameplay:** Colour-coded + symbol feedback per letter (correct position, wrong position, absent); the guess field shakes when a keystroke — physical or on-screen keyboard — is rejected for exceeding the target word's length, instead of failing silently.
 * 📖 **Glossary Integration:** Import concepts from one or all course glossaries as the word pool, with definitions used as hints.
+* 🚧 **Configurable Stopwords:** A per-activity, comma-separated list of words (e.g. "the, of, and") to ignore when splitting a multi-word glossary concept into candidates — so a concept like "Kingdom of the Netherlands" can still yield the meaningful term instead of also drawing "of" and "the" as separate one-off words.
 * 🤖 **AI Word Generation (Optional):** Generate candidate words and hints for a given topic via `local_aihub` (BYOK) or Moodle's `core_ai` fallback. Generated words are treated as untrusted input — only single-token, purely alphabetic terms within the configured length bounds are saved, and they enter the pool pending teacher approval.
 * ✍️ **Manual Word Pool:** Teachers can add, edit, approve, and delete words directly from the management page.
 * 🔀 **Word Modes:** Random word per round (default) or shared sequence mode, where every student receives the same words in the same order.

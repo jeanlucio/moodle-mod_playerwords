@@ -38,15 +38,15 @@ services e conformidade com a Privacy API. Todo push de CI executa a matriz comp
 | Arquivo de teste | Casos | O que é coberto |
 |-----------------|------:|----------------|
 | `count_eligible_words_test.php` | 5 | Conta só palavras aprovadas do banco cujo comprimento cai dentro do intervalo pedido; exclui palavras não aprovadas e fora do intervalo; restrito à própria instância da atividade; exige a capability `mod/playerwords:addinstance` (rejeita um estudante) |
-| `count_glossary_candidates_test.php` | 3 | Conta palavras candidatas de um glossário específico dentro do intervalo de comprimento pedido; uma palavra fora do intervalo é excluída; exige a capability `mod/playerwords:addinstance` (rejeita um estudante) |
+| `count_glossary_candidates_test.php` | 4 | Conta palavras candidatas de um glossário específico dentro do intervalo de comprimento pedido; uma palavra fora do intervalo é excluída; uma stopword passada diretamente do formulário de configurações (ainda sem instância salva) remove o token correspondente antes da contagem; exige a capability `mod/playerwords:addinstance` (rejeita um estudante) |
 | `end_round_test.php` | 4 | Desistência termina a rodada; timeout termina a rodada; um valor inválido de `reason` é rejeitado; a capability `mod/playerwords:view` é exigida |
 | `new_round_test.php` | 3 | Nova rodada sorteia palavra nova; bloqueado quando o limite de rodadas já foi atingido; a capability `mod/playerwords:view` é exigida |
 | `reveal_hint_test.php` | 6 | Dica é revelada; revelar duas vezes é idempotente; rejeitado após a rodada terminar; a capability `mod/playerwords:view` é exigida; saldo insuficiente de item do PlayerHUD (item real, válido) bloqueia a revelação; um custo apontando pra um item excluído é dispensado em vez disso |
 | `start_round_test.php` | 5 | Cronômetro da rodada inicia; rejeitado quando já iniciado; a capability `mod/playerwords:view` é exigida; saldo insuficiente de item do PlayerHUD (item real, válido) bloqueia o início; um custo apontando pra um item excluído é dispensado em vez disso |
 | `submit_guess_test.php` | 7 | Um chute errado nunca revela a palavra; um chute correto revela só quando termina; um chute perdedor também revela; a capability `mod/playerwords:view` é exigida; `timeleft` reflete os segundos restantes durante a rodada; `timeleft` fica congelado no momento em que a rodada terminou, não no relógio real; um total de ranking fracionado sobrevive à limpeza de retorno da API externa, contra a chamada real da webservice |
-| **Subtotal** | **33** | |
+| **Subtotal** | **34** | |
 
-| **Total Geral** | **304** | |
+| **Total Geral** | **305** | |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords

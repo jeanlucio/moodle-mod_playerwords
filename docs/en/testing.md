@@ -38,15 +38,15 @@ services, and Privacy API compliance. Every CI push runs against the full matrix
 | Test file | Cases | What is covered |
 |-----------|------:|----------------|
 | `count_eligible_words_test.php` | 5 | Counts only approved pool words whose length falls within the requested range; excludes unapproved words and words outside the range; scoped to its own activity instance; requires the `mod/playerwords:addinstance` capability (rejects a student) |
-| `count_glossary_candidates_test.php` | 3 | Counts candidate words for a specific glossary within the requested length range; a word outside the range is excluded; requires the `mod/playerwords:addinstance` capability (rejects a student) |
+| `count_glossary_candidates_test.php` | 4 | Counts candidate words for a specific glossary within the requested length range; a word outside the range is excluded; a stopword passed straight from the settings form (not yet saved to any instance) drops the matching token before counting; requires the `mod/playerwords:addinstance` capability (rejects a student) |
 | `end_round_test.php` | 4 | Forfeit finishes the round; timeout finishes the round; an invalid `reason` value is rejected; the `mod/playerwords:view` capability is required |
 | `new_round_test.php` | 3 | A new round picks a fresh word; blocked when the round limit was already reached; the `mod/playerwords:view` capability is required |
 | `reveal_hint_test.php` | 6 | Hint is revealed; revealing twice is idempotent; rejected once the round is finished; the `mod/playerwords:view` capability is required; an insufficient PlayerHUD item balance (a real, valid item) blocks the reveal; a cost pointing at a deleted item is waived instead |
 | `start_round_test.php` | 5 | Round timer starts; rejected when already started; the `mod/playerwords:view` capability is required; an insufficient PlayerHUD item balance (a real, valid item) blocks starting; a cost pointing at a deleted item is waived instead |
 | `submit_guess_test.php` | 7 | A wrong guess never reveals the word; a correct guess reveals it only once finished; a losing guess also reveals it; the `mod/playerwords:view` capability is required; `timeleft` reflects seconds remaining while in progress; `timeleft` is frozen at the moment the round finished, not the wall clock; a fractional ranking total survives the external API's return-value cleaning, against the real webservice call |
-| **Subtotal** | **33** | |
+| **Subtotal** | **34** | |
 
-| **Grand Total** | **304** | |
+| **Grand Total** | **305** | |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords

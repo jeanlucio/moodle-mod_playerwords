@@ -38,15 +38,15 @@ services e conformidade com a Privacy API. Todo push de CI executa a matriz comp
 | Arquivo de teste | Casos |
 |-----------------|------:|
 | `count_eligible_words_test.php` | 5 |
-| `count_glossary_candidates_test.php` | 3 |
+| `count_glossary_candidates_test.php` | 4 |
 | `end_round_test.php` | 4 |
 | `new_round_test.php` | 3 |
 | `reveal_hint_test.php` | 6 |
 | `start_round_test.php` | 5 |
 | `submit_guess_test.php` | 7 |
-| **Subtotal** | **33** |
+| **Subtotal** | **34** |
 
-| **Total Geral** | **304** |
+| **Total Geral** | **305** |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords
