@@ -83,7 +83,7 @@ class ai_word_generator {
             }
 
             $term = trim($item['term'] ?? '');
-            $hint = trim($item['hint'] ?? '');
+            $hint = trim(strip_tags($item['hint'] ?? ''));
 
             if (!self::is_valid_term($term)) {
                 continue;

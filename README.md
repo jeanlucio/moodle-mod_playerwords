@@ -21,6 +21,17 @@ Designed around **retrieval practice** and **spaced repetition** — well-eviden
 
 📚 **[Full documentation](https://jeanlucio.github.io/moodle-mod_playerwords/)** — features, educational purpose, the PlayerGames ecosystem, usage guide, grading & ranking model, the full 256-case test suite, and security details.
 
+### 🔒 Third-party Service Disclosure
+
+AI word generation is **optional** and fully disabled by default. When a teacher uses it, the
+activity topic (never student data or attempt records) is sent through **local_aihub** — using
+that user's or the site's own BYOK key, if the plugin is installed — or, as a fallback, through
+Moodle's own **core AI subsystem** (`core_ai`), which routes to whatever provider the site
+administrator has configured. PlayerWords never contacts an AI provider directly; the request
+and its disclosure/consent are entirely owned by `local_aihub` or by `core_ai`. If neither is
+installed or configured, the AI word source is unavailable and every other feature keeps
+working normally.
+
 ### 📦 Requirements
 
 | Component | Version |
@@ -66,6 +77,18 @@ A atividade integra-se com o **Glossário** do curso (palavras e definições s�
 Baseado na **prática de recuperação** e na **repetição espaçada** — técnicas com boa evidência de eficácia para retenção de longo prazo — transforma a revisão de vocabulário em recuperação ativa da memória em vez de leitura passiva.
 
 📚 **[Documentação completa](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html)** — funcionalidades, finalidade educacional, ecossistema PlayerGames, guia de uso, modelo de nota e ranking, a suíte completa de 256 testes, e detalhes de segurança.
+
+### 🔒 Divulgação de Serviço de Terceiros
+
+A geração de palavras por IA é **opcional** e vem desativada por padrão. Quando um professor a
+usa, o tema da atividade (nunca dados de estudante ou registros de tentativa) é enviado através
+do **local_aihub** — usando a chave própria (BYOK) do usuário ou do site, se o plugin estiver
+instalado — ou, como alternativa, através do subsistema de IA nativo do Moodle (`core_ai`), que
+roteia para o provedor configurado pelo administrador do site. O PlayerWords nunca contata um
+provedor de IA diretamente; a requisição e sua divulgação/consentimento são de responsabilidade
+exclusiva do `local_aihub` ou do `core_ai`. Se nenhum dos dois estiver instalado ou configurado,
+a fonte de palavras por IA fica indisponível e todas as outras funcionalidades continuam
+funcionando normalmente.
 
 ### 📦 Requisitos
 
