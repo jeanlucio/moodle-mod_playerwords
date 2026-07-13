@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['actionscolumnlabel'] = 'Ações';
-$string['activewordscount'] = '{$a} palavras ativas neste jogo.';
+$string['activewordscount'] = 'Palavras ativas neste jogo: {$a}.';
 $string['addwordbutton'] = 'Adicionar palavra';
 $string['aigeneratebutton'] = 'Gerar com IA';
 $string['aigeneratecount'] = 'Quantidade de palavras';
@@ -149,7 +149,7 @@ $string['hud_win_grant_item_help'] = 'O estudante recebe este item toda vez que 
 $string['hud_win_grant_qty'] = 'Quantidade concedida por rodada vencida';
 $string['inactivewords_invalidchars'] = 'Com caractere que o jogo não consegue usar ({$a->count}): {$a->words}.';
 $string['inactivewords_length'] = 'Fora do intervalo de comprimento atual ({$a->count}): {$a->words}.';
-$string['inactivewords_title'] = 'Palavras inativas neste jogo';
+$string['inactivewords_title'] = 'Palavras inativas neste jogo: ';
 $string['keyboard_backspace'] = 'Apagar última letra';
 $string['keyboard_enter'] = 'Confirmar';
 $string['keyboard_enter_text'] = 'Enter';
