@@ -24,8 +24,9 @@ body {
 }
 
 .page-header {
+  position: relative;
   color: #fff;
-  background-color: #1a1a1a;
+  background-color: #0a0000;
   text-align: center;
 }
 
@@ -36,7 +37,11 @@ body {
 }
 
 .page-header-info {
-  padding: 1.5rem 1.5rem 2rem;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 0 1.5rem 2rem;
 }
 
 .project-name {
@@ -210,6 +215,24 @@ body {
   color: var(--text-muted);
   font-size: 0.85rem;
   border-top: 1px solid var(--border);
+}
+
+@media (max-width: 1050px) {
+  /* Below this width the banner shrinks too much for the overlaid text to
+     fit over its dark footer band without covering the wordmark above it —
+     fall back to a plain bar under the image instead, cropping away the
+     footer band the banner file reserves for the overlay at wider widths. */
+  .page-header-banner {
+    aspect-ratio: 2560 / 460;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  .page-header-info {
+    position: static;
+    background-color: #0a0000;
+    padding: 1.5rem 1.5rem 2rem;
+  }
 }
 
 @media (max-width: 800px) {
