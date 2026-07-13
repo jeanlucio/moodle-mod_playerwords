@@ -156,9 +156,11 @@
     {{/hastargetword}}
 
     {{#showwordsstatus}}
-        <p class="mod-playerwords-words-status text-muted small mb-2">{{activewordscount}}</p>
         {{#hasinactivewords}}
             {{> mod_playerwords/inactive_words}}
+        {{/hasinactivewords}}
+        {{^hasinactivewords}}
+            <p class="mod-playerwords-words-status text-muted small mb-2">{{activewordscount}}</p>
         {{/hasinactivewords}}
     {{/showwordsstatus}}
 

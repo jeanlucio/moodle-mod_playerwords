@@ -24,6 +24,7 @@
 
     Example context (json):
     {
+        "activewordscount": "5 active words in this game.",
         "inactivewordstitle": "Inactive words in this game",
         "haslengthissues": true,
         "lengthissuestext": "Outside the current length range (2): iluminismo, revolucao.",
@@ -32,6 +33,7 @@
     }
 }}
 <div class="mod-playerwords-inactive-words alert alert-warning">
+    <p class="mb-1"><strong>{{activewordscount}}</strong></p>
     <p class="mb-1"><strong>{{inactivewordstitle}}</strong></p>
     <ul class="mb-0">
         {{#haslengthissues}}
