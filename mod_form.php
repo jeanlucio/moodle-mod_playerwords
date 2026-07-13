@@ -132,8 +132,26 @@ class mod_playerwords_mod_form extends moodleform_mod {
                 'static',
                 'eligiblewordscount',
                 '',
-                html_writer::span('', 'text-muted', ['id' => 'playerwords-eligible-count'])
+                html_writer::div('', 'alert alert-info py-2 mb-2', [
+                    'id'         => 'playerwords-eligible-count',
+                    'aria-live'  => 'polite',
+                ])
             );
+        } else {
+            // No pool exists yet on first creation, but a glossary source already
+            // does — preview how many of its entries would fit the configured
+            // range. Read-only: nothing is written until the form is actually
+            // saved, at which point the real sync creates the pool for real.
+            $mform->addElement(
+                'static',
+                'glossarywordscount',
+                '',
+                html_writer::div('', 'alert alert-info py-2 mb-2', [
+                    'id'         => 'playerwords-glossary-preview-count',
+                    'aria-live'  => 'polite',
+                ])
+            );
+            $mform->hideIf('glossarywordscount', 'source_glossary', 'notchecked');
         }
 
         $mform->addElement('text', 'timer_minutes', get_string('timer_minutes', 'mod_playerwords'));
@@ -297,6 +315,15 @@ class mod_playerwords_mod_form extends moodleform_mod {
                 'id_min_length',
                 'id_max_length',
                 'playerwords-eligible-count',
+            ]);
+        } else {
+            $PAGE->requires->js_call_amd('mod_playerwords/glossarypreview', 'init', [
+                (int) $COURSE->id,
+                'id_source_glossary',
+                'id_glossaryid',
+                'id_min_length',
+                'id_max_length',
+                'playerwords-glossary-preview-count',
             ]);
         }
 

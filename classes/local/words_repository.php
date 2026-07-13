@@ -37,10 +37,14 @@ class words_repository {
      * non-stopword token becomes a separate candidate. If all tokens are stopwords,
      * or if no stopwords are configured, every token is returned.
      *
+     * Public so it can be reused to preview a glossary's candidate words before an
+     * activity even exists (see classes/external/count_glossary_candidates.php),
+     * not just during the real sync_glossary_words() import.
+     *
      * @param string $concept Raw concept string from a glossary entry.
      * @return string[]
      */
-    private static function extract_candidate_words(string $concept): array {
+    public static function extract_candidate_words(string $concept): array {
         $tokens = preg_split('/\s+/u', $concept, -1, PREG_SPLIT_NO_EMPTY);
         $tokens = array_values(array_filter($tokens, fn($t) => word_normalizer::is_valid_charset($t)));
         if ($tokens === []) {
@@ -660,5 +664,72 @@ class words_repository {
             $counts[(int)$record->wordid] = (int)$record->timesdrawn;
         }
         return $counts;
+    }
+
+    /**
+     * Previews how many distinct words a glossary source would contribute to the
+     * pool within a given length range — the read-only counterpart to
+     * sync_glossary_words(), for the settings form while creating a brand-new
+     * activity, before any instance (and therefore any real pool) exists yet.
+     * Nothing is written; the real sync only happens once the activity is saved.
+     *
+     * @param int $courseid Course id.
+     * @param int $glossaryid Specific glossary id, or 0 for every glossary in the course.
+     * @param int $minlength Candidate minimum word length.
+     * @param int $maxlength Candidate maximum word length.
+     * @return int
+     */
+    public static function count_glossary_candidates(
+        int $courseid,
+        int $glossaryid,
+        int $minlength,
+        int $maxlength
+    ): int {
+        global $DB;
+
+        if ($glossaryid > 0) {
+            // The glossary id comes straight from client input — never trust it
+            // without confirming it actually belongs to this course, the same
+            // instance-isolation rule every other externally-supplied id follows.
+            if (!$DB->record_exists('glossary', ['id' => $glossaryid, 'course' => $courseid])) {
+                return 0;
+            }
+            $glossaryids = [$glossaryid];
+        } else {
+            $glossaryids = $DB->get_fieldset_select(
+                'glossary',
+                'id',
+                'course = :course',
+                ['course' => $courseid]
+            );
+            if (empty($glossaryids)) {
+                return 0;
+            }
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($glossaryids, SQL_PARAMS_NAMED, 'gid');
+        $concepts = $DB->get_fieldset_select(
+            'glossary_entries',
+            'concept',
+            "glossaryid $insql AND approved = 1",
+            $inparams
+        );
+
+        $candidates = [];
+        foreach ($concepts as $concept) {
+            foreach (self::extract_candidate_words(trim($concept)) as $word) {
+                $wordlength = core_text::strlen($word);
+                if ($wordlength < $minlength || $wordlength > $maxlength) {
+                    continue;
+                }
+                // Two different concepts can tokenise into the same word (e.g. a
+                // stopword-adjacent term repeated across entries) — sync_glossary_words()
+                // only ever creates one row for it, so dedupe here too for an accurate
+                // preview of what the real sync would actually produce.
+                $candidates[core_text::strtolower($word)] = true;
+            }
+        }
+
+        return count($candidates);
     }
 }

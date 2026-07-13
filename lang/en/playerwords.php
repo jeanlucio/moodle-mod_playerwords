@@ -101,6 +101,7 @@ $string['glossaryid_all'] = 'All course glossaries';
 $string['glossarystopwords'] = 'Glossary concept stopwords';
 $string['glossarystopwords_desc'] = 'Comma-separated list of words to ignore when splitting multi-word glossary concepts into game candidates. Leave empty to disable filtering (the minimum word length set on each activity still applies). Suggested list: a, an, and, as, at, by, for, from, if, in, into, is, it, its, not, of, on, or, so, the, this, to, up, was, with.';
 $string['glossarysynced'] = 'Glossary words synced. {$a} new term(s) imported.';
+$string['glossarywordscount'] = '{$a} words from the glossary source fit this range.';
 $string['grademethod'] = 'Grading method';
 $string['grademethod_average'] = 'Average grade';
 $string['grademethod_average_all'] = 'Average over all required rounds';

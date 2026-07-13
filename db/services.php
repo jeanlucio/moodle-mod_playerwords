@@ -73,4 +73,12 @@ $functions = [
         'capabilities'  => 'mod/playerwords:addinstance',
         'loginrequired' => true,
     ],
+    'mod_playerwords_count_glossary_candidates' => [
+        'classname'     => 'mod_playerwords\external\count_glossary_candidates',
+        'description'   => 'Preview how many glossary-sourced words fit a length range, before an activity exists.',
+        'type'          => 'read',
+        'ajax'          => true,
+        'capabilities'  => 'mod/playerwords:addinstance',
+        'loginrequired' => true,
+    ],
 ];

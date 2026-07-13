@@ -101,6 +101,7 @@ $string['glossaryid_all'] = 'Todos os glossários do curso';
 $string['glossarystopwords'] = 'Palavras ignoradas nos conceitos do glossário';
 $string['glossarystopwords_desc'] = 'Lista de palavras separadas por vírgula para ignorar ao dividir conceitos de glossário com múltiplas palavras em candidatas para o jogo. Deixe vazio para desativar o filtro (o tamanho mínimo de palavra configurado em cada atividade ainda se aplica). Sugestão: a, ao, aos, às, as, com, da, das, de, do, dos, e, em, entre, na, nas, nem, no, nos, o, os, ou, para, pela, pelas, pelo, pelos, por, que, se, sob, um, uma, uns, umas.';
 $string['glossarysynced'] = 'Palavras do glossário sincronizadas. {$a} novo(s) termo(s) importado(s).';
+$string['glossarywordscount'] = '{$a} palavras da fonte de glossário se encaixam neste intervalo.';
 $string['grademethod'] = 'Método de avaliação';
 $string['grademethod_average'] = 'Nota média';
 $string['grademethod_average_all'] = 'Média sobre todas as rodadas obrigatórias';

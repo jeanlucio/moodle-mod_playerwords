@@ -1121,4 +1121,96 @@ final class words_repository_test extends \advanced_testcase {
         $this->assertSame([], words_repository::get_draw_counts($instance->id));
         $this->assertSame(1, words_repository::get_draw_counts($otherinstance->id)[$wordid]);
     }
+
+    /**
+     * Counts only the candidate words within the requested length range, for a
+     * specific glossary — mirrors what sync_glossary_words() would actually import.
+     *
+     * @covers \mod_playerwords\local\words_repository::count_glossary_candidates
+     * @return void
+     */
+    public function test_count_glossary_candidates_counts_within_range(): void {
+        set_config('glossarystopwords', '', 'mod_playerwords');
+        [$glossary] = $this->make_glossary_entry('sistema solar', 'conjunto de planetas');
+
+        $count = words_repository::count_glossary_candidates($this->course->id, $glossary->id, 5, 6);
+
+        // Sistema (7 letters) is out of range; solar (5 letters) is in range.
+        $this->assertSame(1, $count);
+    }
+
+    /**
+     * glossaryid = 0 counts candidates across every glossary in the course, not
+     * just the first one created.
+     *
+     * @covers \mod_playerwords\local\words_repository::count_glossary_candidates
+     * @return void
+     */
+    public function test_count_glossary_candidates_zero_covers_all_course_glossaries(): void {
+        set_config('glossarystopwords', '', 'mod_playerwords');
+        $this->make_glossary_entry('planeta', 'corpo celeste');
+        $secondglossary = $this->getDataGenerator()->create_module('glossary', ['course' => $this->course->id]);
+        $this->getDataGenerator()->get_plugin_generator('mod_glossary')->create_content($secondglossary, [
+            'concept'    => 'estrela',
+            'definition' => 'corpo celeste luminoso',
+            'approved'   => 1,
+        ]);
+
+        $count = words_repository::count_glossary_candidates($this->course->id, 0, 1, 30);
+
+        $this->assertSame(2, $count);
+    }
+
+    /**
+     * Two different concepts tokenising into the same word are only counted once
+     * — the same deduplication sync_glossary_words() itself applies.
+     *
+     * @covers \mod_playerwords\local\words_repository::count_glossary_candidates
+     * @return void
+     */
+    public function test_count_glossary_candidates_deduplicates_repeated_tokens(): void {
+        set_config('glossarystopwords', '', 'mod_playerwords');
+        $glossary = $this->getDataGenerator()->create_module('glossary', ['course' => $this->course->id]);
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_glossary');
+        $generator->create_content($glossary, ['concept' => 'planeta', 'definition' => 'um', 'approved' => 1]);
+        $generator->create_content($glossary, ['concept' => 'Planeta', 'definition' => 'dois', 'approved' => 1]);
+
+        $count = words_repository::count_glossary_candidates($this->course->id, $glossary->id, 1, 30);
+
+        $this->assertSame(1, $count);
+    }
+
+    /**
+     * A glossary id that belongs to a different course is never counted, even
+     * though the id itself is a real, valid glossary — the instance-isolation
+     * rule for any externally-supplied id.
+     *
+     * @covers \mod_playerwords\local\words_repository::count_glossary_candidates
+     * @return void
+     */
+    public function test_count_glossary_candidates_ignores_glossary_from_another_course(): void {
+        $othercourse = $this->getDataGenerator()->create_course();
+        $foreignglossary = $this->getDataGenerator()->create_module('glossary', ['course' => $othercourse->id]);
+        $this->getDataGenerator()->get_plugin_generator('mod_glossary')->create_content($foreignglossary, [
+            'concept'    => 'planeta',
+            'definition' => 'corpo celeste',
+            'approved'   => 1,
+        ]);
+
+        $count = words_repository::count_glossary_candidates($this->course->id, $foreignglossary->id, 1, 30);
+
+        $this->assertSame(0, $count);
+    }
+
+    /**
+     * A course with no glossaries at all counts zero, without error.
+     *
+     * @covers \mod_playerwords\local\words_repository::count_glossary_candidates
+     * @return void
+     */
+    public function test_count_glossary_candidates_zero_when_no_glossaries_exist(): void {
+        $emptycourse = $this->getDataGenerator()->create_course();
+
+        $this->assertSame(0, words_repository::count_glossary_candidates($emptycourse->id, 0, 1, 30));
+    }
 }
