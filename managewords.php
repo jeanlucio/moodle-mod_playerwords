@@ -26,6 +26,7 @@ require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
 use mod_playerwords\local\ai_word_generator;
+use mod_playerwords\local\word_normalizer;
 use mod_playerwords\local\words_repository;
 
 $id = required_param('id', PARAM_INT);
@@ -71,6 +72,9 @@ if (optional_param('addword', 0, PARAM_BOOL)) {
     if ($manualword === '') {
         $notification = get_string('error_manualwordrequired', 'mod_playerwords');
         $notificationtype = 'warning';
+    } else if (!word_normalizer::is_valid_charset($manualword)) {
+        $notification = get_string('error_manualwordinvalidchars', 'mod_playerwords');
+        $notificationtype = 'warning';
     } else if ($wordlength < (int)$instance->min_length || $wordlength > (int)$instance->max_length) {
         $notification = get_string(
             'error_manualwordlength',
@@ -98,6 +102,10 @@ if (optional_param('saveword', 0, PARAM_BOOL)) {
 
     if ($manualword === '') {
         $notification = get_string('error_manualwordrequired', 'mod_playerwords');
+        $notificationtype = 'warning';
+        $editwordid = $wordid;
+    } else if (!word_normalizer::is_valid_charset($manualword)) {
+        $notification = get_string('error_manualwordinvalidchars', 'mod_playerwords');
         $notificationtype = 'warning';
         $editwordid = $wordid;
     } else if ($wordlength < (int)$instance->min_length || $wordlength > (int)$instance->max_length) {
@@ -166,6 +174,7 @@ if (optional_param('generateai', 0, PARAM_BOOL)) {
 
 $recentwords = words_repository::get_recent_words((int)$instance->id, 0, $sort, $dir);
 $fragmentedconcepts = words_repository::get_fragmented_concepts((int)$instance->id);
+$drawcounts = words_repository::get_draw_counts((int)$instance->id);
 
 $editworddata = null;
 if ($editwordid > 0) {
@@ -232,6 +241,7 @@ foreach ($recentwords as $recentword) {
         'editwordurl'              => $editurl->out(false),
         'isfragmentedconcept'      => $isfragmentedconcept,
         'fragmentedconceptwarning' => $fragmentedconceptwarning,
+        'drawcount'                => $drawcounts[(int)$recentword->id] ?? 0,
     ];
 }
 
@@ -270,6 +280,7 @@ $templatecontext = [
     'wordcolumnlabel'        => get_string('wordcolumnlabel', 'mod_playerwords'),
     'sourcecolumnlabel'      => get_string('sourcecolumnlabel', 'mod_playerwords'),
     'statuscolumnlabel'      => get_string('statuscolumnlabel', 'mod_playerwords'),
+    'drawcountcolumnlabel'   => get_string('drawcountcolumnlabel', 'mod_playerwords'),
     'actionscolumnlabel'     => get_string('actionscolumnlabel', 'mod_playerwords'),
     'deletewordbutton'       => get_string('deletewordbutton', 'mod_playerwords'),
     'deletewordconfirm'      => get_string('deletewordconfirm', 'mod_playerwords'),

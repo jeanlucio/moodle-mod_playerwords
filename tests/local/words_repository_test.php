@@ -963,4 +963,162 @@ final class words_repository_test extends \advanced_testcase {
         $this->assertSame(['sistema solar'], words_repository::get_fragmented_concepts($instance->id));
         $this->assertSame([], words_repository::get_fragmented_concepts($otherinstance->id));
     }
+
+    /**
+     * A word with no issues never appears in get_inactive_words().
+     *
+     * @covers \mod_playerwords\local\words_repository::get_inactive_words
+     * @return void
+     */
+    public function test_get_inactive_words_empty_when_no_issues(): void {
+        $instance = $this->make_full_instance(['min_length' => 4, 'max_length' => 6]);
+        $this->make_word($instance->id, 'boca');
+
+        $this->assertSame([], words_repository::get_inactive_words($instance));
+    }
+
+    /**
+     * An approved word outside the current length range is reported with reason
+     * "length".
+     *
+     * @covers \mod_playerwords\local\words_repository::get_inactive_words
+     * @return void
+     */
+    public function test_get_inactive_words_reports_length_mismatch(): void {
+        $instance = $this->make_full_instance(['min_length' => 4, 'max_length' => 6]);
+        $this->make_word($instance->id, 'planeta');
+
+        $inactive = words_repository::get_inactive_words($instance);
+
+        $this->assertCount(1, $inactive);
+        $this->assertSame('planeta', $inactive[0]['word']);
+        $this->assertSame('length', $inactive[0]['reason']);
+    }
+
+    /**
+     * An approved word saved with a character the game cannot use is reported with
+     * reason "invalidchars" — this can only happen from data saved before charset
+     * validation existed on the manual-word form, or inserted through another path.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_inactive_words
+     * @return void
+     */
+    public function test_get_inactive_words_reports_invalid_charset(): void {
+        $instance = $this->make_full_instance(['min_length' => 1, 'max_length' => 30]);
+        $this->make_word($instance->id, 'café-com-leite');
+
+        $inactive = words_repository::get_inactive_words($instance);
+
+        $this->assertCount(1, $inactive);
+        $this->assertSame('café-com-leite', $inactive[0]['word']);
+        $this->assertSame('invalidchars', $inactive[0]['reason']);
+    }
+
+    /**
+     * A pending (unapproved) word is never reported — it was never eligible to play
+     * in the first place, so there is nothing "newly" inactive about it.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_inactive_words
+     * @return void
+     */
+    public function test_get_inactive_words_ignores_unapproved_words(): void {
+        $instance = $this->make_full_instance(['min_length' => 4, 'max_length' => 6]);
+        $this->make_word($instance->id, 'planeta', 0);
+
+        $this->assertSame([], words_repository::get_inactive_words($instance));
+    }
+
+    /**
+     * No attempts recorded means no entry in the draw-count map at all — a word
+     * that was never drawn is absent, not present with a zero.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_draw_counts
+     * @return void
+     */
+    public function test_get_draw_counts_absent_when_never_drawn(): void {
+        $instance = $this->make_full_instance();
+        $this->make_word($instance->id, 'boca');
+
+        $this->assertSame([], words_repository::get_draw_counts($instance->id));
+    }
+
+    /**
+     * Every attempt row counts towards the total, regardless of outcome.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_draw_counts
+     * @return void
+     */
+    public function test_get_draw_counts_sums_all_attempts_regardless_of_outcome(): void {
+        global $DB;
+
+        $instance = $this->make_full_instance();
+        $wordid = $DB->insert_record('playerwords_words', (object)[
+            'playerwordsid' => $instance->id,
+            'word'          => 'boca',
+            'concept'       => 'boca',
+            'hint'          => '',
+            'source'        => 'manual',
+            'glossaryid'    => 0,
+            'approved'      => 1,
+            'timecreated'   => time(),
+            'addedby'       => $this->user->id,
+        ]);
+
+        foreach ([1, 0, 0] as $completed) {
+            $DB->insert_record('playerwords_attempts', (object)[
+                'playerwordsid' => $instance->id,
+                'userid'        => $this->user->id,
+                'wordid'        => $wordid,
+                'attempts_used' => 1,
+                'time_used'     => 5,
+                'completed'     => $completed,
+                'score'         => $completed ? 100 : 0,
+                'timecreated'   => time(),
+                'timefinished'  => $completed ? time() : 0,
+            ]);
+        }
+
+        $counts = words_repository::get_draw_counts($instance->id);
+
+        $this->assertSame(3, $counts[$wordid]);
+    }
+
+    /**
+     * Draw counts are scoped to their own instance — attempts recorded against the
+     * same word id in a different instance must never be added in.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_draw_counts
+     * @return void
+     */
+    public function test_get_draw_counts_is_scoped_to_its_own_instance(): void {
+        global $DB;
+
+        $instance = $this->make_full_instance();
+        $otherinstance = $this->make_full_instance();
+        $wordid = $DB->insert_record('playerwords_words', (object)[
+            'playerwordsid' => $otherinstance->id,
+            'word'          => 'boca',
+            'concept'       => 'boca',
+            'hint'          => '',
+            'source'        => 'manual',
+            'glossaryid'    => 0,
+            'approved'      => 1,
+            'timecreated'   => time(),
+            'addedby'       => $this->user->id,
+        ]);
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $otherinstance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => $wordid,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+
+        $this->assertSame([], words_repository::get_draw_counts($instance->id));
+        $this->assertSame(1, words_repository::get_draw_counts($otherinstance->id)[$wordid]);
+    }
 }

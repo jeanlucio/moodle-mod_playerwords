@@ -59,4 +59,35 @@ final class word_normalizer_test extends \basic_testcase {
     public function test_normalize(string $input, string $expected): void {
         $this->assertSame($expected, word_normalizer::normalize($input));
     }
+
+    /**
+     * Provides words and whether they are made up exclusively of letters.
+     *
+     * @return array[]
+     */
+    public static function is_valid_charset_provider(): array {
+        return [
+            'plain lowercase'   => ['gato', true],
+            'accented letters'  => ['ação', true],
+            'mixed case'        => ['GaTo', true],
+            'contains digit'    => ['gato1', false],
+            'contains space'    => ['gato preto', false],
+            'contains hyphen'   => ['café-com-leite', false],
+            'contains apostrophe' => ["d'agua", false],
+            'empty string'      => ['', false],
+        ];
+    }
+
+    /**
+     * Tests that is_valid_charset accepts only strings made up of letters.
+     *
+     * @covers \mod_playerwords\local\word_normalizer::is_valid_charset
+     * @dataProvider is_valid_charset_provider
+     * @param string $word Word to check.
+     * @param bool $expected Expected result.
+     * @return void
+     */
+    public function test_is_valid_charset(string $word, bool $expected): void {
+        $this->assertSame($expected, word_normalizer::is_valid_charset($word));
+    }
 }

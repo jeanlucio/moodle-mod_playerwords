@@ -42,7 +42,7 @@ class words_repository {
      */
     private static function extract_candidate_words(string $concept): array {
         $tokens = preg_split('/\s+/u', $concept, -1, PREG_SPLIT_NO_EMPTY);
-        $tokens = array_values(array_filter($tokens, fn($t) => (bool)preg_match('/^[\p{L}]+$/u', $t)));
+        $tokens = array_values(array_filter($tokens, fn($t) => word_normalizer::is_valid_charset($t)));
         if ($tokens === []) {
             return [];
         }
@@ -96,7 +96,7 @@ class words_repository {
             if ($wordlength < (int)$instance->min_length || $wordlength > (int)$instance->max_length) {
                 continue;
             }
-            if (!preg_match('/^[\p{L}]+$/u', $word)) {
+            if (!word_normalizer::is_valid_charset($word)) {
                 continue;
             }
             $candidates[] = $record;
@@ -597,5 +597,68 @@ class words_repository {
               GROUP BY concept
                 HAVING COUNT(*) > 1";
         return array_values($DB->get_fieldset_sql($sql, ['playerwordsid' => $instanceid, 'source' => 'glossary']));
+    }
+
+    /**
+     * Returns every approved word that get_candidate_words() would silently exclude
+     * from play — either outside the instance's current length range, or containing
+     * a character the game cannot use. A word can end up here after being approved:
+     * the instance's length range was edited afterwards, or (before charset
+     * validation was added to the manual-word form) it was saved with punctuation,
+     * digits or spaces. Used to warn the teacher directly on view.php.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @return array<int, array{word: string, reason: string}> Reason is 'length' or 'invalidchars'.
+     */
+    public static function get_inactive_words(\stdClass $instance): array {
+        global $DB;
+
+        $records = $DB->get_records_select(
+            'playerwords_words',
+            'playerwordsid = :playerwordsid AND approved = :approved',
+            ['playerwordsid' => $instance->id, 'approved' => 1],
+            '',
+            'id, word'
+        );
+
+        $inactive = [];
+        foreach ($records as $record) {
+            $word = trim($record->word);
+            if (!word_normalizer::is_valid_charset($word)) {
+                $inactive[] = ['word' => $word, 'reason' => 'invalidchars'];
+                continue;
+            }
+            $wordlength = core_text::strlen($word);
+            if ($wordlength < (int)$instance->min_length || $wordlength > (int)$instance->max_length) {
+                $inactive[] = ['word' => $word, 'reason' => 'length'];
+            }
+        }
+
+        return $inactive;
+    }
+
+    /**
+     * Counts how many times each word has been drawn into a round for this
+     * instance, regardless of the round's outcome (won, lost, forfeited or still
+     * in progress) — every row in {playerwords_attempts} represents one draw.
+     *
+     * @param int $instanceid Activity instance id.
+     * @return array<int, int> Word id => number of times drawn. A word with no
+     *     attempts at all is simply absent from the map, not present with 0.
+     */
+    public static function get_draw_counts(int $instanceid): array {
+        global $DB;
+
+        $sql = "SELECT wordid, COUNT(*) AS timesdrawn
+                  FROM {playerwords_attempts}
+                 WHERE playerwordsid = :playerwordsid
+              GROUP BY wordid";
+        $records = $DB->get_records_sql($sql, ['playerwordsid' => $instanceid]);
+
+        $counts = [];
+        foreach ($records as $record) {
+            $counts[(int)$record->wordid] = (int)$record->timesdrawn;
+        }
+        return $counts;
     }
 }

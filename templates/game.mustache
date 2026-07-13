@@ -42,6 +42,12 @@
         "gradingtext": "Grading method: Highest grade.",
         "rankingtext": "The ranking adds up your points from every finished round. Ties are broken by fewer attempts used on average, then less time spent on average.",
         "reviewhint": "You can review these instructions anytime by clicking the help icon at the top of the game.",
+        "hasinactivewords": true,
+        "inactivewordstitle": "Inactive words in the pool",
+        "haslengthissues": true,
+        "lengthissuestext": "Outside the current length range (2): iluminismo, revolucao.",
+        "hascharsetissues": false,
+        "charsetissuestext": "",
         "toolbarmyattempts": "Attempt history",
         "myattemptsurl": "https://example.com/mod/playerwords/myattempts.php?id=1",
         "hastargetword": true,
@@ -146,6 +152,10 @@
             {{/showlobby}}
         </div>
     {{/hastargetword}}
+
+    {{#hasinactivewords}}
+        {{> mod_playerwords/inactive_words}}
+    {{/hasinactivewords}}
 
     <div id="playerwords-live-region"
          class="visually-hidden"

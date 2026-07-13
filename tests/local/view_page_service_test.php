@@ -387,4 +387,68 @@ final class view_page_service_test extends \advanced_testcase {
 
         $this->assertNotEmpty($pagedata['templatecontext']['reviewhint']);
     }
+
+    /**
+     * A student — who cannot manage the activity — never sees the inactive-words
+     * warning, even when the pool genuinely has an inactive word.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_hides_inactive_words_for_non_manager(): void {
+        global $DB;
+
+        [$instance, $cm, $context] = $this->make_instance(['min_length' => 4, 'max_length' => 4]);
+        $DB->insert_record('playerwords_words', (object)[
+            'playerwordsid' => $instance->id,
+            'word'          => 'planeta',
+            'concept'       => 'planeta',
+            'hint'          => '',
+            'source'        => 'manual',
+            'glossaryid'    => 0,
+            'approved'      => 1,
+            'timecreated'   => time(),
+            'addedby'       => $this->user->id,
+        ]);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+
+        $this->assertFalse($pagedata['templatecontext']['hasinactivewords']);
+    }
+
+    /**
+     * Whoever can manage the activity sees the inactive-words warning, naming the
+     * word and its exclusion reason.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_shows_inactive_words_for_manager(): void {
+        global $DB;
+
+        [$instance, $cm, $context] = $this->make_instance(['min_length' => 4, 'max_length' => 4]);
+        $DB->insert_record('playerwords_words', (object)[
+            'playerwordsid' => $instance->id,
+            'word'          => 'planeta',
+            'concept'       => 'planeta',
+            'hint'          => '',
+            'source'        => 'manual',
+            'glossaryid'    => 0,
+            'approved'      => 1,
+            'timecreated'   => time(),
+            'addedby'       => $this->user->id,
+        ]);
+
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $this->course->id, 'editingteacher');
+        $this->setUser($teacher);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $teacher->id);
+        $ctx = $pagedata['templatecontext'];
+
+        $this->assertTrue($ctx['hasinactivewords']);
+        $this->assertTrue($ctx['haslengthissues']);
+        $this->assertStringContainsString('planeta', $ctx['lengthissuestext']);
+        $this->assertFalse($ctx['hascharsetissues']);
+    }
 }

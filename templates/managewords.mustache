@@ -43,6 +43,7 @@
         "wordcolumnlabel": "Word",
         "sourcecolumnlabel": "Source",
         "statuscolumnlabel": "Status",
+        "drawcountcolumnlabel": "Times drawn",
         "actionscolumnlabel": "Actions",
         "deletewordbutton": "Delete",
         "deletewordconfirm": "Are you sure you want to delete this word? This action cannot be undone.",
@@ -81,7 +82,8 @@
                 "ispending": false,
                 "editwordurl": "https://example.com/mod/playerwords/managewords.php?id=1&editwordid=1",
                 "isfragmentedconcept": false,
-                "fragmentedconceptwarning": ""
+                "fragmentedconceptwarning": "",
+                "drawcount": 12
             },
             {
                 "id": 2,
@@ -91,7 +93,8 @@
                 "ispending": true,
                 "editwordurl": "https://example.com/mod/playerwords/managewords.php?id=1&editwordid=2",
                 "isfragmentedconcept": false,
-                "fragmentedconceptwarning": ""
+                "fragmentedconceptwarning": "",
+                "drawcount": 0
             },
             {
                 "id": 3,
@@ -101,7 +104,8 @@
                 "ispending": false,
                 "editwordurl": "https://example.com/mod/playerwords/managewords.php?id=1&editwordid=3",
                 "isfragmentedconcept": true,
-                "fragmentedconceptwarning": "This word is one of several extracted from the same glossary concept (\"Second World War\") — review whether it makes sense on its own."
+                "fragmentedconceptwarning": "This word is one of several extracted from the same glossary concept (\"Second World War\") — review whether it makes sense on its own.",
+                "drawcount": 3
             }
         ]
     }
@@ -298,6 +302,7 @@
                                         <i class="fa {{sort_approved_icon}}" aria-hidden="true"></i>
                                     </a>
                                 </th>
+                                <th scope="col">{{drawcountcolumnlabel}}</th>
                                 <th scope="col">{{actionscolumnlabel}}</th>
                             </tr>
                         </thead>
@@ -323,6 +328,7 @@
                                     </td>
                                     <td>{{source}}</td>
                                     <td>{{approved}}</td>
+                                    <td>{{drawcount}}</td>
                                     <td>
                                         <a href="{{{editwordurl}}}"
                                            class="btn btn-outline-secondary btn-sm me-1">

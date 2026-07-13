@@ -39,4 +39,17 @@ class word_normalizer {
     public static function normalize(string $value): string {
         return core_text::strtolower(core_text::specialtoascii(core_text::strtolower(trim($value))));
     }
+
+    /**
+     * Whether a word is made up exclusively of letters — the same rule the game
+     * itself enforces at play time (see words_repository::get_candidate_words()
+     * and ::extract_candidate_words()). A word that fails this can be saved and
+     * marked approved, but will never actually be drawn into a round.
+     *
+     * @param string $word Word text, already trimmed.
+     * @return bool
+     */
+    public static function is_valid_charset(string $word): bool {
+        return (bool)preg_match('/^[\p{L}]+$/u', $word);
+    }
 }

@@ -150,8 +150,56 @@ class view_page_service {
             'roundstarted' => !empty($state['roundstarted']),
         ]
             + self::build_help_context($instance)
+            + self::build_inactive_words_context($instance, $canmanagewords)
             + round_presenter::build_ranking_context($instance, $cm, $userid, !empty($state['finished']))
             + $inner;
+    }
+
+    /**
+     * Builds the context for the "inactive words" warning: approved pool words that
+     * words_repository::get_candidate_words() would silently exclude from play, shown
+     * only to whoever can manage the activity — a student never sees this.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @param bool $canmanagewords Whether the current user can manage the activity.
+     * @return array
+     */
+    private static function build_inactive_words_context(\stdClass $instance, bool $canmanagewords): array {
+        if (!$canmanagewords) {
+            return ['hasinactivewords' => false];
+        }
+
+        $inactive = words_repository::get_inactive_words($instance);
+        if (empty($inactive)) {
+            return ['hasinactivewords' => false];
+        }
+
+        $lengthwords = [];
+        $charsetwords = [];
+        foreach ($inactive as $entry) {
+            if ($entry['reason'] === 'invalidchars') {
+                $charsetwords[] = $entry['word'];
+            } else {
+                $lengthwords[] = $entry['word'];
+            }
+        }
+
+        return [
+            'hasinactivewords' => true,
+            'inactivewordstitle' => get_string('inactivewords_title', 'mod_playerwords'),
+            'haslengthissues' => !empty($lengthwords),
+            'lengthissuestext' => !empty($lengthwords) ? get_string('inactivewords_length', 'mod_playerwords', (object)[
+                'count' => count($lengthwords),
+                'words' => implode(', ', $lengthwords),
+            ]) : '',
+            'hascharsetissues' => !empty($charsetwords),
+            'charsetissuestext' => !empty($charsetwords)
+                ? get_string('inactivewords_invalidchars', 'mod_playerwords', (object)[
+                    'count' => count($charsetwords),
+                    'words' => implode(', ', $charsetwords),
+                ])
+                : '',
+        ];
     }
 
     /**

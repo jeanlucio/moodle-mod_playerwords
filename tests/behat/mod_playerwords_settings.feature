@@ -55,6 +55,17 @@ Feature: PlayerWords teacher-facing settings behaviour
     And I click on "Add word" "button"
     Then I should see "This word already exists in this activity's word pool."
 
+  Scenario: Adding a manual word with a character the game cannot use is rejected
+    Given the following "activities" exist:
+      | activity    | course | name              | min_length | max_length |
+      | playerwords | C1     | Word InvalidChars | 4          | 12         |
+    And I log in as "teacher1"
+    And I am on the "Word InvalidChars" "playerwords activity" page
+    And I click on "a.pw-toolbar-btn[title=\"Manage words\"]" "css_element"
+    When I set the field "playerwords-manualword" to "test123"
+    And I click on "Add word" "button"
+    Then I should see "Word must contain letters only (no numbers, spaces, hyphens or punctuation)."
+
   Scenario: A PlayerHUD item that no longer exists stays selected instead of resetting silently
     Given the following "activities" exist:
       | activity    | course | name     | min_length | max_length | hud_round_cost_item |

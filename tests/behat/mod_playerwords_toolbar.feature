@@ -30,6 +30,23 @@ Feature: PlayerWords toolbar and modals
     And I am on the "Word Toolbar" "playerwords activity" page
     Then "a.pw-toolbar-btn[title=\"Manage words\"]" "css_element" should not exist
 
+  Scenario: The inactive-words warning appears only for whoever can manage the activity
+    Given the following "activities" exist:
+      | activity    | course | name          | min_length | max_length |
+      | playerwords | C1     | Word Inactive | 5          | 5          |
+    And the following PlayerWords words exist in activity "Word Inactive":
+      | word  |
+      | rodar |
+      | boca  |
+    When I log in as "teacher1"
+    And I am on the "Word Inactive" "playerwords activity" page
+    Then I should see "Inactive words in the pool"
+    And I should see "Outside the current length range"
+    And I should see "boca"
+    When I log in as "student1"
+    And I am on the "Word Inactive" "playerwords activity" page
+    Then I should not see "Inactive words in the pool"
+
   Scenario: The ranking icon only appears when the activity has ranking enabled
     Given the following "activities" exist:
       | activity    | course | name              | min_length | max_length | show_ranking |
