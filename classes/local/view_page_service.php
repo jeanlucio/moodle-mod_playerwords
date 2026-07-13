@@ -156,9 +156,11 @@ class view_page_service {
     }
 
     /**
-     * Builds the context for the "inactive words" warning: approved pool words that
-     * words_repository::get_candidate_words() would silently exclude from play, shown
-     * only to whoever can manage the activity — a student never sees this.
+     * Builds the context for the word-pool status shown to whoever can manage the
+     * activity — a student never sees any of this. Always includes a count of
+     * currently playable words, a quick "the pool isn't empty" reassurance, and
+     * conditionally the "inactive words" warning: approved pool words that
+     * words_repository::get_candidate_words() would silently exclude from play.
      *
      * @param \stdClass $instance Activity instance.
      * @param bool $canmanagewords Whether the current user can manage the activity.
@@ -166,13 +168,11 @@ class view_page_service {
      */
     private static function build_inactive_words_context(\stdClass $instance, bool $canmanagewords): array {
         if (!$canmanagewords) {
-            return ['hasinactivewords' => false];
+            return ['showwordsstatus' => false, 'hasinactivewords' => false];
         }
 
+        $activecount = count(words_repository::get_candidate_words($instance));
         $inactive = words_repository::get_inactive_words($instance);
-        if (empty($inactive)) {
-            return ['hasinactivewords' => false];
-        }
 
         $lengthwords = [];
         $charsetwords = [];
@@ -185,7 +185,9 @@ class view_page_service {
         }
 
         return [
-            'hasinactivewords' => true,
+            'showwordsstatus' => true,
+            'activewordscount' => get_string('activewordscount', 'mod_playerwords', $activecount),
+            'hasinactivewords' => !empty($inactive),
             'inactivewordstitle' => get_string('inactivewords_title', 'mod_playerwords'),
             'haslengthissues' => !empty($lengthwords),
             'lengthissuestext' => !empty($lengthwords) ? get_string('inactivewords_length', 'mod_playerwords', (object)[

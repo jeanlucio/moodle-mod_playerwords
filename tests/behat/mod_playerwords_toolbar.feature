@@ -40,12 +40,14 @@ Feature: PlayerWords toolbar and modals
       | boca  |
     When I log in as "teacher1"
     And I am on the "Word Inactive" "playerwords activity" page
-    Then I should see "Inactive words in the pool"
+    Then I should see "active words in this game"
+    And I should see "Inactive words in this game"
     And I should see "Outside the current length range"
     And I should see "boca"
     When I log in as "student1"
     And I am on the "Word Inactive" "playerwords activity" page
-    Then I should not see "Inactive words in the pool"
+    Then I should not see "Inactive words in this game"
+    And I should not see "active words in this game"
 
   Scenario: The ranking icon only appears when the activity has ranking enabled
     Given the following "activities" exist:
