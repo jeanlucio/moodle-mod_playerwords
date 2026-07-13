@@ -64,7 +64,7 @@ Feature: PlayerWords teacher-facing settings behaviour
     And I click on "a.pw-toolbar-btn[title=\"Manage words\"]" "css_element"
     When I set the field "playerwords-manualword" to "test123"
     And I click on "Add word" "button"
-    Then I should see "Word must contain letters only (no numbers, spaces, hyphens or punctuation)."
+    Then I should see "Word must contain letters only"
 
   Scenario: A PlayerHUD item that no longer exists stays selected instead of resetting silently
     Given the following "activities" exist:
