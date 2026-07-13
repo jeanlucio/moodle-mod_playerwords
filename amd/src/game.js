@@ -581,6 +581,7 @@ const setForfeitButtonVisible = (visible) => {
  */
 const wireRoundPanel = (cmid, timertotal) => {
     recolorKeyboard();
+    initInputFilter();
     initGridPreview();
     initGuessForm(cmid, timertotal);
     initGuessLengthFeedback();
@@ -841,7 +842,6 @@ const initGuessForm = (cmid, timertotal) => {
  * @param {boolean} shouldAutoShowIntro Whether to open the how-to-play modal once, automatically.
  */
 const init = (cooldownUntil, timeleft, timertotal, cmid, shouldAutoShowIntro) => {
-    initInputFilter();
     initHelpModal(Boolean(shouldAutoShowIntro));
     initForfeit(cmid, timertotal || 0);
     wireRoundPanel(cmid, timertotal || 0);
