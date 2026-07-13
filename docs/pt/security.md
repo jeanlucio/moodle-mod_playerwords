@@ -9,3 +9,15 @@
 * O estado de sessão da rodada é isolado por instância de atividade e por usuário — um id de palavra ou chave de sessão de uma atividade nunca é aceito por outra
 * Compatível com a API externa do Moodle
 * Privacy API completamente implementada (LGPD/GDPR)
+
+## 🔒 Divulgação de Serviço de Terceiros
+
+A geração de palavras por IA é **opcional** e vem desativada por padrão. Quando um professor a
+usa, o tema da atividade (nunca dados de estudante ou registros de tentativa) é enviado através
+do `local_aihub` — usando a chave própria (BYOK) do usuário ou do site, se o plugin estiver
+instalado — ou, como alternativa, através do subsistema de IA nativo do Moodle (`core_ai`), que
+roteia para o provedor configurado pelo administrador do site. O PlayerWords nunca contata um
+provedor de IA diretamente; a requisição e sua divulgação/consentimento são de responsabilidade
+exclusiva do `local_aihub` ou do `core_ai`. Se nenhum dos dois estiver instalado ou configurado,
+a fonte de palavras por IA fica indisponível e todas as outras funcionalidades continuam
+funcionando normalmente.

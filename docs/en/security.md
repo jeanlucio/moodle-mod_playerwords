@@ -9,3 +9,14 @@
 * Session round state is isolated per activity instance and per user — a word id or session key from one activity is never accepted by another
 * Moodle External API compliant
 * Privacy API fully implemented (GDPR/LGPD)
+
+## 🔒 Third-party Service Disclosure
+
+AI word generation is **optional** and disabled by default. When a teacher uses it, the
+activity topic (never student data or attempt records) is sent through `local_aihub` — using
+that user's or the site's own BYOK key, if the plugin is installed — or, as a fallback,
+through Moodle's own core AI subsystem (`core_ai`), which routes to whatever provider the
+site administrator has configured. PlayerWords never contacts an AI provider directly; the
+request and its disclosure/consent are entirely owned by `local_aihub` or by `core_ai`. If
+neither is installed or configured, the AI word source is unavailable and every other feature
+keeps working normally.

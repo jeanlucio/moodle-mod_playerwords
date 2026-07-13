@@ -23,14 +23,10 @@ Designed around **retrieval practice** and **spaced repetition** — well-eviden
 
 ### 🔒 Third-party Service Disclosure
 
-AI word generation is **optional** and fully disabled by default. When a teacher uses it, the
-activity topic (never student data or attempt records) is sent through **local_aihub** — using
-that user's or the site's own BYOK key, if the plugin is installed — or, as a fallback, through
-Moodle's own **core AI subsystem** (`core_ai`), which routes to whatever provider the site
-administrator has configured. PlayerWords never contacts an AI provider directly; the request
-and its disclosure/consent are entirely owned by `local_aihub` or by `core_ai`. If neither is
-installed or configured, the AI word source is unavailable and every other feature keeps
-working normally.
+AI word generation is **optional** and disabled by default. When used, the activity topic
+(never student data) is sent through `local_aihub` (BYOK) or Moodle's `core_ai` subsystem —
+PlayerWords never contacts an AI provider directly. Full disclosure:
+[Security & Compliance](https://jeanlucio.github.io/moodle-mod_playerwords/#security).
 
 ### 📦 Requirements
 
@@ -80,15 +76,11 @@ Baseado na **prática de recuperação** e na **repetição espaçada** — téc
 
 ### 🔒 Divulgação de Serviço de Terceiros
 
-A geração de palavras por IA é **opcional** e vem desativada por padrão. Quando um professor a
-usa, o tema da atividade (nunca dados de estudante ou registros de tentativa) é enviado através
-do **local_aihub** — usando a chave própria (BYOK) do usuário ou do site, se o plugin estiver
-instalado — ou, como alternativa, através do subsistema de IA nativo do Moodle (`core_ai`), que
-roteia para o provedor configurado pelo administrador do site. O PlayerWords nunca contata um
-provedor de IA diretamente; a requisição e sua divulgação/consentimento são de responsabilidade
-exclusiva do `local_aihub` ou do `core_ai`. Se nenhum dos dois estiver instalado ou configurado,
-a fonte de palavras por IA fica indisponível e todas as outras funcionalidades continuam
-funcionando normalmente.
+A geração de palavras por IA é **opcional** e vem desativada por padrão. Quando usada, o tema
+da atividade (nunca dados de estudante) é enviado através do `local_aihub` (BYOK) ou do
+subsistema `core_ai` do Moodle — o PlayerWords nunca contata um provedor de IA diretamente.
+Divulgação completa:
+[Segurança e Conformidade](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html#security).
 
 ### 📦 Requisitos
 
