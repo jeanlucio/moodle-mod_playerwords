@@ -278,4 +278,113 @@ final class view_page_service_test extends \advanced_testcase {
         $this->assertStringContainsString('1', $ctx['nogamewords']);
         $this->assertSame(0, $pagedata['cooldownuntil']);
     }
+
+    /**
+     * A user's very first page load of any PlayerWords activity is flagged to
+     * auto-show the how-to-play intro, and that first load immediately marks the
+     * site-wide preference so it is never repeated — including on the very same
+     * lobby, matching intro_service's own contract.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_flags_autoshow_intro_once_on_lobby(): void {
+        [$instance, $cm, $context] = $this->make_instance();
+
+        $this->assertFalse(intro_service::has_seen_intro($this->user->id));
+
+        $first = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $this->assertTrue($first['shouldautoshowintro']);
+        $this->assertTrue(intro_service::has_seen_intro($this->user->id));
+
+        $second = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $this->assertFalse($second['shouldautoshowintro']);
+    }
+
+    /**
+     * The auto-show flag is site-wide, not per-activity: a user who already saw
+     * the intro on one activity must not see it again on a second, different one.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_autoshow_intro_does_not_repeat_across_activities(): void {
+        [$instancea, $cma, $contexta] = $this->make_instance();
+        [$instanceb, $cmb, $contextb] = $this->make_instance();
+
+        $firstactivity = view_page_service::build_page_data($cma, $instancea, $contexta, $this->user->id);
+        $this->assertTrue($firstactivity['shouldautoshowintro']);
+
+        $secondactivity = view_page_service::build_page_data($cmb, $instanceb, $contextb, $this->user->id);
+        $this->assertFalse($secondactivity['shouldautoshowintro']);
+    }
+
+    /**
+     * The auto-show flag is still surfaced on the finished-round branch of
+     * build_page_data, not only on the fresh-lobby branch — otherwise a user whose
+     * very first visit happens to already have a finished round recorded (e.g. an
+     * imported attempt) would never see the intro automatically.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_flags_autoshow_intro_on_finished_round_branch(): void {
+        [$instance, $cm, $context] = $this->make_instance();
+
+        $state = round_service::load_state($cm->id, $this->user->id);
+        [$state, $targetword, $roundwordid] = round_service::ensure_round_state($state, $instance, $cm->id, $this->user->id);
+        [$state] = round_service::start_round($state, $instance, $this->user->id);
+        [$state] = round_service::submit_guess($state, $instance, $cm->id, $this->user->id, $roundwordid, $targetword, $targetword);
+        round_service::save_state($cm->id, $this->user->id, $state);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+
+        $this->assertTrue($pagedata['shouldautoshowintro']);
+        $this->assertTrue(intro_service::has_seen_intro($this->user->id));
+    }
+
+    /**
+     * The auto-show flag is still surfaced on the round-restriction branch of
+     * build_page_data (round limit already reached before a word is even picked).
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_flags_autoshow_intro_on_restriction_branch(): void {
+        global $DB;
+
+        [$instance, $cm, $context] = $this->make_instance(['max_rounds' => 1]);
+
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => 1,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+
+        $this->assertTrue($pagedata['shouldautoshowintro']);
+        $this->assertTrue(intro_service::has_seen_intro($this->user->id));
+    }
+
+    /**
+     * The help modal content always carries the review hint pointing back to the
+     * toolbar help icon, regardless of round state.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_includes_review_hint_in_help_context(): void {
+        [$instance, $cm, $context] = $this->make_instance();
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+
+        $this->assertNotEmpty($pagedata['templatecontext']['reviewhint']);
+    }
 }

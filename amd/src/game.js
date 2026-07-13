@@ -119,25 +119,44 @@ const initForfeit = (cmid, timertotal) => {
 };
 
 /**
- * Wires the toolbar's help button to open the how-to-play content in a modal, keeping the
- * current round visible instead of navigating away to a separate page. The content itself
- * is server-rendered once into a hidden container in the page (#playerwords-help-content)
- * so it never needs to be re-fetched.
+ * Opens the how-to-play content (already server-rendered into #playerwords-help-content)
+ * in a modal, keeping the current round visible instead of navigating away to a
+ * separate page.
+ *
+ * @param {HTMLElement} button Help toolbar button, source of the modal title.
+ * @param {HTMLElement} content Hidden container holding the pre-rendered help body.
  */
-const initHelpModal = () => {
+const openHelpModal = (button, content) => {
+    Modal.create({
+        title: button.dataset.title,
+        body: content.innerHTML,
+        show: true,
+        removeOnClose: true,
+    }).catch(Notification.exception);
+};
+
+/**
+ * Wires the toolbar's help button to open the how-to-play modal on click, and — when
+ * requested by the server for this page load — opens it once automatically too. The
+ * server decides `autoshow` from a site-wide user preference (see intro_service::
+ * has_seen_intro()) that is marked seen the moment it is decided, so this can only ever
+ * fire once per user across every PlayerWords activity on the whole site, not once per
+ * activity or per course.
+ *
+ * @param {boolean} autoshow Whether to open the modal immediately, once, on this load.
+ */
+const initHelpModal = (autoshow) => {
     const button = document.getElementById('playerwords-help-button');
     const content = document.getElementById('playerwords-help-content');
     if (!button || !content) {
         return;
     }
     button.addEventListener('click', () => {
-        Modal.create({
-            title: button.dataset.title,
-            body: content.innerHTML,
-            show: true,
-            removeOnClose: true,
-        }).catch(Notification.exception);
+        openHelpModal(button, content);
     });
+    if (autoshow) {
+        openHelpModal(button, content);
+    }
 };
 
 /**
@@ -790,10 +809,11 @@ const initGuessForm = (cmid, timertotal) => {
  * @param {number} timeleft      Seconds remaining in the current round (0 = no timer).
  * @param {number} timertotal    Total seconds configured for the round (0 = no timer).
  * @param {number} cmid          Course-module id.
+ * @param {boolean} shouldAutoShowIntro Whether to open the how-to-play modal once, automatically.
  */
-const init = (cooldownUntil, timeleft, timertotal, cmid) => {
+const init = (cooldownUntil, timeleft, timertotal, cmid, shouldAutoShowIntro) => {
     initInputFilter();
-    initHelpModal();
+    initHelpModal(Boolean(shouldAutoShowIntro));
     initForfeit(cmid, timertotal || 0);
     wireRoundPanel(cmid, timertotal || 0);
     initStartRound(cmid, timertotal || 0);

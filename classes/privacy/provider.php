@@ -35,6 +35,7 @@ use core_privacy\local\request\contextlist;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
+use mod_playerwords\local\intro_service;
 
 /**
  * Privacy provider implementation.
@@ -42,7 +43,8 @@ use core_privacy\local\request\writer;
 class provider implements
     \core_privacy\local\metadata\provider,
     \core_privacy\local\request\core_userlist_provider,
-    \core_privacy\local\request\plugin\provider {
+    \core_privacy\local\request\plugin\provider,
+    \core_privacy\local\request\user_preference_provider {
     #[\Override]
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table(
@@ -69,7 +71,26 @@ class provider implements
             'privacy:metadata:playerwords_words'
         );
 
+        $collection->add_user_preference(
+            intro_service::get_preference_name(),
+            'privacy:metadata:preference:seenintro'
+        );
+
         return $collection;
+    }
+
+    #[\Override]
+    public static function export_user_preferences(int $userid): void {
+        if (!intro_service::has_seen_intro($userid)) {
+            return;
+        }
+
+        writer::export_user_preference(
+            'mod_playerwords',
+            intro_service::get_preference_name(),
+            transform::yesno(true),
+            get_string('privacy:metadata:preference:seenintro', 'mod_playerwords')
+        );
     }
 
     #[\Override]

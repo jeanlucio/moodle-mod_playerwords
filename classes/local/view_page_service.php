@@ -49,6 +49,15 @@ class view_page_service {
     ): array {
         $canmanagewords = has_capability('mod/playerwords:addinstance', $context);
 
+        // Decided once per page load and marked immediately, not deferred to a client
+        // callback: this is the same synchronous read-then-write pattern the preference
+        // itself is meant to make trivial (see intro_service), and it means the flag can
+        // never be shown twice even if the page fails to finish rendering client-side.
+        $shouldautoshowintro = !intro_service::has_seen_intro($userid);
+        if ($shouldautoshowintro) {
+            intro_service::mark_intro_seen($userid);
+        }
+
         $state = round_service::load_state((int)$cm->id, $userid);
 
         if ((int)$state['wordid'] === 0 || !empty($state['finished'])) {
@@ -58,10 +67,11 @@ class view_page_service {
                 $displayword = (int)($state['wordid'] ?? 0) > 0 ? ($state['wordtext'] ?? '') : '';
                 $templatectx = self::build_template_context($cm, $instance, $state, $displayword, $canmanagewords, $userid);
                 return [
-                    'templatecontext' => $templatectx,
-                    'cooldownuntil'   => round_service::compute_cooldown_until($instance, $userid),
-                    'timeleft'        => 0,
-                    'timertotal'      => 0,
+                    'templatecontext'      => $templatectx,
+                    'cooldownuntil'        => round_service::compute_cooldown_until($instance, $userid),
+                    'timeleft'             => 0,
+                    'timertotal'           => 0,
+                    'shouldautoshowintro'  => $shouldautoshowintro,
                 ];
             }
             if ($restrictionnotice !== null) {
@@ -69,10 +79,11 @@ class view_page_service {
                 $templatectx = self::build_template_context($cm, $instance, $state, '', $canmanagewords, $userid);
                 $templatectx['nogamewords'] = $restrictionnotice;
                 return [
-                    'templatecontext' => $templatectx,
-                    'cooldownuntil'   => 0,
-                    'timeleft'        => 0,
-                    'timertotal'      => 0,
+                    'templatecontext'      => $templatectx,
+                    'cooldownuntil'        => 0,
+                    'timeleft'             => 0,
+                    'timertotal'           => 0,
+                    'shouldautoshowintro'  => $shouldautoshowintro,
                 ];
             }
         }
@@ -90,10 +101,11 @@ class view_page_service {
         );
 
         return [
-            'templatecontext' => $templatecontext,
-            'cooldownuntil'   => round_service::compute_cooldown_until($instance, $userid),
-            'timeleft'        => (int)($templatecontext['timeleft'] ?? 0),
-            'timertotal'      => (int)$instance->timer_seconds,
+            'templatecontext'      => $templatecontext,
+            'cooldownuntil'        => round_service::compute_cooldown_until($instance, $userid),
+            'timeleft'             => (int)($templatecontext['timeleft'] ?? 0),
+            'timertotal'           => (int)$instance->timer_seconds,
+            'shouldautoshowintro'  => $shouldautoshowintro,
         ];
     }
 
@@ -174,6 +186,7 @@ class view_page_service {
                 : '',
             'showranking' => $showranking,
             'rankingtext' => $showranking ? get_string('help_ranking', 'mod_playerwords') : '',
+            'reviewhint' => get_string('help_reviewhint', 'mod_playerwords'),
         ];
     }
 }
