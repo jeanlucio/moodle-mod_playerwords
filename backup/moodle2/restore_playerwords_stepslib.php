@@ -142,6 +142,7 @@ class restore_playerwords_activity_structure_step extends restore_activity_struc
 
         $data->playerwordsid = $this->get_new_parentid('playerwords');
         $data->timecreated = $this->apply_date_offset($data->timecreated);
+        $data->timemodified = $this->apply_date_offset($data->timemodified);
 
         // Remap addedby to the restored user; fall back to 0 (anonymous) when unmapped.
         $data->addedby = (int)$this->get_mappingid('user', $data->addedby, 0);

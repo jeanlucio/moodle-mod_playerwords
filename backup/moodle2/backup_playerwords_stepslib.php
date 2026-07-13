@@ -75,6 +75,7 @@ class backup_playerwords_activity_structure_step extends backup_activity_structu
             'glossaryid',
             'approved',
             'timecreated',
+            'timemodified',
             'addedby',
         ]);
 

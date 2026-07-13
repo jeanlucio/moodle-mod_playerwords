@@ -157,6 +157,43 @@ final class backup_restore_test extends \advanced_testcase {
     }
 
     /**
+     * Regression test for a column-drift bug: playerwords_words.timemodified was added to
+     * install.xml (upgrade step 2026070701) but never mirrored into the backup_nested_element
+     * attribute list, so it silently reverted to its DB default (0) on every restore instead
+     * of preserving the original value.
+     *
+     * @covers \backup_playerwords_activity_structure_step::define_structure
+     * @covers \restore_playerwords_activity_structure_step::process_playerwords_word
+     * @return void
+     */
+    public function test_backup_restore_preserves_word_timemodified(): void {
+        global $DB;
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $instance = $this->getDataGenerator()->create_module('playerwords', ['course' => $course->id]);
+        $originaltimemodified = time() - 12345;
+        $DB->insert_record('playerwords_words', (object)[
+            'playerwordsid' => $instance->id,
+            'word'          => 'teste',
+            'concept'       => 'teste',
+            'hint'          => 'dica',
+            'source'        => 'manual',
+            'glossaryid'    => 0,
+            'approved'      => 1,
+            'timecreated'   => time(),
+            'timemodified'  => $originaltimemodified,
+            'addedby'       => 0,
+        ]);
+
+        $newcourse = $this->backup_and_restore_into_new_course($course);
+
+        $newinstance = $DB->get_record('playerwords', ['course' => $newcourse->id], '*', MUST_EXIST);
+        $newword = $DB->get_record('playerwords_words', ['playerwordsid' => $newinstance->id], '*', MUST_EXIST);
+        $this->assertSame($originaltimemodified, (int)$newword->timemodified);
+    }
+
+    /**
      * Skips the current test when block_playerhud is not installed.
      *
      * @return void
