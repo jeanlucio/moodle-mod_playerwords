@@ -157,7 +157,7 @@ if (optional_param('generateai', 0, PARAM_BOOL)) {
     $count = max(1, min(20, (int)optional_param('aicount', 10, PARAM_INT)));
     if ($topic !== '') {
         try {
-            $saved = ai_word_generator::generate_and_save($instance, (int)$USER->id, $topic, $count);
+            $saved = ai_word_generator::generate_and_save($instance, (int)$USER->id, $topic, $count, $context);
             if ($saved > 0) {
                 $notification = get_string('aigeneratedsaved', 'mod_playerwords', $saved);
                 $notificationtype = 'success';
@@ -270,7 +270,7 @@ $templatecontext = [
     'manualwordplaceholder'  => get_string('manualwordplaceholder', 'mod_playerwords'),
     'manualhintplaceholder'  => get_string('manualhintplaceholder', 'mod_playerwords'),
     'addwordbutton'          => get_string('addwordbutton', 'mod_playerwords'),
-    'hasai'                  => ai_word_generator::has_key(),
+    'hasai'                  => ai_word_generator::has_key($context),
     'aigeneratetitle'        => get_string('aigeneratetitle', 'mod_playerwords'),
     'aigeneratetopic'        => get_string('aigeneratetopic', 'mod_playerwords'),
     'aigeneratecount'        => get_string('aigeneratecount', 'mod_playerwords'),

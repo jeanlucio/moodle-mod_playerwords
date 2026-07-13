@@ -36,13 +36,18 @@ class ai_word_generator {
     /**
      * Returns true when an AI source (hub key or core_ai) is available.
      *
+     * local_aihub is a site-wide BYOK service with no per-course scoping of its own, so
+     * only the core_ai path needs the activity's context to honour a course/module-level
+     * "Enable AI tools" override.
+     *
+     * @param \context $context Context of the activity checking availability.
      * @return bool
      */
-    public static function has_key(): bool {
+    public static function has_key(\context $context): bool {
         if (class_exists(\local_aihub\ai::class) && \local_aihub\ai::is_available()) {
             return true;
         }
-        return self::has_core_ai();
+        return self::has_core_ai($context);
     }
 
     /**
@@ -55,6 +60,7 @@ class ai_word_generator {
      * @param int $userid ID of the user triggering the generation.
      * @param string $topic Subject area or theme for the AI prompt.
      * @param int $count Number of words to request (1–20).
+     * @param \context $context Context of the activity requesting generation.
      * @return int Number of words saved as pending.
      * @throws \moodle_exception If no AI source is available or the request fails.
      */
@@ -62,14 +68,15 @@ class ai_word_generator {
         \stdClass $instance,
         int $userid,
         string $topic,
-        int $count
+        int $count,
+        \context $context
     ): int {
         $language = get_string('thislanguage', 'langconfig');
         $requestcount = min(60, $count * 3);
         $prompt = self::build_prompt($topic, $language, $requestcount);
         $description = get_string('aiusage', 'mod_playerwords', $topic);
 
-        $result = self::call_ai($prompt, $description);
+        $result = self::call_ai($prompt, $description, $context);
         if (empty($result['success'])) {
             throw new \moodle_exception('aigenerateerror', 'mod_playerwords');
         }
@@ -196,9 +203,10 @@ class ai_word_generator {
      *
      * @param string $prompt The full prompt text.
      * @param string $description Short label of what is being generated, for the hub usage log.
+     * @param \context $context Context of the activity requesting generation.
      * @return array Result with keys: success (bool), data (string), message (string), provider (string).
      */
-    protected static function call_ai(string $prompt, string $description): array {
+    protected static function call_ai(string $prompt, string $description, \context $context): array {
         $lasterror = ['success' => false, 'message' => '', 'data' => '', 'provider' => ''];
 
         if (class_exists(\local_aihub\ai::class)) {
@@ -212,8 +220,8 @@ class ai_word_generator {
             }
         }
 
-        if (self::has_core_ai()) {
-            $result = self::call_core_ai($prompt);
+        if (self::has_core_ai($context)) {
+            $result = self::call_core_ai($prompt, $context);
             if ($result['success'] || !empty($result['message'])) {
                 return $result;
             }
@@ -223,11 +231,13 @@ class ai_word_generator {
     }
 
     /**
-     * Returns true when the Moodle core_ai subsystem has a text-generation provider.
+     * Returns true when the Moodle core_ai subsystem has a text-generation provider
+     * available and, on Moodle versions that support it, not disabled for this context.
      *
+     * @param \context $context Context of the activity checking availability.
      * @return bool
      */
-    protected static function has_core_ai(): bool {
+    protected static function has_core_ai(\context $context): bool {
         if (
             !class_exists(\core_ai\manager::class)
             || !class_exists(\core_ai\aiactions\generate_text::class)
@@ -239,19 +249,49 @@ class ai_word_generator {
             $actionclass = \core_ai\aiactions\generate_text::class;
             $manager = \core\di::get(\core_ai\manager::class);
             $providers = $manager->get_providers_for_actions([$actionclass], true);
-            return !empty($providers[$actionclass]);
+            if (empty($providers[$actionclass])) {
+                return false;
+            }
+            return self::action_enabled_in_context($manager, $context, $actionclass);
         } catch (\Throwable $e) {
             return false;
         }
     }
 
     /**
+     * Checks the per-course/per-module "Enable AI tools" override, when the running Moodle
+     * version supports it.
+     *
+     * core_ai\manager::is_action_enabled_in_context() was added to Moodle core after 4.5
+     * (course.enableaitools / course_modules.enableaitools do not exist on 4.5, so the method
+     * itself is undefined there). This plugin supports 4.5+5.x, so the check is skipped —
+     * never blocking — on versions where the method does not exist, exactly like every other
+     * class_exists()/method_exists() guarded integration in this codebase.
+     *
+     * @param \core_ai\manager $manager The AI manager instance.
+     * @param \context $context Context of the activity requesting generation.
+     * @param string $actionclass Fully qualified AI action class name.
+     * @return bool
+     */
+    protected static function action_enabled_in_context(
+        \core_ai\manager $manager,
+        \context $context,
+        string $actionclass
+    ): bool {
+        if (!method_exists($manager, 'is_action_enabled_in_context')) {
+            return true;
+        }
+        return $manager->is_action_enabled_in_context($context, $actionclass);
+    }
+
+    /**
      * Generates text via the Moodle core_ai subsystem (institutional fallback).
      *
      * @param string $prompt The prompt text.
+     * @param \context $context Context of the activity requesting generation.
      * @return array Result with keys: success (bool), data (string), message (string), provider (string).
      */
-    protected static function call_core_ai(string $prompt): array {
+    protected static function call_core_ai(string $prompt, \context $context): array {
         global $USER;
 
         try {
@@ -259,12 +299,12 @@ class ai_word_generator {
             $manager = \core\di::get(\core_ai\manager::class);
             $providers = $manager->get_providers_for_actions([$actionclass], true);
 
-            if (empty($providers[$actionclass])) {
+            if (empty($providers[$actionclass]) || !self::action_enabled_in_context($manager, $context, $actionclass)) {
                 return ['success' => false, 'message' => '', 'data' => '', 'provider' => ''];
             }
 
             $action = new \core_ai\aiactions\generate_text(
-                contextid: \context_system::instance()->id,
+                contextid: $context->id,
                 userid: (int) $USER->id,
                 prompttext: $prompt,
             );
