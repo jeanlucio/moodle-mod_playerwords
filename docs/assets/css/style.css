@@ -23,85 +23,54 @@ body {
   color: var(--text);
 }
 
-.page-header {
-  position: relative;
-  color: #fff;
-  background-color: #0a0000;
-  text-align: center;
-}
-
 .page-header-banner {
   display: block;
   width: 100%;
   height: auto;
 }
 
-.page-header-info {
-  position: absolute;
-  top: 44%;
-  bottom: 0;
-  left: 6%;
-  right: 0;
-  padding: 0.4rem 0 1.2rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
-.page-header-side-buttons {
-  position: absolute;
-  top: 0;
-  height: 43%;
-  right: 0;
-  width: 20%;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-}
-
-.page-header-side-buttons .btn {
-  margin: 0;
-  font-size: 0.78rem;
-  padding: 0.4rem 0.35rem;
+.intro {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  text-align: center;
 }
 
 .project-name {
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.3rem;
   font-size: 2.25rem;
+  color: var(--accent-dark);
+}
+
+.project-tagline {
+  margin: 0 0 1.2rem;
+  font-weight: normal;
+  color: var(--text-muted);
 }
 
 .lang-switch {
-  margin: 0 0 1rem;
+  margin: 0 0 1.2rem;
   font-size: 0.9rem;
 }
 
 .lang-switch a {
-  color: #fff;
-  text-decoration: underline;
-}
-
-.project-tagline {
-  margin: 0 0 1.5rem;
-  font-weight: normal;
-  opacity: 0.85;
+  color: var(--accent-dark);
 }
 
 .btn {
   display: inline-block;
   margin: 0 0.4rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.2rem;
   color: #fff;
-  background-color: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background-color: var(--accent-dark);
+  border: 1px solid var(--accent-dark);
   border-radius: 0.3rem;
   text-decoration: none;
 }
 
 .btn:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: var(--accent);
+  border-color: var(--accent);
 }
 
 .layout {
@@ -239,39 +208,6 @@ body {
   color: var(--text-muted);
   font-size: 0.85rem;
   border-top: 1px solid var(--border);
-}
-
-@media (max-width: 900px) {
-  /* Below this width the banner shrinks too much for the overlaid text to
-     clear the wordmark above it — fall back to a plain bar under the image
-     instead, cropping the banner to just its logo band (discarding the
-     otherwise-empty area the overlay uses at wider widths). */
-  .page-header-banner {
-    aspect-ratio: 2560 / 350;
-    object-fit: cover;
-    object-position: top;
-  }
-
-  .page-header-info {
-    position: static;
-    background-color: #0a0000;
-    padding: 1.5rem 1.5rem 2rem;
-  }
-
-  .page-header-side-buttons {
-    position: static;
-    width: auto;
-    height: auto;
-    display: block;
-    background-color: #0a0000;
-    padding: 0 1rem 1.5rem;
-  }
-
-  .page-header-side-buttons .btn {
-    margin: 0 0.4rem;
-    font-size: 0.95rem;
-    padding: 0.5rem 1rem;
-  }
 }
 
 @media (max-width: 800px) {

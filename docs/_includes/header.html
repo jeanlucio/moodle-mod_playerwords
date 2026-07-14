@@ -4,19 +4,18 @@
     src="{{ '/assets/img/playergames-banner.png' | relative_url }}"
     alt="PlayerGames ecosystem banner artwork"
   >
-  <div class="page-header-info">
-    <h1 class="project-name">{{ site.title }}</h1>
-    <p class="project-tagline">{{ site.description }}</p>
-    <p class="lang-switch">
-      {% if page.lang == 'pt' %}
-        <a href="{{ '/' | relative_url }}">English</a> | <strong>Português</strong>
-      {% else %}
-        <strong>English</strong> | <a href="{{ '/pt.html' | relative_url }}">Português</a>
-      {% endif %}
-    </p>
-  </div>
-  <div class="page-header-side-buttons">
-    <a class="btn" href="https://github.com/{{ site.repository }}">View on GitHub</a>
-    <a class="btn" href="https://github.com/{{ site.repository }}/archive/refs/heads/main.zip">Download .zip</a>
-  </div>
 </header>
+
+<div class="intro">
+  <h1 class="project-name">{{ site.title }}</h1>
+  <p class="project-tagline">{{ site.description }}</p>
+  <p class="lang-switch">
+    {% if page.lang == 'pt' %}
+      <a href="{{ '/' | relative_url }}">English</a> | <strong>Português</strong>
+    {% else %}
+      <strong>English</strong> | <a href="{{ '/pt.html' | relative_url }}">Português</a>
+    {% endif %}
+  </p>
+  <a class="btn" href="https://github.com/{{ site.repository }}">View on GitHub</a>
+  <a class="btn" href="https://github.com/{{ site.repository }}/archive/refs/heads/main.zip">Download .zip</a>
+</div>
