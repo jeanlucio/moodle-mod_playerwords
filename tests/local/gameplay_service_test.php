@@ -27,6 +27,13 @@ namespace mod_playerwords\local;
 
 /**
  * Tests for gameplay_service — pure logic, no database required.
+ *
+ * Coverage is declared once at class level (not per test method) so that private helpers
+ * reached only via self:: from these public methods (e.g. compute_points()) are correctly
+ * attributed to this test suite instead of being silently excluded by php-code-coverage's
+ * per-method coverage-annotation line filtering.
+ *
+ * @covers \mod_playerwords\local\gameplay_service
  */
 final class gameplay_service_test extends \basic_testcase {
     #[\Override]
@@ -97,7 +104,6 @@ final class gameplay_service_test extends \basic_testcase {
     /**
      * Tests build_letter_feedback across multiple guess/target combinations.
      *
-     * @covers \mod_playerwords\local\gameplay_service::build_letter_feedback
      * @dataProvider build_letter_feedback_provider
      * @param string $guess    User guess.
      * @param string $target   Target word.
@@ -112,7 +118,6 @@ final class gameplay_service_test extends \basic_testcase {
     /**
      * Tests that a completed round returns the full configured grade as a float.
      *
-     * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
      * @return void
      */
     public function test_calculate_score_completed(): void {
@@ -124,7 +129,6 @@ final class gameplay_service_test extends \basic_testcase {
     /**
      * Tests that a failed round always returns zero regardless of grade config.
      *
-     * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
      * @return void
      */
     public function test_calculate_score_not_completed(): void {
@@ -136,7 +140,6 @@ final class gameplay_service_test extends \basic_testcase {
     /**
      * Tests that a decimal grade stored as a string is correctly cast to float.
      *
-     * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
      * @return void
      */
     public function test_calculate_score_decimal_grade(): void {
@@ -150,7 +153,6 @@ final class gameplay_service_test extends \basic_testcase {
      * attempts — a confident second guess is not treated as less deserving than a
      * first-try one.
      *
-     * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
      * @return void
      */
     public function test_calculate_score_linear_first_two_attempts(): void {
@@ -165,7 +167,6 @@ final class gameplay_service_test extends \basic_testcase {
      * spread over (max_attempts − 1) steps, since the first two attempts share the
      * same full-credit plateau, so the last attempt here earns 100 / 5, not 100 / 6.
      *
-     * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
      * @return void
      */
     public function test_calculate_score_linear_last_attempt(): void {
@@ -177,7 +178,6 @@ final class gameplay_service_test extends \basic_testcase {
     /**
      * Tests that linear grade scoring still returns zero for a round not completed.
      *
-     * @covers \mod_playerwords\local\gameplay_service::calculate_round_score
      * @return void
      */
     public function test_calculate_score_linear_not_completed(): void {
@@ -189,7 +189,6 @@ final class gameplay_service_test extends \basic_testcase {
     /**
      * Tests that binary ranking points match the full grade on a win.
      *
-     * @covers \mod_playerwords\local\gameplay_service::calculate_ranking_points
      * @return void
      */
     public function test_calculate_ranking_points_binary(): void {
@@ -203,7 +202,6 @@ final class gameplay_service_test extends \basic_testcase {
      * then scale down proportionally over the remaining ones, independently from
      * whatever the grade scoring mode is set to.
      *
-     * @covers \mod_playerwords\local\gameplay_service::calculate_ranking_points
      * @return void
      */
     public function test_calculate_ranking_points_linear(): void {
@@ -224,7 +222,6 @@ final class gameplay_service_test extends \basic_testcase {
      * max_attempts is 2 or fewer, since both allowed attempts fall within the
      * full-credit plateau.
      *
-     * @covers \mod_playerwords\local\gameplay_service::calculate_ranking_points
      * @return void
      */
     public function test_calculate_ranking_points_linear_degenerates_at_low_max_attempts(): void {
@@ -240,7 +237,6 @@ final class gameplay_service_test extends \basic_testcase {
     /**
      * Tests that a failed round always returns zero ranking points, regardless of mode.
      *
-     * @covers \mod_playerwords\local\gameplay_service::calculate_ranking_points
      * @return void
      */
     public function test_calculate_ranking_points_not_completed(): void {
