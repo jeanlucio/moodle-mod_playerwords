@@ -52,41 +52,31 @@ services, and Privacy API compliance. Every CI push runs against the full matrix
 vendor/bin/phpunit --testsuite mod_playerwords
 ```
 
-### 📊 Code Coverage
+**Line coverage by class (PHPUnit + Xdebug):**
 
-Measured with `moodle-coverage` (PHPUnit + Xdebug, `classes/` scope). A class-level `@covers`
-annotation is used on every test class, so a method's coverage is attributed correctly even when
-it is only reached through another method of the same class (e.g. a private helper called via
-`self::`).
+| Class | Line coverage |
+|-------|:-------------:|
+| `completion\custom_completion` | 100% |
+| `external\count_eligible_words` | 70% |
+| `external\count_glossary_candidates` | 55% |
+| `external\end_round` | 76% |
+| `external\new_round` | 50% |
+| `external\reveal_hint` | 59% |
+| `external\start_round` | 43% |
+| `external\submit_guess` | 76% |
+| `local\ai_word_generator` | 25% |
+| `local\attempts_history_service` | 78% |
+| `local\gameplay_service` | 95% |
+| `local\hud_service` | 91% |
+| `local\intro_service` | 100% |
+| `local\ranking_service` | 78% |
+| `local\round_presenter` | 69% |
+| `local\round_service` | 66% |
+| `local\view_page_service` | 38% |
+| `local\word_normalizer` | 100% |
+| `local\words_repository` | 87% |
+| `privacy\provider` | 86% |
+| **Overall** | **63%** |
 
-**Summary:** Classes 12.50% (3/24) · Methods 44.85% (61/136) · Lines 63.46% (1386/2184)
-
-| Class | Methods | Lines |
-|-------|--------:|------:|
-| `completion\custom_completion` | 100.00% (4/4) | 100.00% (19/19) |
-| `local\ai_word_generator` | 22.22% (2/9) | 25.23% (28/111) |
-| `local\attempts_history_service` | 60.00% (3/5) | 77.53% (69/89) |
-| `local\gameplay_service` | 60.00% (3/5) | 95.12% (39/41) |
-| `local\hud_service` | 77.78% (7/9) | 90.91% (20/22) |
-| `local\intro_service` | 100.00% (3/3) | 100.00% (3/3) |
-| `local\ranking_service` | 50.00% (1/2) | 77.78% (42/54) |
-| `local\round_presenter` | 33.33% (5/15) | 69.37% (188/271) |
-| `local\round_service` | 30.77% (4/13) | 65.80% (177/269) |
-| `local\view_page_service` | 25.00% (1/4) | 37.70% (46/122) |
-| `local\word_normalizer` | 100.00% (2/2) | 100.00% (2/2) |
-| `local\words_repository` | 80.00% (16/20) | 86.56% (277/320) |
-| `external\count_eligible_words` | 33.33% (1/3) | 70.37% (19/27) |
-| `external\count_glossary_candidates` | 33.33% (1/3) | 54.55% (18/33) |
-| `external\end_round` | 33.33% (1/3) | 76.09% (35/46) |
-| `external\new_round` | 33.33% (1/3) | 50.00% (30/60) |
-| `external\reveal_hint` | 0.00% (0/4) | 58.97% (23/39) |
-| `external\start_round` | 25.00% (1/4) | 42.53% (37/87) |
-| `external\submit_guess` | 40.00% (2/5) | 75.74% (103/136) |
-| `privacy\provider` | 33.33% (3/9) | 85.79% (163/190) |
-
-The four `event/*.php` classes are not exercised directly by any test (Moodle only requires them
-lazily when the corresponding event actually fires) and carry no coverage data of their own.
-
-```bash
-moodle-coverage mod/playerwords
-```
+The four `event/*.php` classes aren't listed — Moodle only loads them lazily when the
+corresponding event actually fires, so the instrumentation never sees them.

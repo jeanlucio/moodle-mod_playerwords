@@ -52,7 +52,6 @@ services, and Privacy API compliance. Every CI push runs against the full matrix
 vendor/bin/phpunit --testsuite mod_playerwords
 ```
 
-**Code coverage** (`moodle-coverage`, `classes/` scope): Classes 12.50% (3/24) · Methods 44.85%
-(61/136) · Lines 63.46% (1386/2184).
+**Overall line coverage** (`moodle-coverage`, PHPUnit + Xdebug): **63%**.
 
 [Full test-by-test breakdown and coverage table →]({{ '/testing.html' | relative_url }})
