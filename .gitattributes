@@ -4,3 +4,4 @@
 # pattern (e.g. cli/seed*.php export-ignore) so that script ships normally.
 cli/ export-ignore
 docs/ export-ignore
+.github/ export-ignore
