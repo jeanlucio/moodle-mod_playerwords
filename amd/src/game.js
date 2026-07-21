@@ -605,6 +605,9 @@ const showRoundResult = async(roundresult, cmid, timertotal) => {
     if (!playNode) {
         return;
     }
+    // The keyboard is a sibling of playNode (see round_panel.mustache), not a
+    // descendant, so replacing playNode alone would leave it lingering on screen.
+    document.getElementById('playerwords-keyboard')?.remove();
     const {html, js} = await Templates.renderForPromise('mod_playerwords/round_result', roundresult);
     await Templates.replaceNode(playNode, html, js);
     initNewRound(cmid, timertotal);

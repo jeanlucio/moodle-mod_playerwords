@@ -274,11 +274,21 @@
     flex-direction: column;
     align-items: center;
     gap: 0.375rem;
-    margin-top: 0.5rem;
-    margin-inline: auto;
     width: fit-content;
     max-width: 100%;
     user-select: none;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: 0.5rem;
+    margin-inline: auto;
+    margin-bottom: -1rem;
+    padding: 0.75rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    background-color: var(--body-bg, #fff);
+    border-top: 1px solid var(--gray-300, #dee2e6);
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    box-shadow: 0 -0.25rem 0.5rem rgba(0, 0, 0, 0.05);
 }
 
 .path-mod-playerwords .mod-playerwords-keyboard-row {
@@ -401,34 +411,6 @@
 
     .path-mod-playerwords .mod-playerwords-game {
         padding: 1rem;
-    }
-
-    /*
-     * Below this width the device's own on-screen keyboard is assumed to be
-     * suppressed (inputmode="none"), so the virtual keyboard becomes this
-     * screen's only way to type — pin it to the viewport instead of leaving it
-     * in normal flow, where it could scroll out of reach. Desktop/tablet sizes
-     * keep the plain in-flow keyboard from the base rule above: a physical
-     * keyboard already works there regardless of inputmode, so reserving
-     * permanent space for an on-screen one would only waste it.
-     */
-    .path-mod-playerwords #playerwords-round-play {
-        padding-bottom: 14rem;
-    }
-
-    .path-mod-playerwords .mod-playerwords-keyboard {
-        position: fixed;
-        left: 50%;
-        bottom: 0;
-        transform: translateX(-50%);
-        z-index: 2;
-        margin-top: 0;
-        padding: 0.75rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
-        background-color: var(--body-bg, #fff);
-        border-top: 1px solid var(--gray-300, #dee2e6);
-        border-top-left-radius: 0.75rem;
-        border-top-right-radius: 0.75rem;
-        box-shadow: 0 -0.25rem 0.5rem rgba(0, 0, 0, 0.05);
     }
 }
 

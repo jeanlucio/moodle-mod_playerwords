@@ -17,21 +17,23 @@
 {{!
     @template mod_playerwords/round_play
 
-    Guess input and the on-screen keyboard for an active round. Submitting happens via
-    Enter (physical keyboard, implicit form submission) or the keyboard's own ENTER key
+    Guess input for an active round. Submitting happens via Enter (physical keyboard,
+    implicit form submission) or the on-screen keyboard's own ENTER key
     (form.requestSubmit()) — there is no separate submit button. The forfeit action lives
     in the page-level toolbar (mod_playerwords/toolbar), not here.
+
+    The on-screen keyboard itself is a sibling in mod_playerwords/round_panel, not here,
+    so it keeps sharing that template's own (tall) containing block for
+    position: sticky — see round_panel's docblock for why. Since #playerwords-round-play
+    is what game.js's showRoundResult() replaces wholesale when the round finishes, the
+    keyboard living outside it means that function also removes the keyboard node
+    explicitly, so it never lingers orphaned on the result screen.
 
     Example context (json):
     {
         "guesslabel": "Your guess",
         "guessplaceholder": "Type a word",
-        "guessmaxlength": 7,
-        "keyboardlabel": "On-screen keyboard",
-        "keyboardenterlabel": "Submit",
-        "keyboardentertext": "Enter",
-        "keyboardbackspacelabel": "Backspace",
-        "showcedilla": true
+        "guessmaxlength": 7
     }
 }}
 <div id="playerwords-round-play">
@@ -49,51 +51,4 @@
             required
         >
     </form>
-    <div id="playerwords-keyboard" class="mod-playerwords-keyboard" role="group" aria-label="{{keyboardlabel}}">
-        <div class="mod-playerwords-keyboard-row">
-            <button type="button" class="pw-key" data-key="Q" tabindex="-1">Q</button>
-            <button type="button" class="pw-key" data-key="W" tabindex="-1">W</button>
-            <button type="button" class="pw-key" data-key="E" tabindex="-1">E</button>
-            <button type="button" class="pw-key" data-key="R" tabindex="-1">R</button>
-            <button type="button" class="pw-key" data-key="T" tabindex="-1">T</button>
-            <button type="button" class="pw-key" data-key="Y" tabindex="-1">Y</button>
-            <button type="button" class="pw-key" data-key="U" tabindex="-1">U</button>
-            <button type="button" class="pw-key" data-key="I" tabindex="-1">I</button>
-            <button type="button" class="pw-key" data-key="O" tabindex="-1">O</button>
-            <button type="button" class="pw-key" data-key="P" tabindex="-1">P</button>
-        </div>
-        <div class="mod-playerwords-keyboard-row">
-            <button type="button" class="pw-key" data-key="A" tabindex="-1">A</button>
-            <button type="button" class="pw-key" data-key="S" tabindex="-1">S</button>
-            <button type="button" class="pw-key" data-key="D" tabindex="-1">D</button>
-            <button type="button" class="pw-key" data-key="F" tabindex="-1">F</button>
-            <button type="button" class="pw-key" data-key="G" tabindex="-1">G</button>
-            <button type="button" class="pw-key" data-key="H" tabindex="-1">H</button>
-            <button type="button" class="pw-key" data-key="J" tabindex="-1">J</button>
-            <button type="button" class="pw-key" data-key="K" tabindex="-1">K</button>
-            <button type="button" class="pw-key" data-key="L" tabindex="-1">L</button>
-            {{#showcedilla}}
-                <button type="button" class="pw-key" data-key="Ç" tabindex="-1">Ç</button>
-            {{/showcedilla}}
-        </div>
-        <div class="mod-playerwords-keyboard-row">
-            <button type="button"
-                    class="pw-key pw-key-wide pw-key-enter"
-                    data-key="ENTER"
-                    tabindex="-1"
-                    aria-label="{{keyboardenterlabel}}">{{keyboardentertext}}</button>
-            <button type="button" class="pw-key" data-key="Z" tabindex="-1">Z</button>
-            <button type="button" class="pw-key" data-key="X" tabindex="-1">X</button>
-            <button type="button" class="pw-key" data-key="C" tabindex="-1">C</button>
-            <button type="button" class="pw-key" data-key="V" tabindex="-1">V</button>
-            <button type="button" class="pw-key" data-key="B" tabindex="-1">B</button>
-            <button type="button" class="pw-key" data-key="N" tabindex="-1">N</button>
-            <button type="button" class="pw-key" data-key="M" tabindex="-1">M</button>
-            <button type="button"
-                    class="pw-key pw-key-wide pw-key-backspace"
-                    data-key="BACKSPACE"
-                    tabindex="-1"
-                    aria-label="{{keyboardbackspacelabel}}">&#x232b;</button>
-        </div>
-    </div>
 </div>
