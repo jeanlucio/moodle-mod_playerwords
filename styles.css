@@ -328,6 +328,21 @@
     color: var(--white, #fff);
 }
 
+/*
+ * touch-action is read from whichever element a touch gesture starts on, and stays
+ * in effect for the gesture's whole lifetime even once the finger slides off that
+ * element — so setting "none" here on the long-press keys themselves (not the popup)
+ * is what stops the browser from also reading the same drag as a page scroll while
+ * the player is sliding a finger across the accent options.
+ */
+.path-mod-playerwords .mod-playerwords-keyboard .pw-key[data-key="A"],
+.path-mod-playerwords .mod-playerwords-keyboard .pw-key[data-key="E"],
+.path-mod-playerwords .mod-playerwords-keyboard .pw-key[data-key="I"],
+.path-mod-playerwords .mod-playerwords-keyboard .pw-key[data-key="O"],
+.path-mod-playerwords .mod-playerwords-keyboard .pw-key[data-key="U"] {
+    touch-action: none;
+}
+
 .path-mod-playerwords .mod-playerwords-keyboard .pw-key {
     height: 3.25rem;
     min-width: 2.25rem;

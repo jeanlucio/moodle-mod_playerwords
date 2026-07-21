@@ -552,12 +552,17 @@ const initAccentLongPress = (keyboard, input) => {
         if (!longPressActive || !accentPopup) {
             return;
         }
+        // Backs up the long-press keys' own touch-action: none (see styles.css) —
+        // without this the page can still scroll under the player's finger while
+        // they are sliding across the accent options, on a browser that resolves
+        // touch-action more loosely.
+        e.preventDefault();
         const touch = e.touches[0];
         const option = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.pw-accent-option');
         if (option) {
             highlightAccentOption(accentPopup, option);
         }
-    }, {passive: true});
+    });
 
     keyboard.addEventListener('touchend', (e) => {
         clearPressTimer();
