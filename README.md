@@ -25,7 +25,18 @@ Designed around **retrieval practice** and **spaced repetition** — well-eviden
 
 AI word generation is **optional** and disabled by default. When used, the activity topic
 (never student data) is sent through `local_aihub` (BYOK) or Moodle's `core_ai` subsystem —
-PlayerWords never contacts an AI provider directly. Full disclosure:
+PlayerWords never contacts an AI provider directly.
+
+* **Cost:** None required. AI generation is entirely optional; if used, any cost is whatever
+  the underlying provider charges through your own `local_aihub` key, or nothing at all via a
+  free/institutional `core_ai` provider the site admin may have already configured.
+* **API keys:** Not configured in PlayerWords itself. Obtain and configure a personal or site
+  key inside `local_aihub` (see its own documentation), or ask your site administrator to
+  configure a `core_ai` provider instead.
+* **Demo credentials:** Not applicable — no credentials are required to install or use
+  PlayerWords; AI generation is entirely opt-in.
+
+Full disclosure:
 [Security & Compliance](https://jeanlucio.github.io/moodle-mod_playerwords/#security).
 
 ### 📦 Requirements
@@ -35,7 +46,7 @@ PlayerWords never contacts an AI provider directly. Full disclosure:
 | Moodle    | 4.5+    |
 | PHP       | 8.1+    |
 
-### 🛠️ Installation
+### 🛠️ Installation & Configuration
 
 1. Download the `.zip` file or clone this repository.
 2. Extract the folder into your Moodle `mod/` directory.
@@ -44,6 +55,11 @@ PlayerWords never contacts an AI provider directly. Full disclosure:
    `your-moodle/mod/playerwords/`
 4. Visit **Site administration > Notifications** to complete installation.
 5. Add a **PlayerWords** activity to any course.
+
+This plugin has no separate site-level settings to configure after installation — every
+setting is configured by the teacher when adding the activity to a course, as covered in the
+[Usage](https://jeanlucio.github.io/moodle-mod_playerwords/#usage) section of the full
+documentation.
 
 ### 🆘 Support
 
@@ -79,6 +95,16 @@ Baseado na **prática de recuperação** e na **repetição espaçada** — téc
 A geração de palavras por IA é **opcional** e vem desativada por padrão. Quando usada, o tema
 da atividade (nunca dados de estudante) é enviado através do `local_aihub` (BYOK) ou do
 subsistema `core_ai` do Moodle — o PlayerWords nunca contata um provedor de IA diretamente.
+
+* **Custo:** Nenhum é exigido. A geração por IA é totalmente opcional; se usada, qualquer custo
+  é o que o provedor cobrar através da sua própria chave no `local_aihub`, ou nenhum custo via
+  um provedor `core_ai` gratuito/institucional que o administrador do site já tenha configurado.
+* **Chaves de API:** Não são configuradas no PlayerWords. Obtenha e configure uma chave pessoal
+  ou do site dentro do `local_aihub` (veja a documentação própria dele), ou peça ao
+  administrador do site para configurar um provedor `core_ai`.
+* **Credenciais de demonstração:** Não aplicável — nenhuma credencial é exigida para instalar ou
+  usar o PlayerWords; a geração por IA é totalmente opcional.
+
 Divulgação completa:
 [Segurança e Conformidade](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html#security).
 
@@ -89,7 +115,7 @@ Divulgação completa:
 | Moodle     | 4.5+   |
 | PHP        | 8.1+   |
 
-### 🛠️ Instalação
+### 🛠️ Instalação e Configuração
 
 1. Baixe o arquivo `.zip` ou clone este repositório.
 2. Extraia na pasta `mod/` do seu Moodle.
@@ -98,6 +124,11 @@ Divulgação completa:
    `seu-moodle/mod/playerwords/`
 4. Acesse **Administração do site > Notificações** para concluir a instalação.
 5. Adicione uma atividade **PlayerWords** a qualquer curso.
+
+Este plugin não tem configurações separadas em nível de site após a instalação — toda
+configuração é feita pelo professor ao adicionar a atividade a um curso, conforme explicado na
+seção [Como Usar](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html#usage) da
+documentação completa.
 
 ### 🆘 Suporte
 
