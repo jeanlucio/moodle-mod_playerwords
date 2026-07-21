@@ -398,6 +398,184 @@ const recolorKeyboard = () => {
 };
 
 /**
+ * Accent variants offered by the long-press popup, keyed by the base letter's own
+ * keyboard key. Matching stays accent-insensitive (see word_normalizer::normalize()) —
+ * this is purely a typing convenience so students can practise proper Portuguese
+ * spelling, never a requirement to guess correctly.
+ *
+ * @type {Object<string, string[]>}
+ */
+const ACCENT_VARIANTS = {
+    A: ['Á', 'À', 'Â', 'Ã'],
+    E: ['É', 'Ê'],
+    I: ['Í'],
+    O: ['Ó', 'Ô', 'Õ'],
+    U: ['Ú'],
+};
+
+/** @type {number} Touch hold duration, in ms, before the accent popup appears. */
+const ACCENT_LONG_PRESS_MS = 450;
+
+/** @type {?HTMLElement} The accent popup currently on screen, if any. */
+let accentPopup = null;
+
+/**
+ * Writes one letter into the guess input, respecting maxlength — shared by a normal
+ * keyboard tap and an accent-popup selection so both go through the same length check
+ * and shake feedback.
+ *
+ * @param {HTMLElement} input Guess text input.
+ * @param {string} letter Single letter to append.
+ */
+const writeLetter = (input, letter) => {
+    const max = parseInt(input.getAttribute('maxlength'), 10);
+    if (input.value.length < max) {
+        input.value += letter;
+    } else {
+        shakeElement(input);
+    }
+    input.dispatchEvent(new Event('input'));
+};
+
+/**
+ * Removes the accent popup, if one is currently shown. Safe to call unconditionally.
+ */
+const removeAccentPopup = () => {
+    if (accentPopup) {
+        accentPopup.remove();
+        accentPopup = null;
+    }
+};
+
+/**
+ * Marks one accent-popup option as the one that will be committed on release, moving
+ * the highlight away from whichever option had it before — mirrors a phone's own
+ * native long-press-for-diacritics keyboard, where sliding a finger across the popup
+ * before lifting it picks whichever option is currently underneath.
+ *
+ * @param {HTMLElement} popup The accent popup element.
+ * @param {HTMLElement} target The option to highlight.
+ */
+const highlightAccentOption = (popup, target) => {
+    popup.querySelectorAll('.pw-accent-option').forEach((opt) => {
+        opt.classList.toggle('is-active', opt === target);
+    });
+};
+
+/**
+ * Builds and positions the accent popup above the long-pressed key, options being the
+ * plain base letter (pre-selected, so a long press released without sliding still
+ * types the same letter a normal tap would) followed by each accented variant.
+ *
+ * @param {HTMLElement} keyboard The keyboard container — the popup's own positioning parent.
+ * @param {HTMLElement} btn The long-pressed key button.
+ * @param {string} baseLetter The key's own base letter, e.g. "E".
+ */
+const showAccentPopup = (keyboard, btn, baseLetter) => {
+    removeAccentPopup();
+    const popup = document.createElement('div');
+    popup.className = 'pw-accent-popup';
+    [baseLetter, ...ACCENT_VARIANTS[baseLetter]].forEach((letter, i) => {
+        const opt = document.createElement('button');
+        opt.type = 'button';
+        opt.tabIndex = -1;
+        opt.className = 'pw-accent-option' + (i === 0 ? ' is-active' : '');
+        opt.textContent = letter;
+        opt.dataset.letter = letter;
+        popup.appendChild(opt);
+    });
+
+    const btnRect = btn.getBoundingClientRect();
+    const kbRect = keyboard.getBoundingClientRect();
+    popup.style.left = `${btnRect.left - kbRect.left + (btnRect.width / 2)}px`;
+    popup.style.top = `${btnRect.top - kbRect.top}px`;
+    keyboard.appendChild(popup);
+
+    // Keys near either edge of the keyboard (A is the leftmost key with variants)
+    // would otherwise centre the popup partly off-screen — nudge it back in.
+    const popupRect = popup.getBoundingClientRect();
+    if (popupRect.left < kbRect.left) {
+        popup.style.left = `${parseFloat(popup.style.left) + (kbRect.left - popupRect.left) + 4}px`;
+    } else if (popupRect.right > kbRect.right) {
+        popup.style.left = `${parseFloat(popup.style.left) - (popupRect.right - kbRect.right) - 4}px`;
+    }
+
+    accentPopup = popup;
+};
+
+/**
+ * Wires the accent-popup long-press gesture on every keyboard key that has variants
+ * (see ACCENT_VARIANTS). Touch-only by nature — a long press has no equivalent on a
+ * physical keyboard, which can already type accents through the operating system, so
+ * desktop typing is entirely unaffected. A normal (short) tap still falls through to
+ * wireKeyboardClicks' own click handler exactly as before.
+ *
+ * @param {HTMLElement} keyboard The keyboard container.
+ * @param {HTMLElement} input Guess text input.
+ */
+const initAccentLongPress = (keyboard, input) => {
+    let pressTimer = null;
+    let longPressActive = false;
+
+    const clearPressTimer = () => {
+        if (pressTimer) {
+            window.clearTimeout(pressTimer);
+            pressTimer = null;
+        }
+    };
+
+    const endLongPress = (commit) => {
+        if (commit && accentPopup) {
+            const active = accentPopup.querySelector('.pw-accent-option.is-active');
+            if (active) {
+                writeLetter(input, active.dataset.letter);
+            }
+        }
+        removeAccentPopup();
+        longPressActive = false;
+    };
+
+    keyboard.addEventListener('touchstart', (e) => {
+        const btn = e.target.closest('[data-key]');
+        const baseLetter = btn?.dataset.key;
+        if (!baseLetter || !ACCENT_VARIANTS[baseLetter]) {
+            return;
+        }
+        clearPressTimer();
+        pressTimer = window.setTimeout(() => {
+            longPressActive = true;
+            showAccentPopup(keyboard, btn, baseLetter);
+        }, ACCENT_LONG_PRESS_MS);
+    }, {passive: true});
+
+    keyboard.addEventListener('touchmove', (e) => {
+        if (!longPressActive || !accentPopup) {
+            return;
+        }
+        const touch = e.touches[0];
+        const option = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.pw-accent-option');
+        if (option) {
+            highlightAccentOption(accentPopup, option);
+        }
+    }, {passive: true});
+
+    keyboard.addEventListener('touchend', (e) => {
+        clearPressTimer();
+        if (longPressActive) {
+            // Suppresses the synthetic click touchend would otherwise fire next,
+            // which would type the plain base letter a second time.
+            e.preventDefault();
+            endLongPress(true);
+        }
+    });
+
+    keyboard.addEventListener('touchcancel', () => {
+        clearPressTimer();
+        endLongPress(false);
+    });
+};
+
+/**
  * Wires on-screen keyboard clicks to the guess input and form. Wired once per keyboard
  * element — the keyboard DOM node persists across guesses within the same round.
  *
@@ -417,6 +595,7 @@ const wireKeyboardClicks = (input, form) => {
         const key = btn.dataset.key;
         if (key === 'BACKSPACE') {
             input.value = input.value.slice(0, -1);
+            input.dispatchEvent(new Event('input'));
         } else if (key === 'ENTER') {
             if (form.requestSubmit) {
                 form.requestSubmit();
@@ -424,15 +603,10 @@ const wireKeyboardClicks = (input, form) => {
                 form.submit();
             }
         } else {
-            const max = parseInt(input.getAttribute('maxlength'), 10);
-            if (input.value.length < max) {
-                input.value += key;
-            } else {
-                shakeElement(input);
-            }
+            writeLetter(input, key);
         }
-        input.dispatchEvent(new Event('input'));
     });
+    initAccentLongPress(keyboard, input);
 };
 
 /**
