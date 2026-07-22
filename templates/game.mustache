@@ -140,6 +140,25 @@
         {{/timerenabled}}
     </div>
 
+    {{!
+        Rendered above the game area, not below it: the on-screen keyboard inside
+        #playerwords-stage is position: fixed to the viewport's bottom edge on mobile,
+        with no reserved space of its own for content that comes after it in the
+        document — anything placed below the stage risks sitting behind the keyboard,
+        mostly hidden (see mod_playercross's identical fix, which hit this in
+        production; not currently reachable here, since the grid's own height keeps
+        this content clear, but there is no guarantee that stays true as the UI
+        evolves).
+    }}
+    {{#showwordsstatus}}
+        {{#hasinactivewords}}
+            {{> mod_playerwords/inactive_words}}
+        {{/hasinactivewords}}
+        {{^hasinactivewords}}
+            <p class="mod-playerwords-words-status text-muted small mb-2">{{activewordscount}}</p>
+        {{/hasinactivewords}}
+    {{/showwordsstatus}}
+
     {{^hastargetword}}
         <div class="alert alert-warning">{{nogamewords}}</div>
     {{/hastargetword}}
@@ -154,15 +173,6 @@
             {{/showlobby}}
         </div>
     {{/hastargetword}}
-
-    {{#showwordsstatus}}
-        {{#hasinactivewords}}
-            {{> mod_playerwords/inactive_words}}
-        {{/hasinactivewords}}
-        {{^hasinactivewords}}
-            <p class="mod-playerwords-words-status text-muted small mb-2">{{activewordscount}}</p>
-        {{/hasinactivewords}}
-    {{/showwordsstatus}}
 
     <div id="playerwords-live-region"
          class="visually-hidden"
