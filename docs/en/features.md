@@ -19,6 +19,8 @@
 * 🔢 **Round Limit:** Teachers can cap the total number of rounds per student (1–10 or unlimited). Students see a rounds-played counter (e.g. "3 / 10" or "3 / ∞") both in the lobby and after each round.
 * 🛡️ **Round-Limit Integrity:** A round abandoned mid-play (closed tab, lost session) still counts against the round limit — reserved the moment it starts, not only once it finishes, so it can never grant a free re-roll.
 * 🔡 **Accent-Insensitive Matching:** Diacritics are always stripped before comparing guess and target.
+* ⌨️ **Accent Picker on the Virtual Keyboard:** Long-pressing a vowel key (A, E, I, O, U) on the on-screen keyboard opens a popup with its accented variants, mirroring a mobile keyboard's own long-press behaviour — sliding the finger picks a variant, releasing confirms it. Purely cosmetic: guess matching stays accent-insensitive throughout.
+* ✅ **True-Spelling Reveal:** When a round ends (win, loss, or forfeit), the word is shown with its real, accented spelling from the word bank, even if the winning guess was typed without accents.
 * 📊 **Grading Methods:** Highest grade, average grade, first attempt, last attempt, or average over all required rounds.
 * ⚖️ **Configurable Scoring Mode:** Choose Binary (all-or-nothing) or Linear (proportional to attempts spared) independently for the grade and for the ranking — see [Grading & Ranking](grading.html). Locked once the activity has recorded a real grade, so every round is guaranteed to be scored under the same rules.
 * 🧮 **Grading Transparency:** Students see the active grading method before playing and their live computed grade after each round, the same way mod_quiz communicates its own grading method.

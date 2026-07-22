@@ -19,6 +19,8 @@
 * 🔢 **Limite de rodadas:** O professor pode limitar o total de rodadas por estudante (1–10 ou ilimitado). O estudante vê um contador de rodadas jogadas (ex.: "3 / 10" ou "3 / ∞") no lobby e após cada rodada.
 * 🛡️ **Integridade do limite de rodadas:** Uma rodada abandonada no meio (aba fechada, sessão perdida) continua contando para o limite — reservada assim que começa, não só quando termina, então nunca dá um reroll de graça.
 * 🔡 **Correspondência sem acentos:** Acentuação é sempre ignorada ao comparar chute e palavra-alvo.
+* ⌨️ **Seleção de acento no teclado virtual:** Segurar uma tecla de vogal (A, E, I, O, U) no teclado virtual abre um popup com as variantes acentuadas, igual ao padrão de teclado de celular — arrastar o dedo escolhe a variante, soltar confirma. Puramente estético: a correspondência do chute continua sempre insensível a acentos.
+* ✅ **Revelação com ortografia real:** Ao vencer, perder ou desistir da rodada, a palavra é exibida com sua acentuação verdadeira do banco de palavras, mesmo que o chute vencedor tenha sido digitado sem acento.
 * 📊 **Métodos de nota:** Maior nota, média, primeira tentativa, última tentativa ou média sobre todas as rodadas exigidas.
 * ⚖️ **Modo de pontuação configurável:** Escolha Binária (tudo ou nada) ou Linear (proporcional às tentativas poupadas) de forma independente para a nota e para o ranking — veja [Nota e Ranking](grading.html). Trava assim que a atividade registra uma nota real, garantindo que toda rodada seja pontuada sob as mesmas regras.
 * 🧮 **Transparência de avaliação:** O estudante vê o método de avaliação ativo antes de jogar e sua nota atual computada após cada rodada, do mesmo jeito que o Quiz do Moodle comunica seu método de avaliação.
