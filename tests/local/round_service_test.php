@@ -998,4 +998,102 @@ final class round_service_test extends \advanced_testcase {
         $this->assertNotNull($notification);
         $this->assertFalse($state['roundstarted']);
     }
+
+    /**
+     * The guest account plays a free demo: start_round() must skip both the PlayerHUD
+     * cost and the {playerwords_attempts} reservation, even when a real cost item is
+     * configured and the guest's balance (it has none) would otherwise block it —
+     * test_start_round_still_blocks_when_item_disabled_and_insufficient() above proves a
+     * regular student is still blocked by the same kind of configuration, so this is a
+     * guest-specific waiver, not a general bypass.
+     *
+     * @covers \mod_playerwords\local\round_service::start_round
+     * @return void
+     */
+    public function test_start_round_guest_never_charges_or_reserves(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+
+        $biid = $this->make_block_instance($this->course);
+        $itemid = $this->make_item($biid);
+        $instance = $this->make_instance(['hud_round_cost_item' => $itemid, 'hud_round_cost_qty' => 1]);
+        $this->setGuestUser();
+        $guestid = (int)guest_user()->id;
+
+        $state = round_service::load_state($instance->cmid, $guestid);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $guestid);
+        [$state, $notification] = round_service::start_round($state, $instance, $guestid);
+
+        $this->assertNull($notification);
+        $this->assertTrue($state['roundstarted']);
+        $this->assertSame(0, $state['attemptid']);
+        $this->assertSame(0, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
+    }
+
+    /**
+     * The guest account plays a free demo: reveal_hint() must skip the PlayerHUD cost
+     * even when a real cost item is configured and the guest's balance would otherwise
+     * block it.
+     *
+     * @covers \mod_playerwords\local\round_service::reveal_hint
+     * @return void
+     */
+    public function test_reveal_hint_guest_never_charges(): void {
+        $this->skip_if_no_playerhud();
+
+        $biid = $this->make_block_instance($this->course);
+        $itemid = $this->make_item($biid);
+        $instance = $this->make_instance(['hud_hint_cost_item' => $itemid, 'hud_hint_cost_qty' => 1]);
+        $this->setGuestUser();
+        $guestid = (int)guest_user()->id;
+
+        $state = round_service::load_state($instance->cmid, $guestid);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $guestid);
+        [$state] = round_service::start_round($state, $instance, $guestid);
+
+        [$state, $notification] = round_service::reveal_hint($state, $instance, $guestid);
+
+        $this->assertNull($notification);
+        $this->assertTrue($state['hintrevealed']);
+    }
+
+    /**
+     * The guest account plays a free demo: finishing a round (a win, in this case) must
+     * leave no {playerwords_attempts} row, grant no PlayerHUD item, and never touch the
+     * gradebook — every guest visitor to a course shares the same account, so none of
+     * this could be safely attributed to one specific person.
+     *
+     * @covers \mod_playerwords\local\round_service::submit_guess
+     * @return void
+     */
+    public function test_finish_round_guest_never_persists(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+
+        $biid = $this->make_block_instance($this->course);
+        $itemid = $this->make_item($biid, 30);
+        $instance = $this->make_instance(['hud_win_grant_item' => $itemid, 'hud_win_grant_qty' => 2]);
+        $this->setGuestUser();
+        $guestid = (int)guest_user()->id;
+
+        $state = round_service::load_state($instance->cmid, $guestid);
+        [$state, , $roundwordid] = round_service::ensure_round_state($state, $instance, $instance->cmid, $guestid);
+        [$state] = round_service::start_round($state, $instance, $guestid);
+
+        [$state] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $guestid,
+            $roundwordid,
+            'boca',
+            'boca'
+        );
+
+        $this->assertTrue($state['finished']);
+        $this->assertTrue($state['won']);
+        $this->assertSame(0, $state['attemptid']);
+        $this->assertSame(0, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
+        $this->assertSame(0, $DB->count_records('block_playerhud_inventory', ['userid' => $guestid]));
+    }
 }

@@ -290,6 +290,12 @@ class round_service {
      * silently granting a free re-roll. finish_round() completes this same row rather
      * than inserting a second one.
      *
+     * The guest account is exempt from both the reservation and the PlayerHUD cost: a
+     * course's guest-access visitors all share the single guest user record, so nothing
+     * here could be safely attributed to one specific person. Guests play a free demo
+     * that leaves no {playerwords_attempts} row behind — see finish_round() for the
+     * matching exemption on the completion side.
+     *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
      * @param int $userid User id.
@@ -298,8 +304,10 @@ class round_service {
     public static function start_round(array $state, \stdClass $instance, int $userid): array {
         global $DB;
 
+        $isguest = isguestuser();
+
         $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
-        if ($roundcostitem > 0) {
+        if (!$isguest && $roundcostitem > 0) {
             $blockinstanceid = hud_service::resolve_block_instance_id($instance);
             $consumed = hud_service::consume_items(
                 $blockinstanceid,
@@ -316,7 +324,7 @@ class round_service {
         $state['starttime'] = time();
         $state['roundstarted'] = true;
 
-        if (empty($state['attemptid'])) {
+        if (!$isguest && empty($state['attemptid'])) {
             $state['attemptid'] = $DB->insert_record('playerwords_attempts', (object)[
                 'playerwordsid' => $instance->id,
                 'userid'        => $userid,
@@ -337,6 +345,8 @@ class round_service {
     /**
      * Reveals the hint, optionally consuming a PlayerHUD item cost.
      *
+     * The guest account is exempt from the PlayerHUD cost — see start_round() for why.
+     *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
      * @param int $userid User id.
@@ -344,7 +354,7 @@ class round_service {
      */
     public static function reveal_hint(array $state, \stdClass $instance, int $userid): array {
         $hintcostitem = (int)($instance->hud_hint_cost_item ?? 0);
-        if ($hintcostitem > 0) {
+        if (!isguestuser() && $hintcostitem > 0) {
             $blockinstanceid = hud_service::resolve_block_instance_id($instance);
             $consumed = hud_service::consume_items(
                 $blockinstanceid,
@@ -490,6 +500,11 @@ class round_service {
      * The single place all finish paths (guess completion, forfeit, timeout) go through:
      * flags, cooldown, score, attempt record, round_completed event and grade update.
      *
+     * The guest account never reaches the persistence block below: no attempt row, no
+     * round_completed event, no grade update, no PlayerHUD grant, no completion update.
+     * $state still gets 'finished'/'won'/etc. so the UI can show the round's outcome —
+     * see start_round() for why guests are exempt in the first place.
+     *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
      * @param int $cmid Course module id.
@@ -522,6 +537,11 @@ class round_service {
         // record this method is about to insert, via compute_cooldown_until(). That way
         // a later change to cooldown_seconds applies immediately, the same way mod_quiz's
         // inter-attempt delay always reflects its current setting.
+
+        if (isguestuser()) {
+            $state['attemptid'] = 0;
+            return $state;
+        }
 
         $timeused = max(0, time() - (int)$state['starttime']);
         $score = gameplay_service::calculate_round_score(

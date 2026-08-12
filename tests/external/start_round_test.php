@@ -50,6 +50,21 @@ final class start_round_test extends \advanced_testcase {
     }
 
     /**
+     * Enables the course's guest-access enrolment method — precondition for the
+     * guest-demo-mode regression test: mod/playerwords:view (the sole gate on this
+     * write service) is granted to the guest archetype, but only reachable at all once
+     * a course opts into guest access.
+     *
+     * @return void
+     */
+    private function enable_guest_access(): void {
+        global $DB;
+        $guestplugin = enrol_get_plugin('guest');
+        $instance = $DB->get_record('enrol', ['courseid' => $this->course->id, 'enrol' => 'guest'], '*', MUST_EXIST);
+        $guestplugin->update_status($instance, ENROL_INSTANCE_ENABLED);
+    }
+
+    /**
      * Creates a playerwords instance with one approved word, timer enabled.
      *
      * @param array $overrides Instance field overrides.
@@ -201,6 +216,30 @@ final class start_round_test extends \advanced_testcase {
         $result = $this->call_start_round($instance->cmid);
 
         $this->assertTrue($result['error']);
+    }
+
+    /**
+     * The guest account is allowed to play a free demo through the real web service
+     * dispatch path: the call succeeds (mod/playerwords:view is granted to the guest
+     * archetype on purpose), but round_service::start_round() must still leave no
+     * {playerwords_attempts} row behind — every guest visitor to a course shares the
+     * same account, so nothing here could be safely attributed to one specific person.
+     *
+     * @covers \mod_playerwords\external\start_round::execute
+     * @return void
+     */
+    public function test_guest_can_play_demo_without_persisting(): void {
+        global $DB;
+
+        $instance = $this->make_instance();
+        $this->enable_guest_access();
+        $this->setGuestUser();
+
+        $result = $this->call_start_round($instance->cmid);
+
+        $this->assertFalse($result['error']);
+        $this->assertTrue($result['data']['success']);
+        $this->assertSame(0, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
     }
 
     /**

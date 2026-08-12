@@ -102,6 +102,37 @@ final class submit_guess_test extends \advanced_testcase {
     }
 
     /**
+     * Enables the course's guest-access enrolment method — precondition for the
+     * guest-demo-mode regression test: mod/playerwords:view (the sole gate on this
+     * write service) is granted to the guest archetype, but only reachable at all once
+     * a course opts into guest access.
+     *
+     * @return void
+     */
+    private function enable_guest_access(): void {
+        global $DB;
+        $guestplugin = enrol_get_plugin('guest');
+        $instance = $DB->get_record('enrol', ['courseid' => $this->course->id, 'enrol' => 'guest'], '*', MUST_EXIST);
+        $guestplugin->update_status($instance, ENROL_INSTANCE_ENABLED);
+    }
+
+    /**
+     * Puts a round in progress for the current guest user. Must run after
+     * $this->setGuestUser() — setUser()/setGuestUser() empties the session, so any
+     * session state written before it is silently lost.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @return void
+     */
+    private function start_round_for_guest(\stdClass $instance): void {
+        $guestid = (int)guest_user()->id;
+        $state = round_service::load_state($instance->cmid, $guestid);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $guestid);
+        [$state] = round_service::start_round($state, $instance, $guestid);
+        round_service::save_state($instance->cmid, $guestid, $state);
+    }
+
+    /**
      * Calls the mod_playerwords_submit_guess web service through the real dispatch path.
      *
      * @param int $cmid Course module id.
@@ -196,6 +227,35 @@ final class submit_guess_test extends \advanced_testcase {
         $result = $this->call_submit_guess($instance->cmid, 'boca');
 
         $this->assertTrue($result['error']);
+    }
+
+    /**
+     * The guest account is allowed to play a free demo through the real web service
+     * dispatch path, all the way to winning a round: the call succeeds and the response
+     * reveals the word as usual, but round_service::finish_round() must leave no
+     * {playerwords_attempts} row behind and grant no PlayerHUD item — every guest
+     * visitor to a course shares the same account, so nothing here could be safely
+     * attributed to one specific person.
+     *
+     * @covers \mod_playerwords\external\submit_guess::execute
+     * @return void
+     */
+    public function test_guest_can_win_demo_without_persisting(): void {
+        global $DB;
+
+        $instance = $this->make_instance();
+        $this->enable_guest_access();
+        $this->setGuestUser();
+        $this->start_round_for_guest($instance);
+
+        $result = $this->call_submit_guess($instance->cmid, 'boca');
+
+        $this->assertFalse($result['error']);
+        $data = $result['data'];
+        $this->assertTrue($data['finished']);
+        $this->assertTrue($data['won']);
+        $this->assertSame('boca', $data['roundresult']['revealword']);
+        $this->assertSame(0, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
     }
 
     /**
