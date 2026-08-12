@@ -204,6 +204,45 @@ final class start_round_test extends \advanced_testcase {
     }
 
     /**
+     * Regression test for the max_rounds bypass: once the round limit is reached, a
+     * student who calls mod_playerwords_start_round directly — skipping the UI, which
+     * hides the "start" control and never lets this request happen from a real page —
+     * must not be able to sort a fresh word or insert another attempt row. A brand-new
+     * session (never having called new_round at all) has the exact same default state
+     * (wordid=0, finished=false) as one left behind by a blocked new_round() call, so
+     * this reproduces the report's PoC without needing to go through new_round first.
+     *
+     * @covers \mod_playerwords\external\start_round::execute
+     * @return void
+     */
+    public function test_blocked_when_round_limit_already_reached(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['max_rounds' => 1, 'cooldown_amount' => 0]);
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->student->id,
+            'wordid'        => 0,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+        $this->setUser($this->student);
+
+        $result = $this->call_start_round($instance->cmid);
+
+        $this->assertFalse($result['error']);
+        $this->assertFalse($result['data']['success']);
+
+        $state = round_service::load_state($instance->cmid, $this->student->id);
+        $this->assertFalse($state['roundstarted']);
+        $this->assertSame(1, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
+    }
+
+    /**
      * Tests that an insufficient PlayerHUD item balance blocks starting the round.
      *
      * @covers \mod_playerwords\external\start_round::execute

@@ -494,6 +494,50 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
+     * Regression test for the max_rounds/cooldown bypass: ensure_round_state() must
+     * refuse to pick a word once get_round_restriction_notice() reports a restriction,
+     * even when the session state already looks like a fresh lobby (wordid=0,
+     * finished=false) — the exact shape a blocked new_round() call, or a brand-new
+     * session, leaves behind. Before this guard, a direct call to start_round or
+     * submit_guess from that state would sort a word and insert an attempt row past
+     * max_rounds, ignoring the cooldown entirely.
+     *
+     * @covers \mod_playerwords\local\round_service::ensure_round_state
+     * @return void
+     */
+    public function test_ensure_round_state_refuses_new_word_when_restricted(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['max_rounds' => 1, 'cooldown_amount' => 0]);
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => 0,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+
+        // Simulates the state a fresh session, or a blocked new_round(), leaves behind.
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+
+        [$state, $targetword, $roundwordid] = round_service::ensure_round_state(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id
+        );
+
+        $this->assertSame('', $targetword);
+        $this->assertSame(0, $roundwordid);
+        $this->assertSame(0, $state['wordid']);
+        $this->assertSame(1, round_service::count_rounds_played($instance, $this->user->id));
+    }
+
+    /**
      * Tests that count_rounds_played counts only this instance's attempts for this user.
      *
      * @covers \mod_playerwords\local\round_service::count_rounds_played

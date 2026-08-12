@@ -190,6 +190,10 @@ class round_service {
      * Fires the round_started event when a fresh word is picked. Never picks a new word
      * while the current round is finished — that transition belongs exclusively to
      * new_round(); callers must reset the round first if they want to advance past it.
+     * Also never picks a new word while get_round_restriction_notice() reports max_rounds
+     * or cooldown as active — this is the single point every caller (view render, and the
+     * start_round/submit_guess/new_round externals) goes through to pick a word, so the
+     * restriction is enforced once here instead of being repeated at each call site.
      *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
@@ -240,6 +244,10 @@ class round_service {
         }
 
         if (!$wordremoved && $targetword === '') {
+            if (self::get_round_restriction_notice($instance, $userid) !== null) {
+                return [$state, '', 0];
+            }
+
             $completedround = self::count_rounds_played($instance, $userid);
             $excludewordid = words_repository::get_last_played_word_id($instance, $userid);
             $pickedword = words_repository::pick_round_word($instance, $completedround, $excludewordid);
