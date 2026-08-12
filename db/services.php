@@ -70,7 +70,7 @@ $functions = [
         'description'   => 'Count approved pool words within a given length range for the settings form.',
         'type'          => 'read',
         'ajax'          => true,
-        'capabilities'  => 'mod/playerwords:addinstance',
+        'capabilities'  => 'mod/playerwords:managewords',
         'loginrequired' => true,
     ],
     'mod_playerwords_count_glossary_candidates' => [

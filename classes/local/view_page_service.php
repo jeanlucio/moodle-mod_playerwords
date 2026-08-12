@@ -47,7 +47,7 @@ class view_page_service {
         context_module $context,
         int $userid
     ): array {
-        $canmanagewords = has_capability('mod/playerwords:addinstance', $context);
+        $canmanagewords = has_capability('mod/playerwords:managewords', $context);
 
         // Decided once per page load and marked immediately, not deferred to a client
         // callback: this is the same synchronous read-then-write pattern the preference

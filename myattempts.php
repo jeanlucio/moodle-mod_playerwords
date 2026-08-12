@@ -44,10 +44,9 @@ $PAGE->requires->css('/mod/playerwords/styles.css');
 $activityurl = (new moodle_url('/mod/playerwords/view.php', ['id' => $cm->id]))->out(false);
 $backlabel = get_string('backtogamebutton', 'mod_playerwords');
 
-// Whoever can add this activity (editingteacher, manager) reviews every student instead of
-// only their own history — same "can manage" gate ranking_service::get_ranking() already uses
-// to keep managers out of the student-facing ranking.
-if (has_capability('mod/playerwords:addinstance', $context)) {
+// Whoever can review reports (teacher, editingteacher, manager) sees every student instead
+// of only their own history.
+if (has_capability('mod/playerwords:viewreports', $context)) {
     $page = optional_param('page', 0, PARAM_INT);
     $sort = optional_param('sort', 'date', PARAM_ALPHA);
     $dir = (strtoupper(optional_param('dir', 'DESC', PARAM_ALPHA)) === 'ASC') ? 'ASC' : 'DESC';

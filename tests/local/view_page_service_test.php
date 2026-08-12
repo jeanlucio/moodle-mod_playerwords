@@ -478,4 +478,41 @@ final class view_page_service_test extends \advanced_testcase {
         $this->assertStringContainsString('1', $ctx['activewordscount']);
         $this->assertFalse($ctx['hasinactivewords']);
     }
+
+    /**
+     * Regression test for the capability split: mod/playerwords:addinstance — "may
+     * create an activity in this course" — must NOT, by itself, turn on the
+     * word-management affordances (the "manage words" button and the inactive-words
+     * status panel). Before the split, addinstance was the only gate here, so a
+     * course-wide "add activity" grant doubled as an activity-level word-management
+     * grant. This role deliberately holds addinstance and nothing else, proving
+     * build_page_data() now checks mod/playerwords:managewords specifically.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_addinstance_alone_does_not_show_manage_affordances(): void {
+        [$instance, $cm, $context] = $this->make_instance();
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $this->course->id, 'student');
+
+        $roleid = create_role(
+            'Addinstance only',
+            'addinstanceonly',
+            'Holds mod/playerwords:addinstance but not mod/playerwords:managewords'
+        );
+        $coursecontext = \context_course::instance($this->course->id);
+        assign_capability('mod/playerwords:addinstance', CAP_ALLOW, $roleid, $coursecontext->id, true);
+        role_assign($roleid, $user->id, $coursecontext->id);
+
+        $this->setUser($user);
+        $this->assertTrue(has_capability('mod/playerwords:addinstance', $coursecontext));
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $user->id);
+        $ctx = $pagedata['templatecontext'];
+
+        $this->assertFalse($ctx['canmanagewords']);
+        $this->assertFalse($ctx['showwordsstatus']);
+    }
 }

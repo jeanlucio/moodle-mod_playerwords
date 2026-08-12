@@ -34,10 +34,10 @@ final class count_eligible_words_test extends \advanced_testcase {
     /** @var \stdClass Course used by the tests. */
     private \stdClass $course;
 
-    /** @var \stdClass Teacher with mod/playerwords:addinstance. */
+    /** @var \stdClass Teacher with mod/playerwords:managewords (via the editingteacher archetype). */
     private \stdClass $teacher;
 
-    /** @var \stdClass Student without mod/playerwords:addinstance. */
+    /** @var \stdClass Student without mod/playerwords:managewords. */
     private \stdClass $student;
 
     #[\Override]
@@ -180,15 +180,49 @@ final class count_eligible_words_test extends \advanced_testcase {
     }
 
     /**
-     * A user without mod/playerwords:addinstance (e.g. a student) is rejected.
+     * A user without mod/playerwords:managewords (e.g. a student) is rejected.
      *
      * @covers \mod_playerwords\external\count_eligible_words::execute
      * @return void
      */
-    public function test_requires_addinstance_capability(): void {
+    public function test_requires_managewords_capability(): void {
         $instance = $this->make_instance();
 
         $this->setUser($this->student);
+
+        $this->expectException(\required_capability_exception::class);
+        \mod_playerwords\external\count_eligible_words::execute($instance->cmid, 4, 6);
+    }
+
+    /**
+     * Regression test for the capability split: mod/playerwords:addinstance —
+     * "may create an activity in this course" — must NOT, by itself, grant access to
+     * this word-management endpoint. Before the split, addinstance was the only gate
+     * here, so a course-wide "add activity" grant doubled as an activity-level
+     * word-management grant, which was broader than intended. This role deliberately
+     * holds addinstance and nothing else, proving the endpoint now checks
+     * mod/playerwords:managewords specifically.
+     *
+     * @covers \mod_playerwords\external\count_eligible_words::execute
+     * @return void
+     */
+    public function test_addinstance_alone_does_not_grant_access(): void {
+        $instance = $this->make_instance();
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($user->id, $this->course->id, 'student');
+
+        $roleid = create_role(
+            'Addinstance only',
+            'addinstanceonly',
+            'Holds mod/playerwords:addinstance but not mod/playerwords:managewords'
+        );
+        $coursecontext = \context_course::instance($this->course->id);
+        assign_capability('mod/playerwords:addinstance', CAP_ALLOW, $roleid, $coursecontext->id, true);
+        role_assign($roleid, $user->id, $coursecontext->id);
+
+        $this->setUser($user);
+        $this->assertTrue(has_capability('mod/playerwords:addinstance', $coursecontext));
 
         $this->expectException(\required_capability_exception::class);
         \mod_playerwords\external\count_eligible_words::execute($instance->cmid, 4, 6);
