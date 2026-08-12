@@ -376,6 +376,10 @@ class round_service {
     /**
      * Validates and applies one guess.
      *
+     * Requires roundstarted: a client that calls this before start_round() — skipping
+     * the "Iniciar rodada" button, which is the only place a configured PlayerHUD round
+     * cost is actually charged — must not be able to play the round for free.
+     *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
      * @param int $cmid Course module id.
@@ -396,6 +400,10 @@ class round_service {
     ): array {
         if (!empty($state['finished']) || (int)$state['attemptsused'] >= (int)$instance->max_attempts) {
             return [$state, null, get_string('roundfinished', 'mod_playerwords'), 'warning'];
+        }
+
+        if (empty($state['roundstarted'])) {
+            return [$state, null, get_string('roundnotstarted', 'mod_playerwords'), 'warning'];
         }
 
         if ($targetword === '') {

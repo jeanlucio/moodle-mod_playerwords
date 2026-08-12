@@ -186,6 +186,44 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
+     * Regression test for the round-cost bypass: a client that calls submit_guess()
+     * before start_round() — skipping the "Iniciar rodada" button, the only place a
+     * configured PlayerHUD round cost is actually charged — must be rejected, even with
+     * a correct guess for the word already sitting in session. The round stays
+     * unfinished and unscored so a repeat with start_round() first still works normally.
+     *
+     * @covers \mod_playerwords\local\round_service::submit_guess
+     * @return void
+     */
+    public function test_submit_guess_rejected_when_round_not_started(): void {
+        $instance = $this->make_instance();
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state, $targetword, $roundwordid] = round_service::ensure_round_state(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id
+        );
+        $this->assertFalse($state['roundstarted']);
+
+        [$state, $feedback, $notification, $notificationtype] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            $targetword,
+            'boca'
+        );
+
+        $this->assertNull($feedback);
+        $this->assertNotEmpty($notification);
+        $this->assertSame('warning', $notificationtype);
+        $this->assertFalse($state['finished']);
+        $this->assertSame(0, $state['attemptsused']);
+    }
+
+    /**
      * Tests that a wrong guess is recorded without finishing the round.
      *
      * @covers \mod_playerwords\local\round_service::submit_guess

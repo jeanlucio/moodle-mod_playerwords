@@ -228,6 +228,7 @@ $string['roundfinished'] = 'Esta rodada já foi finalizada. Inicie uma nova roda
 $string['roundforfeited'] = 'Você desistiu. A rodada foi encerrada.';
 $string['roundlimitreached'] = 'Você atingiu o número máximo de rodadas ({$a}) para esta atividade.';
 $string['roundlost'] = 'Rodada encerrada.';
+$string['roundnotstarted'] = 'Inicie a rodada antes de enviar um palpite.';
 $string['roundnottimedout'] = 'O tempo ainda não acabou.';
 $string['roundsplayed'] = 'Rodadas jogadas: {$a->played} / {$a->max}.';
 $string['roundtimeout'] = 'O tempo acabou. A rodada foi encerrada.';

@@ -117,6 +117,51 @@ final class submit_guess_test extends \advanced_testcase {
     }
 
     /**
+     * Skips the current test when block_playerhud is not installed.
+     *
+     * @return void
+     */
+    private function skip_if_no_playerhud(): void {
+        global $DB;
+        if (!$DB->get_manager()->table_exists('block_playerhud_items')) {
+            $this->markTestSkipped('block_playerhud not installed.');
+        }
+    }
+
+    /**
+     * Inserts a genuine block_playerhud_items record (with its own block instance).
+     *
+     * @return int Item id.
+     */
+    private function make_hud_item(): int {
+        global $DB;
+        $ctx = \context_course::instance($this->course->id);
+        $biid = $DB->insert_record('block_instances', (object)[
+            'blockname'         => 'playerhud',
+            'parentcontextid'   => $ctx->id,
+            'showinsubcontexts' => 0,
+            'pagetypepattern'   => 'course-view-*',
+            'subpagepattern'    => null,
+            'defaultregion'     => 'side-pre',
+            'defaultweight'     => 0,
+            'configdata'        => base64_encode(serialize(new \stdClass())),
+            'timecreated'       => time(),
+            'timemodified'      => time(),
+        ]);
+        return $DB->insert_record('block_playerhud_items', (object)[
+            'blockinstanceid' => $biid,
+            'name'            => 'Chave de Ouro',
+            'xp'              => 0,
+            'image'           => '',
+            'description'     => '',
+            'enabled'         => 1,
+            'secret'          => 0,
+            'timecreated'     => time(),
+            'timemodified'    => time(),
+        ]);
+    }
+
+    /**
      * Puts a round in progress for the current guest user. Must run after
      * $this->setGuestUser() — setUser()/setGuestUser() empties the session, so any
      * session state written before it is silently lost.
@@ -211,6 +256,41 @@ final class submit_guess_test extends \advanced_testcase {
         $this->assertTrue($data['finished']);
         $this->assertFalse($data['won']);
         $this->assertSame('boca', $data['roundresult']['revealword']);
+    }
+
+    /**
+     * Regression test for the round-cost bypass: a student who skips the "Iniciar
+     * rodada" button — the only place a configured PlayerHUD round cost is actually
+     * charged — and calls mod_playerwords_submit_guess directly through the real web
+     * service dispatch path must be rejected, even with a correct guess for the word
+     * already sitting in session (view.php's GET-time ensure_round_state() call puts it
+     * there before the student ever clicks anything). The round must not finish, must
+     * not be scored, and must leave no {playerwords_attempts} row behind.
+     *
+     * @covers \mod_playerwords\external\submit_guess::execute
+     * @return void
+     */
+    public function test_rejects_guess_when_round_not_started_bypassing_hud_cost(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+
+        $itemid = $this->make_hud_item();
+        $instance = $this->make_instance(['hud_round_cost_item' => $itemid, 'hud_round_cost_qty' => 1]);
+        $this->setUser($this->student);
+
+        // Load the target word into session (what view.php's GET does), but never call
+        // start_round — the exact shape of the exploit in the security report's PoC.
+        $state = round_service::load_state($instance->cmid, $this->student->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->student->id);
+        round_service::save_state($instance->cmid, $this->student->id, $state);
+
+        $result = $this->call_submit_guess($instance->cmid, 'boca');
+
+        $this->assertFalse($result['error']);
+        $data = $result['data'];
+        $this->assertFalse($data['finished']);
+        $this->assertNotEmpty($data['notification']);
+        $this->assertSame(0, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
     }
 
     /**
