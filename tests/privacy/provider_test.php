@@ -58,9 +58,13 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * @param int $userid        User ID.
      * @param int $playerwordsid Activity instance ID.
      * @param int $wordid        Word ID.
+     * @param float $rankingpoints Ranking points awarded for the round. Deliberately
+     *                             different from the fixed score value, so a test
+     *                             asserting on it cannot be accidentally satisfied by
+     *                             reading the score column instead.
      * @return void
      */
-    private function make_attempt(int $userid, int $playerwordsid, int $wordid): void {
+    private function make_attempt(int $userid, int $playerwordsid, int $wordid, float $rankingpoints = 80.0): void {
         global $DB;
         $DB->insert_record('playerwords_attempts', (object)[
             'playerwordsid' => $playerwordsid,
@@ -70,6 +74,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
             'time_used'     => 45,
             'completed'     => 1,
             'score'         => 100.0,
+            'rankingpoints' => $rankingpoints,
             'timecreated'   => time(),
             'timefinished'  => time(),
         ]);
@@ -112,6 +117,40 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $this->assertContains('playerwords_attempts', $keys);
         $this->assertContains('playerwords_words', $keys);
         $this->assertContains(intro_service::get_preference_name(), $keys);
+    }
+
+    /**
+     * Tests that the declared playerwords_attempts field keys match every real column
+     * of the table (minus id). Asserted as a set-equality against $DB->get_columns()
+     * rather than checking individual keys one by one, so a future column silently
+     * added to install.xml without a matching metadata entry fails this test — the
+     * exact drift that left rankingpoints undeclared until this test was added.
+     *
+     * @covers \mod_playerwords\privacy\provider::get_metadata
+     * @return void
+     */
+    public function test_get_metadata_playerwords_attempts_fields_match_schema(): void {
+        global $DB;
+
+        $collection = new collection('mod_playerwords');
+        $collection = provider::get_metadata($collection);
+
+        $tableitem = null;
+        foreach ($collection->get_collection() as $item) {
+            if ($item->get_name() === 'playerwords_attempts') {
+                $tableitem = $item;
+                break;
+            }
+        }
+        $this->assertNotNull($tableitem);
+
+        $declaredfields = array_keys($tableitem->get_privacy_fields());
+        $realcolumns = array_keys($DB->get_columns('playerwords_attempts'));
+        $realcolumns = array_values(array_diff($realcolumns, ['id']));
+
+        sort($declaredfields);
+        sort($realcolumns);
+        $this->assertSame($realcolumns, $declaredfields);
     }
 
     /**
@@ -289,6 +328,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         ]);
         $this->assertNotEmpty($attemptsdata->attempts);
         $this->assertSame($wordid, (int)$attemptsdata->attempts[0]['wordid']);
+        $this->assertSame(80.0, (float)$attemptsdata->attempts[0]['rankingpoints']);
 
         $wordsdata = writer::with_context($context)->get_data([
             get_string('pluginname', 'mod_playerwords'),

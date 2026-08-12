@@ -199,6 +199,7 @@ $string['privacy:metadata:playerwords_attempts'] = 'Armazena cada tentativa de r
 $string['privacy:metadata:playerwords_attempts:attempts_used'] = 'Número de palpites utilizados na rodada.';
 $string['privacy:metadata:playerwords_attempts:completed'] = 'Se o estudante acertou a palavra.';
 $string['privacy:metadata:playerwords_attempts:playerwordsid'] = 'ID da atividade PlayerWords.';
+$string['privacy:metadata:playerwords_attempts:rankingpoints'] = 'Pontos que esta rodada contribuiu para o ranking da atividade.';
 $string['privacy:metadata:playerwords_attempts:score'] = 'Nota atribuída pela rodada.';
 $string['privacy:metadata:playerwords_attempts:time_used'] = 'Tempo gasto na rodada, em segundos.';
 $string['privacy:metadata:playerwords_attempts:timecreated'] = 'Momento em que a tentativa de rodada foi criada.';

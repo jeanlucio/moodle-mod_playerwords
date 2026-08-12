@@ -57,6 +57,7 @@ class provider implements
                 'time_used'     => 'privacy:metadata:playerwords_attempts:time_used',
                 'completed'     => 'privacy:metadata:playerwords_attempts:completed',
                 'score'         => 'privacy:metadata:playerwords_attempts:score',
+                'rankingpoints' => 'privacy:metadata:playerwords_attempts:rankingpoints',
                 'timecreated'   => 'privacy:metadata:playerwords_attempts:timecreated',
                 'timefinished'  => 'privacy:metadata:playerwords_attempts:timefinished',
             ],
@@ -223,6 +224,7 @@ class provider implements
                         'time_used'     => (int)$a->time_used,
                         'completed'     => transform::yesno($a->completed),
                         'score'         => (float)$a->score,
+                        'rankingpoints' => (float)$a->rankingpoints,
                         'timecreated'   => transform::datetime($a->timecreated),
                         'timefinished'  => $a->timefinished > 0 ? transform::datetime($a->timefinished) : null,
                     ];

@@ -199,6 +199,7 @@ $string['privacy:metadata:playerwords_attempts'] = 'Stores each round attempt ma
 $string['privacy:metadata:playerwords_attempts:attempts_used'] = 'Number of guesses used in the round.';
 $string['privacy:metadata:playerwords_attempts:completed'] = 'Whether the student guessed the word correctly.';
 $string['privacy:metadata:playerwords_attempts:playerwordsid'] = 'ID of the PlayerWords activity.';
+$string['privacy:metadata:playerwords_attempts:rankingpoints'] = 'Points this round contributed to the activity ranking.';
 $string['privacy:metadata:playerwords_attempts:score'] = 'Score awarded for the round.';
 $string['privacy:metadata:playerwords_attempts:time_used'] = 'Time spent on the round, in seconds.';
 $string['privacy:metadata:playerwords_attempts:timecreated'] = 'Time when the round attempt was created.';
