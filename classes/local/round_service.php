@@ -290,6 +290,14 @@ class round_service {
      * silently granting a free re-roll. finish_round() completes this same row rather
      * than inserting a second one.
      *
+     * Revalidates get_round_restriction_notice() again here, not just at the point
+     * ensure_round_state() picked the word: a word can sit armed in session state for
+     * a while (the student never reaching "Iniciar rodada"), and a second concurrent
+     * session for the same user can reach that same armed state — e.g. two open tabs,
+     * or the round limit being hit in one session while another already loaded the
+     * lobby. Without this check, the second session could still commit the reservation
+     * and PlayerHUD cost after the limit/cooldown became active.
+     *
      * The guest account is exempt from both the reservation and the PlayerHUD cost: a
      * course's guest-access visitors all share the single guest user record, so nothing
      * here could be safely attributed to one specific person. Guests play a free demo
@@ -305,6 +313,13 @@ class round_service {
         global $DB;
 
         $isguest = isguestuser();
+
+        if (!$isguest) {
+            $restrictionnotice = self::get_round_restriction_notice($instance, $userid);
+            if ($restrictionnotice !== null) {
+                return [$state, $restrictionnotice, 'warning'];
+            }
+        }
 
         $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
         if (!$isguest && $roundcostitem > 0) {

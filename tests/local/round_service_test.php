@@ -773,6 +773,50 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
+     * Regression test for the parallel-session bypass: a word can sit armed in a
+     * session's state (ensure_round_state() already picked it) for a while before the
+     * student ever clicks "Iniciar rodada". If, in the meantime, a second session for
+     * the same user reaches max_rounds — e.g. two open tabs, one finishing rounds
+     * while the other's lobby still holds a stale armed word — start_round() must
+     * refuse to commit the reservation for the first session too, instead of trusting
+     * that ensure_round_state() already checked the restriction (it only checks when
+     * a NEW word is picked, not when an already-armed one is reused).
+     *
+     * @covers \mod_playerwords\local\round_service::start_round
+     * @return void
+     */
+    public function test_start_round_revalidates_restriction_for_a_word_armed_before_the_limit_hit(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['max_rounds' => 1, 'cooldown_amount' => 0]);
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+        $this->assertNotSame(0, $state['wordid'], 'word must be armed before the limit is reached');
+
+        // Simulates a second, concurrent session for the same user finishing a round
+        // in the meantime, reaching max_rounds — without going through the first
+        // session's own (stale) $state at all.
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => 0,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+
+        [$state, $notification] = round_service::start_round($state, $instance, $this->user->id);
+
+        $this->assertNotNull($notification);
+        $this->assertFalse($state['roundstarted']);
+        $this->assertSame(0, $state['attemptid']);
+        $this->assertSame(1, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
+    }
+
+    /**
      * finish_round() completes the reservation start_round() made instead of inserting
      * a second row — exactly one attempt row exists per round, whether it is still
      * pending or already finished.
