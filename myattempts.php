@@ -54,15 +54,17 @@ if (has_capability('mod/playerwords:viewreports', $context)) {
     $perpage = attempts_history_service::REPORT_PERPAGE;
 
     $history = attempts_history_service::get_all_history(
+        $cm,
         $instance,
         $context,
+        (int)$USER->id,
         $page,
         $perpage,
         $sort,
         $dir,
         $filteruserid
     );
-    $players = attempts_history_service::get_players_for_filter($instance, $context);
+    $players = attempts_history_service::get_players_for_filter($cm, $instance, $context, (int)$USER->id);
 
     $columns = [
         ['key' => 'student', 'label' => get_string('myattempts_student', 'mod_playerwords'), 'alignend' => false],

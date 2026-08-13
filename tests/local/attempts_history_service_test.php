@@ -282,7 +282,17 @@ final class attempts_history_service_test extends \advanced_testcase {
         $this->add_attempt($instance, $this->user, 30, 0, true, -20);
         $this->add_attempt($instance, $other, 70, 0, true, -10);
 
-        $history = attempts_history_service::get_all_history($instance, $context, 0, 30, 'date', 'DESC', 0);
+        $history = attempts_history_service::get_all_history(
+            $cm,
+            $instance,
+            $context,
+            $this->user->id,
+            0,
+            30,
+            'date',
+            'DESC',
+            0
+        );
 
         $this->assertSame(2, $history['total']);
         $this->assertSame(fullname($other), $history['rows'][0]['student']);
@@ -307,8 +317,18 @@ final class attempts_history_service_test extends \advanced_testcase {
         $this->add_attempt($instance, $this->user, 50);
         $this->add_attempt($instance, $teacher, 999);
 
-        $history = attempts_history_service::get_all_history($instance, $context, 0, 30, 'date', 'DESC', 0);
-        $players = attempts_history_service::get_players_for_filter($instance, $context);
+        $history = attempts_history_service::get_all_history(
+            $cm,
+            $instance,
+            $context,
+            $this->user->id,
+            0,
+            30,
+            'date',
+            'DESC',
+            0
+        );
+        $players = attempts_history_service::get_players_for_filter($cm, $instance, $context, $this->user->id);
 
         $this->assertSame(1, $history['total']);
         $this->assertSame(fullname($this->user), $history['rows'][0]['student']);
@@ -332,8 +352,10 @@ final class attempts_history_service_test extends \advanced_testcase {
         $this->add_attempt($instance, $other, 70);
 
         $history = attempts_history_service::get_all_history(
+            $cm,
             $instance,
             $context,
+            $this->user->id,
             0,
             30,
             'date',
@@ -360,12 +382,24 @@ final class attempts_history_service_test extends \advanced_testcase {
         $this->add_attempt($instance, $this->user, 70, 0, true, -20);
         $this->add_attempt($instance, $this->user, 30, 0, true, -10);
 
-        $ascending = attempts_history_service::get_all_history($instance, $context, 0, 30, 'score', 'ASC', 0);
+        $ascending = attempts_history_service::get_all_history(
+            $cm,
+            $instance,
+            $context,
+            $this->user->id,
+            0,
+            30,
+            'score',
+            'ASC',
+            0
+        );
         $this->assertSame('30.00', $ascending['rows'][0]['score']);
 
         $unknownkey = attempts_history_service::get_all_history(
+            $cm,
             $instance,
             $context,
+            $this->user->id,
             0,
             30,
             'not_a_real_column; DROP TABLE',
@@ -390,12 +424,223 @@ final class attempts_history_service_test extends \advanced_testcase {
             $this->add_attempt($instance, $this->user, (float)$i, 0, true, -$i);
         }
 
-        $firstpage = attempts_history_service::get_all_history($instance, $context, 0, 2, 'date', 'DESC', 0);
-        $secondpage = attempts_history_service::get_all_history($instance, $context, 1, 2, 'date', 'DESC', 0);
+        $firstpage = attempts_history_service::get_all_history(
+            $cm,
+            $instance,
+            $context,
+            $this->user->id,
+            0,
+            2,
+            'date',
+            'DESC',
+            0
+        );
+        $secondpage = attempts_history_service::get_all_history(
+            $cm,
+            $instance,
+            $context,
+            $this->user->id,
+            1,
+            2,
+            'date',
+            'DESC',
+            0
+        );
 
         $this->assertSame(5, $firstpage['total']);
         $this->assertCount(2, $firstpage['rows']);
         $this->assertCount(2, $secondpage['rows']);
         $this->assertNotSame($firstpage['rows'][0]['score'], $secondpage['rows'][0]['score']);
+    }
+
+    /**
+     * Puts the instance's course module into SEPARATEGROUPS mode and returns the
+     * reloaded $cm record, whose ->groupmode a stale in-memory copy would still
+     * report as 0 (NOGROUPS).
+     *
+     * @param \stdClass $instance Activity instance.
+     * @return \stdClass Reloaded course module record.
+     */
+    private function enable_separategroups(\stdClass $instance): \stdClass {
+        global $DB;
+        $cm = get_coursemodule_from_instance('playerwords', $instance->id, 0, false, MUST_EXIST);
+        $DB->set_field('course_modules', 'groupmode', SEPARATEGROUPS, ['id' => $cm->id]);
+        return get_coursemodule_from_instance('playerwords', $instance->id, 0, false, MUST_EXIST);
+    }
+
+    /**
+     * Regression test: with SEPARATEGROUPS active, a viewer restricted to one group
+     * (a non-editing teacher, the exact role mod/playerwords:viewreports is granted to
+     * by default) must not see another group's students in the all-students report —
+     * mirroring the restriction ranking_service::get_ranking() already applies.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
+     * @return void
+     */
+    public function test_get_all_history_separategroups_restricts_to_viewers_own_group(): void {
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = $this->enable_separategroups($instance);
+        $context = \context_module::instance($cm->id);
+
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $this->course->id, 'teacher');
+        $studenta = $this->getDataGenerator()->create_user();
+        $studentb = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($studenta->id, $this->course->id, 'student');
+        $this->getDataGenerator()->enrol_user($studentb->id, $this->course->id, 'student');
+
+        $groupa = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
+        $groupb = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupa->id, 'userid' => $teacher->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupa->id, 'userid' => $studenta->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupb->id, 'userid' => $studentb->id]);
+
+        $this->add_attempt($instance, $studenta, 50);
+        $this->add_attempt($instance, $studentb, 90);
+
+        $history = attempts_history_service::get_all_history(
+            $cm,
+            $instance,
+            $context,
+            $teacher->id,
+            0,
+            30,
+            'date',
+            'DESC',
+            0
+        );
+
+        $this->assertSame(1, $history['total']);
+        $this->assertSame(fullname($studenta), $history['rows'][0]['student']);
+    }
+
+    /**
+     * Regression test for the studentid bypass in the report's PoC: even if the
+     * filter dropdown is correctly scoped, requesting another group's student id
+     * directly via the studentid parameter must still return nothing — the group
+     * scope is enforced as an additional SQL condition, not just a UI-level filter.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
+     * @return void
+     */
+    public function test_get_all_history_separategroups_studentid_filter_cannot_bypass_group_scope(): void {
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = $this->enable_separategroups($instance);
+        $context = \context_module::instance($cm->id);
+
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $this->course->id, 'teacher');
+        $studentb = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($studentb->id, $this->course->id, 'student');
+
+        $groupa = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
+        $groupb = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupa->id, 'userid' => $teacher->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupb->id, 'userid' => $studentb->id]);
+
+        $this->add_attempt($instance, $studentb, 90);
+
+        $history = attempts_history_service::get_all_history(
+            $cm,
+            $instance,
+            $context,
+            $teacher->id,
+            0,
+            30,
+            'date',
+            'DESC',
+            $studentb->id
+        );
+
+        $this->assertSame(0, $history['total']);
+        $this->assertTrue($history['isempty']);
+    }
+
+    /**
+     * The filter dropdown itself must not offer a student from another group either —
+     * otherwise the UI would advertise an id the report then (correctly) refuses.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_players_for_filter
+     * @return void
+     */
+    public function test_get_players_for_filter_separategroups_excludes_other_group(): void {
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = $this->enable_separategroups($instance);
+        $context = \context_module::instance($cm->id);
+
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $this->course->id, 'teacher');
+        $studenta = $this->getDataGenerator()->create_user();
+        $studentb = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($studenta->id, $this->course->id, 'student');
+        $this->getDataGenerator()->enrol_user($studentb->id, $this->course->id, 'student');
+
+        $groupa = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
+        $groupb = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupa->id, 'userid' => $teacher->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupa->id, 'userid' => $studenta->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupb->id, 'userid' => $studentb->id]);
+
+        $this->add_attempt($instance, $studenta, 50);
+        $this->add_attempt($instance, $studentb, 90);
+
+        $players = attempts_history_service::get_players_for_filter($cm, $instance, $context, $teacher->id);
+
+        $this->assertCount(1, $players);
+        $this->assertSame(fullname($studenta), $players[0]->fullname);
+    }
+
+    /**
+     * A viewer holding moodle/site:accessallgroups sees every group's students
+     * despite SEPARATEGROUPS — the standard Moodle override for a report-viewing
+     * role, mirrored from the fix's own recommendation rather than left unhandled.
+     *
+     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
+     * @return void
+     */
+    public function test_get_all_history_accessallgroups_overrides_separategroups(): void {
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = $this->enable_separategroups($instance);
+        $context = \context_module::instance($cm->id);
+
+        $viewer = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($viewer->id, $this->course->id, 'teacher');
+        $roleid = create_role(
+            'Accessallgroups viewer',
+            'accessallgroupsviewer',
+            'Holds moodle/site:accessallgroups'
+        );
+        // Core declares moodle/site:accessallgroups at CONTEXT_MODULE — assigning it at
+        // the module context mirrors exactly where a real site would override it (the
+        // activity's own Permissions screen), not the course context above it.
+        assign_capability('moodle/site:accessallgroups', CAP_ALLOW, $roleid, $context->id, true);
+        role_assign($roleid, $viewer->id, $context->id);
+
+        $studenta = $this->getDataGenerator()->create_user();
+        $studentb = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($studenta->id, $this->course->id, 'student');
+        $this->getDataGenerator()->enrol_user($studentb->id, $this->course->id, 'student');
+        $groupa = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
+        $groupb = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupa->id, 'userid' => $studenta->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupb->id, 'userid' => $studentb->id]);
+        // Viewer deliberately joins neither group — accessallgroups alone must be enough.
+
+        $this->add_attempt($instance, $studenta, 50);
+        $this->add_attempt($instance, $studentb, 90);
+
+        $history = attempts_history_service::get_all_history(
+            $cm,
+            $instance,
+            $context,
+            $viewer->id,
+            0,
+            30,
+            'date',
+            'DESC',
+            0
+        );
+
+        $this->assertSame(2, $history['total']);
     }
 }
