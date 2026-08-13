@@ -459,20 +459,33 @@ function seed_finish_round(
 }
 
 /**
- * Picks a random approved word id for the given activity instance.
+ * Loads every approved word id for the given activity instance, once — the round
+ * simulation loops below call this a single time per activity and pick from the
+ * result with seed_pick_word_id(), instead of re-querying the same unchanging pool
+ * on every simulated round.
  *
  * @param int $instanceid Activity instance id.
- * @return int
+ * @return int[]
  */
-function seed_random_word_id(int $instanceid): int {
+function seed_load_word_ids(int $instanceid): array {
     global $DB;
 
-    $words = array_values($DB->get_records('playerwords_words', [
+    $words = $DB->get_records('playerwords_words', [
         'playerwordsid' => $instanceid,
         'approved'      => 1,
-    ], 'id ASC', 'id'));
+    ], 'id ASC', 'id');
 
-    return $words[array_rand($words)]->id;
+    return array_values(array_map(fn(stdClass $word): int => (int) $word->id, $words));
+}
+
+/**
+ * Picks a random word id from an already-loaded pool.
+ *
+ * @param int[] $wordids Pool of approved word ids, from seed_load_word_ids().
+ * @return int
+ */
+function seed_pick_word_id(array $wordids): int {
+    return $wordids[array_rand($wordids)];
 }
 
 // 7a. "Desafio Rápido" — manual words only, no PlayerHUD costs, unlimited rounds.
@@ -516,17 +529,18 @@ if ($cmquick) {
     cli_writeln("Atividade 'Desafio Rápido' criada: " . count($quickwords) . " palavras manuais.");
 
     // Alice and Bob play several unlimited rounds with no cooldown; Carol only tried once.
+    $quickwordids = seed_load_word_ids($instancequick->id);
     $daysago = 6;
     foreach ([$students[0], $students[1]] as $student) {
         for ($round = 0; $round < 4; $round++) {
-            $wordid = seed_random_word_id($instancequick->id);
+            $wordid = seed_pick_word_id($quickwordids);
             $completed = $round !== 1;
             $attempts = $completed ? random_int(1, 4) : (int) $instancequick->max_attempts;
             seed_finish_round($instancequick, $student->id, $wordid, $attempts, $completed, random_int(20, 90), $daysago);
             $daysago--;
         }
     }
-    seed_finish_round($instancequick, $students[2]->id, seed_random_word_id($instancequick->id), 3, true, 45, 2);
+    seed_finish_round($instancequick, $students[2]->id, seed_pick_word_id($quickwordids), 3, true, 45, 2);
     playerwords_update_grades($instancequick);
     cli_writeln("Rodadas simuladas em 'Desafio Rápido' para Alice, Bob e Carol.");
 } else {
@@ -563,11 +577,12 @@ if ($cmglossarygame) {
     $wordcount = $DB->count_records('playerwords_words', ['playerwordsid' => $instanceglossary->id, 'approved' => 1]);
     cli_writeln("Atividade 'Vocabulário do Glossário' criada: {$wordcount} palavras importadas do glossário.");
 
+    $glossarywordids = seed_load_word_ids($instanceglossary->id);
     $daysago = 5;
     foreach ($students as $idx => $student) {
         $rounds = 2 + ($idx % 3);
         for ($round = 0; $round < $rounds; $round++) {
-            $wordid = seed_random_word_id($instanceglossary->id);
+            $wordid = seed_pick_word_id($glossarywordids);
             $completed = ($round % 3) !== 2;
             $attempts = $completed ? random_int(1, 4) : (int) $instanceglossary->max_attempts;
             seed_finish_round($instanceglossary, $student->id, $wordid, $attempts, $completed, random_int(15, 60), $daysago);
@@ -638,6 +653,7 @@ if ($cmhud) {
         . " palavras manuais + 2 sugestões de IA (1 pendente, 1 aprovada)."
     );
 
+    $hudwordids = seed_load_word_ids($instancehud->id);
     $daysago = 4;
     foreach ($students as $idx => $student) {
         $rounds = min((int) $instancehud->max_rounds, 2 + ($idx % 3));
@@ -647,7 +663,7 @@ if ($cmhud) {
                 hud_service::consume_items($blockinstanceid, $student->id, $itemhint->id, 1);
             }
 
-            $wordid = seed_random_word_id($instancehud->id);
+            $wordid = seed_pick_word_id($hudwordids);
             $completed = $round !== 1;
             $attempts = $completed ? random_int(1, 4) : (int) $instancehud->max_attempts;
             seed_finish_round($instancehud, $student->id, $wordid, $attempts, $completed, random_int(30, 120), $daysago);
@@ -713,11 +729,12 @@ if ($cminfinite) {
     }
     cli_writeln("Atividade 'Modo Infinito PlayerHUD' criada: " . count($infinitewords) . " palavras manuais.");
 
+    $infinitewordids = seed_load_word_ids($instanceinfinite->id);
     $daysago = 3;
     foreach ($students as $idx => $student) {
         $rounds = 2 + ($idx % 2);
         for ($round = 0; $round < $rounds; $round++) {
-            $wordid = seed_random_word_id($instanceinfinite->id);
+            $wordid = seed_pick_word_id($infinitewordids);
             $completed = $round !== 1;
             $attempts = $completed ? random_int(1, 4) : (int) $instanceinfinite->max_attempts;
             seed_finish_round($instanceinfinite, $student->id, $wordid, $attempts, $completed, random_int(20, 80), $daysago);
