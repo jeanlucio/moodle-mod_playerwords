@@ -81,7 +81,7 @@ class reveal_hint extends external_api {
             return self::result(false, '', '', '');
         }
 
-        [$state, $notification, $notificationtype] = round_service::reveal_hint($state, $instance, $userid);
+        [$state, $notification, $notificationtype] = round_service::reveal_hint($state, $instance, $cmid, $userid);
         round_service::save_state($cmid, $userid, $state);
 
         return self::result(

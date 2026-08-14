@@ -379,16 +379,59 @@ class round_service {
     }
 
     /**
+     * Whether a started, timed round's deadline has genuinely passed, with the same
+     * tolerance window timeout() applies in the opposite direction: timeout() refuses
+     * to close a round up to TIMEOUT_TOLERANCE_SECONDS before the deadline (never trust
+     * the client's own countdown alone), so a guess or hint arriving up to that same
+     * window after the deadline is still accepted here — normal network latency, not a
+     * bypass. An untimed activity (timer_seconds <= 0) or a round that never started
+     * never expires by this check.
+     *
+     * @param array $state Current state.
+     * @param \stdClass $instance Activity instance.
+     * @return bool
+     */
+    private static function round_expired(array $state, \stdClass $instance): bool {
+        if ((int)$instance->timer_seconds <= 0 || empty($state['roundstarted'])) {
+            return false;
+        }
+
+        $deadline = (int)$state['starttime'] + (int)$instance->timer_seconds;
+        return time() > $deadline + self::TIMEOUT_TOLERANCE_SECONDS;
+    }
+
+    /**
      * Reveals the hint, optionally consuming a PlayerHUD item cost.
      *
      * The guest account is exempt from the PlayerHUD cost — see start_round() for why.
      *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
+     * @param int $cmid Course module id.
      * @param int $userid User id.
      * @return array [$state, $notification, $notificationtype]
      */
-    public static function reveal_hint(array $state, \stdClass $instance, int $userid): array {
+    public static function reveal_hint(array $state, \stdClass $instance, int $cmid, int $userid): array {
+        if (!empty($state['finished'])) {
+            return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning'];
+        }
+
+        // Requires roundstarted: see submit_guess() for why — a word armed at page-load
+        // time, before the "Iniciar rodada" button is ever clicked, must not be endable
+        // or hintable, let alone spend a PlayerHUD cost on a round never actually
+        // committed to.
+        if (empty($state['roundstarted'])) {
+            return [$state, get_string('roundnotstarted', 'mod_playerwords'), 'warning'];
+        }
+
+        // See submit_guess() for why this is re-checked here too, not just in timeout()
+        // itself.
+        if (self::round_expired($state, $instance)) {
+            $roundwordid = (int)$state['wordid'];
+            $state = self::finish_round($state, $instance, $cmid, $userid, $roundwordid, false, false, true);
+            return [$state, get_string('roundtimeout', 'mod_playerwords'), 'warning'];
+        }
+
         $hintcostitem = (int)($instance->hud_hint_cost_item ?? 0);
         if (!isguestuser() && $hintcostitem > 0) {
             $blockinstanceid = hud_service::resolve_block_instance_id($instance);
@@ -440,6 +483,20 @@ class round_service {
 
         if (empty($state['roundstarted'])) {
             return [$state, null, get_string('roundnotstarted', 'mod_playerwords'), 'warning'];
+        }
+
+        // The client is expected to call mod_playerwords_end_round(reason=timeout)
+        // itself once its own countdown reaches zero, but nothing forces it to — a
+        // client that simply never fires that call (or a reload after the deadline,
+        // since the timer is only ever armed client-side when timeleft > 0) would
+        // otherwise keep this round playable, and winnable, indefinitely past its
+        // configured time limit: without this check, a guess arriving well past the
+        // deadline was still evaluated for correctness below and could still register
+        // as a win. Closing the round here, the same way timeout() itself would, makes
+        // the server the one actually enforcing the limit.
+        if (self::round_expired($state, $instance)) {
+            $state = self::finish_round($state, $instance, $cmid, $userid, $roundwordid, false, false, true);
+            return [$state, null, get_string('roundtimeout', 'mod_playerwords'), 'warning'];
         }
 
         if ($targetword === '') {
@@ -554,6 +611,28 @@ class round_service {
         $state = self::finish_round($state, $instance, $cmid, $userid, $roundwordid, false, false, true);
 
         return [$state, get_string('roundtimeout', 'mod_playerwords'), 'warning'];
+    }
+
+    /**
+     * Closes a started round if its deadline has already passed, the same way
+     * timeout() would. Used by view_page_service so a page reload after the deadline
+     * renders the round as finished immediately, instead of it only closing on the
+     * player's next guess/hint attempt (round_expired() is also checked at the top of
+     * submit_guess() and reveal_hint(), which is the actual security boundary — this is
+     * purely about not rendering a stale playable form on a read-only GET).
+     *
+     * @param array $state Current state.
+     * @param \stdClass $instance Activity instance.
+     * @param int $cmid Course module id.
+     * @param int $userid User id.
+     * @return array Updated state.
+     */
+    public static function close_if_expired(array $state, \stdClass $instance, int $cmid, int $userid): array {
+        if (self::round_expired($state, $instance)) {
+            $roundwordid = (int)$state['wordid'];
+            return self::finish_round($state, $instance, $cmid, $userid, $roundwordid, false, false, true);
+        }
+        return $state;
     }
 
     /**

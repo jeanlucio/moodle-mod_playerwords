@@ -527,6 +527,93 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
+     * Regression test for the timer bypass: a client that never calls
+     * mod_playerwords_end_round(reason=timeout) — because the client only ever arms
+     * that call when it first sees timeleft > 0, so a reload after the deadline never
+     * fires it — must still be rejected by submit_guess() once the round's own
+     * deadline has genuinely passed, even with a guess that would otherwise be correct.
+     * Before this guard, the guess was evaluated for correctness before the elapsed
+     * time was even considered, so a very late but correct guess could still win.
+     *
+     * @covers \mod_playerwords\local\round_service::submit_guess
+     * @return void
+     */
+    public function test_submit_guess_closes_round_once_deadline_has_passed(): void {
+        $instance = $this->make_instance(['timer_minutes' => 1]);
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+        $state['starttime'] = time() - 120;
+
+        [$state, $feedback, $notification, $notificationtype] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'boca'
+        );
+
+        $this->assertTrue($state['finished']);
+        $this->assertTrue($state['timedout']);
+        $this->assertFalse($state['won']);
+        $this->assertNull($feedback);
+        $this->assertSame('warning', $notificationtype);
+        $this->assertNotEmpty($notification);
+    }
+
+    /**
+     * Same regression as submit_guess() above, for reveal_hint(): a hint pulled after
+     * the deadline has genuinely passed must close the round instead of revealing
+     * anything, even though reveal_hint() has no attempt/word-correctness logic of its
+     * own to bypass.
+     *
+     * @covers \mod_playerwords\local\round_service::reveal_hint
+     * @return void
+     */
+    public function test_reveal_hint_closes_round_once_deadline_has_passed(): void {
+        $instance = $this->make_instance(['timer_minutes' => 1]);
+        [$state] = $this->start_ready_round($instance);
+        $state['starttime'] = time() - 120;
+
+        [$state, $notification] = round_service::reveal_hint($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertTrue($state['finished']);
+        $this->assertTrue($state['timedout']);
+        $this->assertFalse($state['hintrevealed']);
+        $this->assertNotEmpty($notification);
+    }
+
+    /**
+     * Regression test for close_if_expired(): only a round that is actually started,
+     * timed, and genuinely past its deadline (plus tolerance) gets closed. Used by
+     * view_page_service so a page reload after the deadline renders the round as
+     * finished immediately, instead of it only closing on the player's next guess/hint.
+     *
+     * @covers \mod_playerwords\local\round_service::close_if_expired
+     * @return void
+     */
+    public function test_close_if_expired_only_closes_a_genuinely_expired_round(): void {
+        $instance = $this->make_instance(['timer_minutes' => 1]);
+
+        $notyetstarted = round_service::load_state($instance->cmid, $this->user->id);
+        [$notyetstarted] = round_service::ensure_round_state($notyetstarted, $instance, $instance->cmid, $this->user->id);
+        $this->assertFalse($notyetstarted['roundstarted']);
+        $notclosed = round_service::close_if_expired(
+            $notyetstarted,
+            $instance,
+            $instance->cmid,
+            $this->user->id
+        );
+        $this->assertFalse($notclosed['finished']);
+
+        [$expired] = $this->start_ready_round($instance);
+        $expired['starttime'] = time() - 120;
+        $closed = round_service::close_if_expired($expired, $instance, $instance->cmid, $this->user->id);
+        $this->assertTrue($closed['finished']);
+        $this->assertTrue($closed['timedout']);
+    }
+
+    /**
      * Tests that new_round resets the session so the next load picks a fresh word.
      *
      * @covers \mod_playerwords\local\round_service::new_round
@@ -1099,7 +1186,7 @@ final class round_service_test extends \advanced_testcase {
         $instance = $this->make_instance(['hud_hint_cost_item' => 999999, 'hud_hint_cost_qty' => 1]);
         [$state] = $this->start_ready_round($instance);
 
-        [$state, $notification] = round_service::reveal_hint($state, $instance, $this->user->id);
+        [$state, $notification] = round_service::reveal_hint($state, $instance, $instance->cmid, $this->user->id);
 
         $this->assertNull($notification);
         $this->assertTrue($state['hintrevealed']);
@@ -1183,7 +1270,7 @@ final class round_service_test extends \advanced_testcase {
         [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $guestid);
         [$state] = round_service::start_round($state, $instance, $guestid);
 
-        [$state, $notification] = round_service::reveal_hint($state, $instance, $guestid);
+        [$state, $notification] = round_service::reveal_hint($state, $instance, $instance->cmid, $guestid);
 
         $this->assertNull($notification);
         $this->assertTrue($state['hintrevealed']);

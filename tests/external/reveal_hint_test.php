@@ -149,6 +149,7 @@ final class reveal_hint_test extends \advanced_testcase {
     public function test_reveals_hint(): void {
         $instance = $this->make_instance();
         $this->setUser($this->student);
+        $this->start_round($instance);
 
         $result = $this->call_reveal_hint($instance->cmid);
 
@@ -166,6 +167,7 @@ final class reveal_hint_test extends \advanced_testcase {
     public function test_reveal_hint_is_idempotent(): void {
         $instance = $this->make_instance();
         $this->setUser($this->student);
+        $this->start_round($instance);
 
         $this->call_reveal_hint($instance->cmid);
         $second = $this->call_reveal_hint($instance->cmid);
@@ -225,6 +227,7 @@ final class reveal_hint_test extends \advanced_testcase {
         $itemid = $this->make_hud_item();
         $instance = $this->make_instance(['hud_hint_cost_item' => $itemid, 'hud_hint_cost_qty' => 1]);
         $this->setUser($this->student);
+        $this->start_round($instance);
 
         $result = $this->call_reveal_hint($instance->cmid);
 
@@ -245,11 +248,54 @@ final class reveal_hint_test extends \advanced_testcase {
     public function test_hud_deleted_item_waives_reveal_cost(): void {
         $instance = $this->make_instance(['hud_hint_cost_item' => 999999, 'hud_hint_cost_qty' => 1]);
         $this->setUser($this->student);
+        $this->start_round($instance);
 
         $result = $this->call_reveal_hint($instance->cmid);
 
         $this->assertFalse($result['error']);
         $this->assertTrue($result['data']['success']);
         $this->assertSame('dica secreta', $result['data']['hintvalue']);
+    }
+
+    /**
+     * Regression test for the timer bypass: a student who never calls
+     * mod_playerwords_end_round(reason=timeout) — because the client only ever arms
+     * that call when it first sees timeleft > 0, so simply reloading after the deadline
+     * never fires it — must still be stopped from revealing the hint through
+     * mod_playerwords_reveal_hint after the round's own deadline has passed.
+     *
+     * @covers \mod_playerwords\external\reveal_hint::execute
+     * @return void
+     */
+    public function test_rejects_hint_reveal_once_deadline_has_passed(): void {
+        $instance = $this->make_instance(['timer_minutes' => 1]);
+        $this->setUser($this->student);
+
+        $state = round_service::load_state($instance->cmid, $this->student->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->student->id);
+        [$state] = round_service::start_round($state, $instance, $this->student->id);
+        $state['starttime'] = time() - 120;
+        round_service::save_state($instance->cmid, $this->student->id, $state);
+
+        $result = $this->call_reveal_hint($instance->cmid);
+
+        $this->assertFalse($result['error']);
+        $this->assertFalse($result['data']['success']);
+        $this->assertSame('', $result['data']['hintvalue']);
+        $this->assertNotEmpty($result['data']['notification']);
+    }
+
+    /**
+     * Starts a round for the given instance and student, and persists the state — the
+     * shared setup every test above needs now that reveal_hint() requires roundstarted.
+     *
+     * @param \stdClass $instance Activity instance (with ->cmid).
+     * @return void
+     */
+    private function start_round(\stdClass $instance): void {
+        $state = round_service::load_state($instance->cmid, $this->student->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->student->id);
+        [$state] = round_service::start_round($state, $instance, $this->student->id);
+        round_service::save_state($instance->cmid, $this->student->id, $state);
     }
 }
