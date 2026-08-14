@@ -17,10 +17,13 @@
 {{!
     @template mod_playerwords/round_play
 
-    Guess input for an active round. Submitting happens via Enter (physical keyboard,
-    implicit form submission) or the on-screen keyboard's own ENTER key
-    (form.requestSubmit()) — there is no separate submit button. The forfeit action lives
-    in the page-level toolbar (mod_playerwords/toolbar), not here.
+    Guess input for an active round. Letters, Backspace and Enter are captured at the
+    document level by game.js's initPhysicalKeyboardCapture(), so physical typing works
+    regardless of whether this input has DOM focus — it no longer relies on native text
+    entry into the field itself. Submitting happens via Enter or the on-screen keyboard's
+    own ENTER key, both routed through the same submitGuessForm() helper
+    (form.requestSubmit()) — there is no separate submit button. The forfeit action
+    lives in the page-level toolbar (mod_playerwords/toolbar), not here.
 
     The on-screen keyboard itself is a sibling in mod_playerwords/round_panel, not here,
     so it keeps sharing that template's own (tall) containing block for

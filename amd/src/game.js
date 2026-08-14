@@ -438,6 +438,33 @@ const writeLetter = (input, letter) => {
 };
 
 /**
+ * Removes the last letter from the guess input — shared by a Backspace tap on the
+ * on-screen keyboard and a physical Backspace keypress, so both go through the same
+ * input-event contract as writeLetter.
+ *
+ * @param {HTMLElement} input Guess text input.
+ */
+const removeLastLetter = (input) => {
+    input.value = input.value.slice(0, -1);
+    input.dispatchEvent(new Event('input'));
+};
+
+/**
+ * Submits the guess form, preferring requestSubmit() (fires the form's own submit
+ * event and any validation) over a bare submit() — shared by the on-screen keyboard's
+ * ENTER key and a physical Enter keypress.
+ *
+ * @param {HTMLElement} form Guess form.
+ */
+const submitGuessForm = (form) => {
+    if (form.requestSubmit) {
+        form.requestSubmit();
+    } else {
+        form.submit();
+    }
+};
+
+/**
  * Removes the accent popup, if one is currently shown. Safe to call unconditionally.
  */
 const removeAccentPopup = () => {
@@ -599,14 +626,9 @@ const wireKeyboardClicks = (input, form) => {
         }
         const key = btn.dataset.key;
         if (key === 'BACKSPACE') {
-            input.value = input.value.slice(0, -1);
-            input.dispatchEvent(new Event('input'));
+            removeLastLetter(input);
         } else if (key === 'ENTER') {
-            if (form.requestSubmit) {
-                form.requestSubmit();
-            } else {
-                form.submit();
-            }
+            submitGuessForm(form);
         } else {
             writeLetter(input, key);
         }
@@ -669,31 +691,6 @@ const initGridPreview = () => {
 const shakeElement = (el) => {
     el.classList.add('pw-shake');
     window.setTimeout(() => el.classList.remove('pw-shake'), 450);
-};
-
-/**
- * Shakes the guess input when the player tries to type past its maxlength. The native
- * HTML attribute already blocks the character on a physical keyboard, but does so
- * silently — this makes the rejection visible instead of leaving the player wondering
- * why the letter never appeared. The on-screen keyboard's own length check triggers the
- * same shake directly in wireKeyboardClicks.
- */
-const initGuessLengthFeedback = () => {
-    const input = document.getElementById('playerwords-guess');
-    if (!input) {
-        return;
-    }
-    input.addEventListener('keydown', (e) => {
-        // A key name longer than one character means a control/navigation key
-        // (Backspace, ArrowLeft, Shift...) rather than a printable character.
-        if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) {
-            return;
-        }
-        const max = parseInt(input.getAttribute('maxlength'), 10);
-        if (input.value.length >= max) {
-            shakeElement(input);
-        }
-    });
 };
 
 /**
@@ -763,7 +760,6 @@ const wireRoundPanel = (cmid, timertotal) => {
     initInputFilter();
     initGridPreview();
     initGuessForm(cmid, timertotal);
-    initGuessLengthFeedback();
     initHintButton(cmid);
 };
 
@@ -1015,6 +1011,84 @@ const initGuessForm = (cmid, timertotal) => {
 };
 
 /**
+ * Whether the given element is a genuinely different text-editing surface (so letters
+ * typed into it are unrelated to the guess and must be left alone).
+ *
+ * @param {?Element} el Element to check, typically document.activeElement.
+ * @param {HTMLElement} guessInput The guess input, exempted since it is never "other".
+ * @returns {boolean}
+ */
+const isOtherTextField = (el, guessInput) => {
+    if (!el || el === guessInput) {
+        return false;
+    }
+    return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable;
+};
+
+/**
+ * Whether the given element natively activates on Enter/Space (so Enter must still
+ * activate it instead of submitting the guess).
+ *
+ * @param {?Element} el Element to check, typically document.activeElement.
+ * @returns {boolean}
+ */
+const isActivatableControl = (el) => {
+    return Boolean(el) && (el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'SELECT');
+};
+
+/**
+ * Captures physical-keyboard input at the document level so typing works regardless of
+ * where focus happens to be on the page. Without this, typing only reached the guess
+ * because game.js keeps refocusing a small text input sitting between the letter grid
+ * and the on-screen keyboard — a usability test with real students showed they would
+ * click elsewhere first (a grid row, the hint button) and then type, expecting it to
+ * just work, the same way a physical keyboard works in Wordle. Wired once in init(),
+ * never inside wireRoundPanel(): it targets document, which persists across every
+ * round-panel re-render, so wiring it again per round would stack duplicate listeners
+ * and type every letter multiple times.
+ *
+ * Routes letters/Backspace/Enter through the exact same writeLetter/removeLastLetter/
+ * submitGuessForm helpers the on-screen keyboard already uses, so both input sources
+ * stay one code path. Letters and Backspace are safe to redirect unconditionally (plain
+ * keys have no native meaning on a focused button), but Enter is only redirected when
+ * focus is on the guess input itself or on nothing interactive (body, grid cells,
+ * status text) — a focused button/link still activates normally on Enter, e.g. the
+ * hint or forfeit button, instead of submitting an unrelated guess.
+ */
+const initPhysicalKeyboardCapture = () => {
+    document.addEventListener('keydown', (e) => {
+        if (e.isComposing || e.ctrlKey || e.metaKey || e.altKey) {
+            return;
+        }
+        const input = document.getElementById('playerwords-guess');
+        const form = document.getElementById('playerwords-guess-form');
+        if (!input || !form) {
+            return;
+        }
+        const active = document.activeElement;
+        if (e.key === 'Backspace') {
+            if (isOtherTextField(active, input)) {
+                return;
+            }
+            e.preventDefault();
+            removeLastLetter(input);
+        } else if (e.key === 'Enter') {
+            if (isOtherTextField(active, input) || isActivatableControl(active)) {
+                return;
+            }
+            e.preventDefault();
+            submitGuessForm(form);
+        } else if (e.key.length === 1 && /\p{L}/u.test(e.key)) {
+            if (isOtherTextField(active, input)) {
+                return;
+            }
+            e.preventDefault();
+            writeLetter(input, e.key.toUpperCase());
+        }
+    });
+};
+
+/**
  * Entry point called by view.php via $PAGE->requires->js_call_amd().
  *
  * @param {number} cooldownUntil Unix timestamp when the cooldown ends (0 = disabled).
@@ -1026,6 +1100,7 @@ const initGuessForm = (cmid, timertotal) => {
 const init = (cooldownUntil, timeleft, timertotal, cmid, shouldAutoShowIntro) => {
     initHelpModal(Boolean(shouldAutoShowIntro));
     initForfeit(cmid, timertotal || 0);
+    initPhysicalKeyboardCapture();
     wireRoundPanel(cmid, timertotal || 0);
     initStartRound(cmid, timertotal || 0);
     initNewRound(cmid, timertotal || 0);
