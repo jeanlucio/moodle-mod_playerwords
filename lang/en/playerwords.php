@@ -234,6 +234,7 @@ $string['roundlost'] = 'Round over.';
 $string['roundnotstarted'] = 'Start the round before submitting a guess.';
 $string['roundnottimedout'] = 'The timer has not run out yet.';
 $string['roundsplayed'] = 'Rounds played: {$a->played} / {$a->max}.';
+$string['roundstartbusy'] = 'Could not start the round right now. Please try again.';
 $string['roundtimeout'] = 'Time is up. The round is over.';
 $string['roundwon'] = 'Congratulations! You guessed the word.';
 $string['savewordbutton'] = 'Save';

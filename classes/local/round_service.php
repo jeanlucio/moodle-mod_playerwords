@@ -298,11 +298,18 @@ class round_service {
      * lobby. Without this check, the second session could still commit the reservation
      * and PlayerHUD cost after the limit/cooldown became active.
      *
-     * The guest account is exempt from both the reservation and the PlayerHUD cost: a
-     * course's guest-access visitors all share the single guest user record, so nothing
-     * here could be safely attributed to one specific person. Guests play a free demo
-     * that leaves no {playerwords_attempts} row behind — see finish_round() for the
-     * matching exemption on the completion side.
+     * The restriction check, the PlayerHUD cost charge and the reservation insert are
+     * serialised per (playerwordsid, userid) with \core\lock\lock_config: the check
+     * above and the insert below are not otherwise atomic, so two concurrent sessions
+     * of the same user (two open tabs) could both pass the check — neither has
+     * inserted a reservation yet — and then both charge their own PlayerHUD cost and
+     * insert their own row, each ending up past max_rounds/cooldown.
+     *
+     * The guest account is exempt from the lock, the reservation and the PlayerHUD
+     * cost: a course's guest-access visitors all share the single guest user record,
+     * so nothing here could be safely attributed to one specific person. Guests play a
+     * free demo that leaves no {playerwords_attempts} row behind — see finish_round()
+     * for the matching exemption on the completion side.
      *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
@@ -312,46 +319,60 @@ class round_service {
     public static function start_round(array $state, \stdClass $instance, int $userid): array {
         global $DB;
 
-        $isguest = isguestuser();
+        if (isguestuser()) {
+            $state['starttime'] = time();
+            $state['roundstarted'] = true;
+            return [$state, null, null];
+        }
 
-        if (!$isguest) {
+        $lockfactory = \core\lock\lock_config::get_lock_factory('mod_playerwords');
+        $lock = $lockfactory->get_lock('start_round_' . $instance->id . '_' . $userid, 5);
+        if (!$lock) {
+            // Could not serialise against a concurrent session within the timeout —
+            // refuse to start rather than risk two sessions reserving past the limit.
+            return [$state, get_string('roundstartbusy', 'mod_playerwords'), 'warning'];
+        }
+
+        try {
             $restrictionnotice = self::get_round_restriction_notice($instance, $userid);
             if ($restrictionnotice !== null) {
                 return [$state, $restrictionnotice, 'warning'];
             }
-        }
 
-        $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
-        if (!$isguest && $roundcostitem > 0) {
-            $blockinstanceid = hud_service::resolve_block_instance_id($instance);
-            $consumed = hud_service::consume_items(
-                $blockinstanceid,
-                $userid,
-                $roundcostitem,
-                max(1, (int)($instance->hud_round_cost_qty ?? 1))
-            );
-            if (!$consumed) {
-                $itemname = hud_service::get_item_name($blockinstanceid, $roundcostitem);
-                return [$state, get_string('hud_insufficient_round', 'mod_playerwords', $itemname), 'warning'];
+            $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
+            if ($roundcostitem > 0) {
+                $blockinstanceid = hud_service::resolve_block_instance_id($instance);
+                $consumed = hud_service::consume_items(
+                    $blockinstanceid,
+                    $userid,
+                    $roundcostitem,
+                    max(1, (int)($instance->hud_round_cost_qty ?? 1))
+                );
+                if (!$consumed) {
+                    $itemname = hud_service::get_item_name($blockinstanceid, $roundcostitem);
+                    return [$state, get_string('hud_insufficient_round', 'mod_playerwords', $itemname), 'warning'];
+                }
             }
-        }
 
-        $state['starttime'] = time();
-        $state['roundstarted'] = true;
+            $state['starttime'] = time();
+            $state['roundstarted'] = true;
 
-        if (!$isguest && empty($state['attemptid'])) {
-            $state['attemptid'] = $DB->insert_record('playerwords_attempts', (object)[
-                'playerwordsid' => $instance->id,
-                'userid'        => $userid,
-                'wordid'        => (int)$state['wordid'],
-                'attempts_used' => 0,
-                'time_used'     => 0,
-                'completed'     => 0,
-                'score'         => 0,
-                'rankingpoints' => 0,
-                'timecreated'   => time(),
-                'timefinished'  => 0,
-            ]);
+            if (empty($state['attemptid'])) {
+                $state['attemptid'] = $DB->insert_record('playerwords_attempts', (object)[
+                    'playerwordsid' => $instance->id,
+                    'userid'        => $userid,
+                    'wordid'        => (int)$state['wordid'],
+                    'attempts_used' => 0,
+                    'time_used'     => 0,
+                    'completed'     => 0,
+                    'score'         => 0,
+                    'rankingpoints' => 0,
+                    'timecreated'   => time(),
+                    'timefinished'  => 0,
+                ]);
+            }
+        } finally {
+            $lock->release();
         }
 
         return [$state, null, null];

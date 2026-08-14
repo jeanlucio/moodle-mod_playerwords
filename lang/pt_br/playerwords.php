@@ -234,6 +234,7 @@ $string['roundlost'] = 'Rodada encerrada.';
 $string['roundnotstarted'] = 'Inicie a rodada antes de enviar um palpite.';
 $string['roundnottimedout'] = 'O tempo ainda não acabou.';
 $string['roundsplayed'] = 'Rodadas jogadas: {$a->played} / {$a->max}.';
+$string['roundstartbusy'] = 'Não foi possível iniciar a rodada agora. Tente novamente.';
 $string['roundtimeout'] = 'O tempo acabou. A rodada foi encerrada.';
 $string['roundwon'] = 'Parabéns! Você acertou a palavra.';
 $string['savewordbutton'] = 'Salvar';
