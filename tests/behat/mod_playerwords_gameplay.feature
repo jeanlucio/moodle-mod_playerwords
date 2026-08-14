@@ -30,7 +30,7 @@ Feature: PlayerWords core gameplay loop
     And I am on the "Word Win" "playerwords activity" page
     And I click on "Start round" "button"
     And "#playerwords-timer-wrapper" "css_element" should be visible
-    When I set the field "Your guess" to "codar"
+    When I fill the PlayerWords guess tiles with "codar"
     And I click on "[data-key=\"ENTER\"]" "css_element"
     Then I should see "Genius!"
     And I should see "The word was:"
@@ -47,7 +47,7 @@ Feature: PlayerWords core gameplay loop
     And I log in as "student1"
     And I am on the "Word Lose" "playerwords activity" page
     And I click on "Start round" "button"
-    When I set the field "Your guess" to "campo"
+    When I fill the PlayerWords guess tiles with "campo"
     And I click on "[data-key=\"ENTER\"]" "css_element"
     Then I should see "Better luck next time."
 
@@ -89,7 +89,7 @@ Feature: PlayerWords core gameplay loop
     And I log in as "student1"
     And I am on the "Word Limit" "playerwords activity" page
     And I click on "Start round" "button"
-    And I set the field "Your guess" to "codar"
+    And I fill the PlayerWords guess tiles with "codar"
     And I click on "[data-key=\"ENTER\"]" "css_element"
     Then I should see "Genius!"
     And I should see "Rounds played: 1 / 1."
@@ -106,7 +106,7 @@ Feature: PlayerWords core gameplay loop
     And I log in as "student1"
     And I am on the "Word Cooldown" "playerwords activity" page
     And I click on "Start round" "button"
-    And I set the field "Your guess" to "codar"
+    And I fill the PlayerWords guess tiles with "codar"
     And I click on "[data-key=\"ENTER\"]" "css_element"
     Then I should see "Next round in"
     And "#playerwords-cooldown-countdown" "css_element" should exist

@@ -208,6 +208,38 @@ class behat_mod_playerwords extends behat_base {
     }
 
     /**
+     * Fills the active guess row's own tile inputs with the given word, one letter per
+     * box, in position order.
+     *
+     * Since amd/src/game.js's box migration (round_play.mustache no longer renders a
+     * single "Your guess" field — the active row's own cells become real
+     * mod-playerwords-tile-input boxes at runtime, see activateRow()), the generic
+     * "I set the field ... to ..." step has nothing left to match. Targets each tile
+     * input directly instead of relying on the app's own click-to-focus-then-type-and-
+     * auto-advance behaviour (writeLetterIntoActiveBox()/focusAdjacentBox()): real
+     * keystroke simulation across a chain of auto-advancing focus targets is far more
+     * brittle over WebDriver than setting each box directly, mirroring the identical
+     * choice already made in mod_playercross's own equivalent step. The guess itself
+     * is later assembled fresh from these same boxes' values at submit time (see
+     * initGuessForm() in game.js), not from any focus-tracking state, so no follow-up
+     * click is needed here the way mod_playercross's version needs one.
+     *
+     * @param string $word Full word to type in, letters only.
+     * @Given I fill the PlayerWords guess tiles with :word
+     */
+    public function i_fill_the_playerwords_guess_tiles_with(string $word): void {
+        $boxes = $this->find_all('css', '.mod-playerwords-row.pw-row-active .mod-playerwords-tile-input');
+        $letters = preg_split('//u', $word, -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($boxes as $index => $box) {
+            if (!isset($letters[$index])) {
+                break;
+            }
+            $box->setValue($letters[$index]);
+        }
+    }
+
+    /**
      * Creates a PlayerHUD item in the block already added to the given course.
      *
      * Direct $DB insert rather than going through the block's own management UI, matching

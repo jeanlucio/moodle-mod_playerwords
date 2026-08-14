@@ -72,7 +72,7 @@ Feature: PlayerWords toolbar and modals
     Then "#playerwords-forfeit-button" "css_element" should not be visible
     When I click on "Start round" "button"
     Then "#playerwords-forfeit-button" "css_element" should be visible
-    When I set the field "Your guess" to "codar"
+    When I fill the PlayerWords guess tiles with "codar"
     And I click on "[data-key=\"ENTER\"]" "css_element"
     Then "#playerwords-forfeit-button" "css_element" should not be visible
 
@@ -134,6 +134,6 @@ Feature: PlayerWords toolbar and modals
     And I wait "1" seconds
     When I click on "[data-action=\"cancel\"]" "css_element"
     Then "#playerwords-round-play" "css_element" should exist
-    When I set the field "Your guess" to "codar"
+    When I fill the PlayerWords guess tiles with "codar"
     And I click on "[data-key=\"ENTER\"]" "css_element"
     Then I should see "Genius!"

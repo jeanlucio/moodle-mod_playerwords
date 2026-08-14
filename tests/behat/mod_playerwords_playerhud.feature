@@ -91,6 +91,6 @@ Feature: PlayerWords PlayerHUD integration
     And I log in as "student1"
     And I am on the "Word HudWin" "playerwords activity" page
     And I click on "Start round" "button"
-    And I set the field "Your guess" to "codar"
+    And I fill the PlayerWords guess tiles with "codar"
     And I click on "[data-key=\"ENTER\"]" "css_element"
     Then I should see "You received 1× Trophy!"
