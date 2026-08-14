@@ -18,7 +18,8 @@
     @template mod_playerwords/toolbar
 
     Compact icon toolbar shown above the game board: help, manage words (teacher-only),
-    attempt history, ranking and forfeit (hidden outside an active round).
+    attempt history, all-students report (teacher-only), ranking and forfeit (hidden
+    outside an active round).
 
     Example context (json):
     {
@@ -29,6 +30,9 @@
         "managewordsurl": "https://example.com/mod/playerwords/managewords.php?id=1",
         "toolbarmyattempts": "Attempt history",
         "myattemptsurl": "https://example.com/mod/playerwords/myattempts.php?id=1",
+        "canviewreports": true,
+        "toolbarreport": "Report",
+        "attemptsreporturl": "https://example.com/mod/playerwords/attemptsreport.php?id=1",
         "showranking": true,
         "rankingurl": "https://example.com/mod/playerwords/ranking.php?id=1",
         "rankingviewfulllabel": "Full ranking",
@@ -54,6 +58,11 @@
     <a href="{{{myattemptsurl}}}" class="pw-toolbar-btn" title="{{toolbarmyattempts}}" aria-label="{{toolbarmyattempts}}">
         <i class="fa fa-list-alt" aria-hidden="true"></i>
     </a>
+    {{#canviewreports}}
+        <a href="{{{attemptsreporturl}}}" class="pw-toolbar-btn" title="{{toolbarreport}}" aria-label="{{toolbarreport}}">
+            <i class="fa fa-bar-chart" aria-hidden="true"></i>
+        </a>
+    {{/canviewreports}}
     {{#showranking}}
         <a href="{{{rankingurl}}}" class="pw-toolbar-btn" title="{{rankingviewfulllabel}}" aria-label="{{rankingviewfulllabel}}">
             <i class="fa fa-trophy" aria-hidden="true"></i>

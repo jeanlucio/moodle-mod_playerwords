@@ -48,6 +48,7 @@ class view_page_service {
         int $userid
     ): array {
         $canmanagewords = has_capability('mod/playerwords:managewords', $context);
+        $canviewreports = has_capability('mod/playerwords:viewreports', $context);
 
         // Decided once per page load and marked immediately, not deferred to a client
         // callback: this is the same synchronous read-then-write pattern the preference
@@ -65,7 +66,15 @@ class view_page_service {
             if (!empty($state['finished'])) {
                 round_service::save_state((int)$cm->id, $userid, $state);
                 $displayword = (int)($state['wordid'] ?? 0) > 0 ? ($state['wordtext'] ?? '') : '';
-                $templatectx = self::build_template_context($cm, $instance, $state, $displayword, $canmanagewords, $userid);
+                $templatectx = self::build_template_context(
+                    $cm,
+                    $instance,
+                    $state,
+                    $displayword,
+                    $canmanagewords,
+                    $canviewreports,
+                    $userid
+                );
                 return [
                     'templatecontext'      => $templatectx,
                     'cooldownuntil'        => round_service::compute_cooldown_until($instance, $userid),
@@ -76,7 +85,15 @@ class view_page_service {
             }
             if ($restrictionnotice !== null) {
                 round_service::save_state((int)$cm->id, $userid, $state);
-                $templatectx = self::build_template_context($cm, $instance, $state, '', $canmanagewords, $userid);
+                $templatectx = self::build_template_context(
+                    $cm,
+                    $instance,
+                    $state,
+                    '',
+                    $canmanagewords,
+                    $canviewreports,
+                    $userid
+                );
                 $templatectx['nogamewords'] = $restrictionnotice;
                 return [
                     'templatecontext'      => $templatectx,
@@ -101,6 +118,7 @@ class view_page_service {
             $state,
             $targetword,
             $canmanagewords,
+            $canviewreports,
             $userid
         );
 
@@ -121,6 +139,7 @@ class view_page_service {
      * @param array $state Session state.
      * @param string $targetword Current target.
      * @param bool $canmanagewords Whether user can manage words.
+     * @param bool $canviewreports Whether user can view every student's attempt report.
      * @param int $userid Current user ID.
      * @return array
      */
@@ -130,6 +149,7 @@ class view_page_service {
         array $state,
         string $targetword,
         bool $canmanagewords,
+        bool $canviewreports,
         int $userid
     ): array {
         $showlobby = empty($state['finished']) && empty($state['roundstarted']) && ($targetword !== '');
@@ -147,6 +167,9 @@ class view_page_service {
             'toolbarhelp' => get_string('toolbarhelp', 'mod_playerwords'),
             'toolbarmyattempts' => get_string('toolbarmyattempts', 'mod_playerwords'),
             'myattemptsurl' => (new moodle_url('/mod/playerwords/myattempts.php', ['id' => $cm->id]))->out(false),
+            'canviewreports' => $canviewreports,
+            'toolbarreport' => get_string('toolbarreport', 'mod_playerwords'),
+            'attemptsreporturl' => (new moodle_url('/mod/playerwords/attemptsreport.php', ['id' => $cm->id]))->out(false),
             'showforfeit' => !empty($state['roundstarted']) && empty($state['finished']),
             'forfeitlabel' => get_string('forfeitbutton', 'mod_playerwords'),
             'forfeitconfirm' => get_string('forfeitconfirm', 'mod_playerwords'),

@@ -204,6 +204,8 @@ final class view_page_service_test extends \advanced_testcase {
         $ctx = $pagedata['templatecontext'];
 
         $this->assertStringContainsString('myattempts.php', $ctx['myattemptsurl']);
+        $this->assertStringContainsString('attemptsreport.php', $ctx['attemptsreporturl']);
+        $this->assertFalse($ctx['canviewreports']);
         $this->assertNotEmpty($ctx['helptitle']);
         $this->assertNotEmpty($ctx['introtext']);
         $this->assertNotEmpty($ctx['keyboardtext']);
@@ -477,6 +479,29 @@ final class view_page_service_test extends \advanced_testcase {
         $this->assertTrue($ctx['showwordsstatus']);
         $this->assertStringContainsString('1', $ctx['activewordscount']);
         $this->assertFalse($ctx['hasinactivewords']);
+    }
+
+    /**
+     * A viewer with mod/playerwords:viewreports (teacher, editingteacher, manager)
+     * sees the toolbar's report link enabled — the all-students attempts report lives
+     * at its own dedicated page (attemptsreport.php), separate from the personal
+     * my-attempts view.
+     *
+     * @covers \mod_playerwords\local\view_page_service::build_page_data
+     * @return void
+     */
+    public function test_build_page_data_shows_report_link_for_viewer_with_capability(): void {
+        [$instance, $cm, $context] = $this->make_instance();
+
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $this->course->id, 'editingteacher');
+        $this->setUser($teacher);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $teacher->id);
+        $ctx = $pagedata['templatecontext'];
+
+        $this->assertTrue($ctx['canviewreports']);
+        $this->assertStringContainsString('attemptsreport.php', $ctx['attemptsreporturl']);
     }
 
     /**
