@@ -377,6 +377,83 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
+     * Tests that a guess of the right length is rejected without consuming an attempt
+     * when restrict_guess_pool is enabled and the guess matches no approved word.
+     *
+     * @covers \mod_playerwords\local\round_service::submit_guess
+     * @return void
+     */
+    public function test_submit_guess_rejected_when_not_in_pool_and_restricted(): void {
+        $instance = $this->make_instance(['restrict_guess_pool' => 1]);
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+
+        [$state, $feedback, $notification, $notificationtype] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'xyzw'
+        );
+
+        $this->assertNull($feedback);
+        $this->assertSame(0, $state['attemptsused']);
+        $this->assertSame('warning', $notificationtype);
+        $this->assertSame(get_string('guessnotinpool', 'mod_playerwords'), $notification);
+    }
+
+    /**
+     * Tests that a guess matching an approved pool word is still accepted and consumes
+     * an attempt when restrict_guess_pool is enabled.
+     *
+     * @covers \mod_playerwords\local\round_service::submit_guess
+     * @return void
+     */
+    public function test_submit_guess_accepted_when_in_pool_and_restricted(): void {
+        $instance = $this->make_instance(['restrict_guess_pool' => 1]);
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+
+        [$state, $feedback] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'boca'
+        );
+
+        $this->assertNotNull($feedback);
+        $this->assertSame(1, $state['attemptsused']);
+    }
+
+    /**
+     * Tests that an unrestricted activity still accepts a guess of the right length even
+     * when it matches no approved word — the default behaviour must not change.
+     *
+     * @covers \mod_playerwords\local\round_service::submit_guess
+     * @return void
+     */
+    public function test_submit_guess_accepted_when_not_in_pool_and_unrestricted(): void {
+        $instance = $this->make_instance();
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+
+        [$state, $feedback] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'xyzw'
+        );
+
+        $this->assertNotNull($feedback);
+        $this->assertSame(1, $state['attemptsused']);
+    }
+
+    /**
      * Tests that forfeit finishes the round, sets cooldown, and fires round_completed once.
      *
      * @covers \mod_playerwords\local\round_service::forfeit

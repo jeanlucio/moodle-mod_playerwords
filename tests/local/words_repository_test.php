@@ -502,6 +502,39 @@ final class words_repository_test extends \advanced_testcase {
     }
 
     /**
+     * word_in_pool() matches an approved word regardless of accent or case, mirroring
+     * the same normalization submit_guess() applies to both the guess and the target.
+     *
+     * @covers \mod_playerwords\local\words_repository::word_in_pool
+     * @return void
+     */
+    public function test_word_in_pool_matches_normalized(): void {
+        $instance = $this->make_instance();
+        $this->make_word($instance->id, 'Ácido');
+
+        $this->assertTrue(words_repository::word_in_pool($instance->id, word_normalizer::normalize('acido')));
+        $this->assertTrue(words_repository::word_in_pool($instance->id, word_normalizer::normalize('ACIDO')));
+    }
+
+    /**
+     * word_in_pool() is false when no approved word matches, and ignores pending words
+     * and other activities' pools.
+     *
+     * @covers \mod_playerwords\local\words_repository::word_in_pool
+     * @return void
+     */
+    public function test_word_in_pool_false_when_no_match_or_unapproved_or_wrong_instance(): void {
+        $instancea = $this->make_instance();
+        $instanceb = $this->make_instance();
+        $this->make_word($instancea->id, 'planeta');
+        $this->make_word($instancea->id, 'estrela', 0);
+
+        $this->assertFalse(words_repository::word_in_pool($instancea->id, word_normalizer::normalize('cometa')));
+        $this->assertFalse(words_repository::word_in_pool($instancea->id, word_normalizer::normalize('estrela')));
+        $this->assertFalse(words_repository::word_in_pool($instanceb->id, word_normalizer::normalize('planeta')));
+    }
+
+    /**
      * An AI-generated word is saved as pending approval, never pre-approved.
      *
      * @covers \mod_playerwords\local\words_repository::add_ai_word

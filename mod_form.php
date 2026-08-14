@@ -122,6 +122,15 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setDefault('max_attempts', 6);
         $mform->addRule('max_attempts', null, 'numeric', null, 'client');
 
+        $mform->addElement(
+            'advcheckbox',
+            'restrict_guess_pool',
+            get_string('restrict_guess_pool', 'mod_playerwords')
+        );
+        $mform->setType('restrict_guess_pool', PARAM_INT);
+        $mform->setDefault('restrict_guess_pool', 0);
+        $mform->addHelpButton('restrict_guess_pool', 'restrict_guess_pool', 'mod_playerwords');
+
         $mform->addElement('text', 'min_length', get_string('min_length', 'mod_playerwords'));
         $mform->setType('min_length', PARAM_INT);
         $mform->setDefault('min_length', 4);
@@ -351,16 +360,20 @@ class mod_playerwords_mod_form extends moodleform_mod {
     }
 
     /**
-     * Freezes settings that feed the per-round scoring formula once the activity has
-     * recorded a real grade for any student.
+     * Freezes settings that feed the per-round scoring formula, plus other settings that
+     * change round difficulty, once the activity has recorded a real grade for any student.
      *
      * max_attempts and the two scoring-mode settings are baked into every already-scored
      * round at the moment it finishes (see gameplay_service::compute_points()). Changing
      * any of them afterwards would make past and future rounds count on different scales,
-     * both for the grade and for the ranking total. This mirrors the same condition core
-     * already uses to freeze the "Maximum grade" field itself — the modgrade element in
-     * lib/form/modgrade.php disables it once $gradeitem->has_grades() is true — so all of
-     * this is reusing that exact check rather than inventing a separate trigger.
+     * both for the grade and for the ranking total. restrict_guess_pool does not feed that
+     * formula directly, but toggling it mid-activity would still make rounds recorded
+     * before and after the change unfairly easier or harder to compare against each other
+     * in the same ranking, so it is frozen alongside them for the same fairness reason.
+     * This mirrors the same condition core already uses to freeze the "Maximum grade"
+     * field itself — the modgrade element in lib/form/modgrade.php disables it once
+     * $gradeitem->has_grades() is true — so all of this is reusing that exact check
+     * rather than inventing a separate trigger.
      *
      * @return void
      */
@@ -386,7 +399,7 @@ class mod_playerwords_mod_form extends moodleform_mod {
         }
 
         $mform = $this->_form;
-        $lockedfields = ['max_attempts', 'gradescoringmode', 'rankingscoringmode'];
+        $lockedfields = ['max_attempts', 'gradescoringmode', 'rankingscoringmode', 'restrict_guess_pool'];
         $mform->freeze($lockedfields);
 
         $warninghtml = html_writer::div(get_string('scoringmode_locked', 'mod_playerwords'), 'alert alert-warning');

@@ -521,6 +521,10 @@ class round_service {
             return [$state, null, $message, 'warning', true];
         }
 
+        if (!empty($instance->restrict_guess_pool) && !words_repository::word_in_pool($instance->id, $normalizedguess)) {
+            return [$state, null, get_string('guessnotinpool', 'mod_playerwords'), 'warning', true];
+        }
+
         $state['attemptsused']++;
         $feedback = gameplay_service::build_letter_feedback($normalizedguess, $targetword);
         $state['rows'][] = [

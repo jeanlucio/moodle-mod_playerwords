@@ -266,6 +266,39 @@ class words_repository {
     }
 
     /**
+     * Whether the given (already normalized) guess text matches an approved word in
+     * this activity's own pool.
+     *
+     * Used to optionally restrict guesses to the teacher's curated vocabulary instead
+     * of accepting any letter combination of the right length. Compares using the same
+     * accent/case-insensitive normalization submit_guess() already applies to the guess
+     * and target word, so a pool entry stored with its real spelling (e.g. "ácido")
+     * still matches a guess typed without the accent.
+     *
+     * @param int $instanceid Activity instance id.
+     * @param string $normalizedguess Already-normalized guess text (see word_normalizer::normalize()).
+     * @return bool
+     */
+    public static function word_in_pool(int $instanceid, string $normalizedguess): bool {
+        global $DB;
+
+        $records = $DB->get_records_select(
+            'playerwords_words',
+            'playerwordsid = :instanceid AND approved = 1',
+            ['instanceid' => $instanceid],
+            '',
+            'id, word'
+        );
+        foreach ($records as $record) {
+            if (word_normalizer::normalize($record->word) === $normalizedguess) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Inserts one manual word as approved.
      *
      * @param int $instanceid Activity instance id.

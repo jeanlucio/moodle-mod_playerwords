@@ -45,6 +45,7 @@ class backup_playerwords_activity_structure_step extends backup_activity_structu
             'min_length',
             'max_length',
             'max_attempts',
+            'restrict_guess_pool',
             'timer_seconds',
             'show_ranking',
             'wordmode',
