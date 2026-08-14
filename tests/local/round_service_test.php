@@ -412,6 +412,30 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
+     * Regression test: forfeiting a word that was only ever armed at page-load time
+     * (ensure_round_state(), before "Iniciar rodada" is ever clicked) must be rejected
+     * — otherwise a student could burn one of their max_rounds, and trigger the
+     * cooldown, on a round they never actually played.
+     *
+     * @covers \mod_playerwords\local\round_service::forfeit
+     * @return void
+     */
+    public function test_forfeit_rejected_when_round_not_started(): void {
+        global $DB;
+
+        $instance = $this->make_instance();
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+        $this->assertFalse($state['roundstarted']);
+
+        [$state, $notification] = round_service::forfeit($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertNotEmpty($notification);
+        $this->assertFalse($state['finished']);
+        $this->assertSame(0, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
+    }
+
+    /**
      * Tests that timeout finishes the round with the timedout flag set, once the
      * configured deadline has genuinely passed.
      *
@@ -474,6 +498,32 @@ final class round_service_test extends \advanced_testcase {
         [$state] = round_service::timeout($state, $instance, $instance->cmid, $this->user->id);
 
         $this->assertFalse($state['finished']);
+    }
+
+    /**
+     * Regression test: a word armed at page-load time but never started (starttime
+     * stays 0) must reject timeout() outright, not fall through to the deadline check
+     * — with starttime=0, that check's own deadline sits in the remote past and would
+     * otherwise pass unconditionally, defeating the anti-forgery tolerance window it
+     * documents.
+     *
+     * @covers \mod_playerwords\local\round_service::timeout
+     * @return void
+     */
+    public function test_timeout_rejected_when_round_not_started(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['timer_minutes' => 5]);
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+        $this->assertFalse($state['roundstarted']);
+        $this->assertSame(0, $state['starttime']);
+
+        [$state, $notification] = round_service::timeout($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertNotEmpty($notification);
+        $this->assertFalse($state['finished']);
+        $this->assertSame(0, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
     }
 
     /**

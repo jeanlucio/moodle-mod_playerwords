@@ -490,6 +490,11 @@ class round_service {
     /**
      * Handles a forfeit: marks the round as lost without an extra attempt.
      *
+     * Requires roundstarted: see submit_guess() for why — a word armed at page-load
+     * time, before the "Iniciar rodada" button is ever clicked, must not be endable at
+     * all, let alone spend one of the student's max_rounds for a round they never
+     * actually played.
+     *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
      * @param int $cmid Course module id.
@@ -501,6 +506,10 @@ class round_service {
             return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning'];
         }
 
+        if (empty($state['roundstarted'])) {
+            return [$state, get_string('roundnotstarted', 'mod_playerwords'), 'warning'];
+        }
+
         $roundwordid = (int)$state['wordid'];
         $state = self::finish_round($state, $instance, $cmid, $userid, $roundwordid, false, true, false);
 
@@ -509,6 +518,11 @@ class round_service {
 
     /**
      * Handles a timer expiry: identical to forfeit but records a timedout flag.
+     *
+     * Requires roundstarted, checked before the deadline itself is computed: with
+     * starttime still at its default of 0, $deadline would sit in the remote past and
+     * the tolerance check below would pass unconditionally, defeating the very
+     * anti-forgery purpose it documents.
      *
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
@@ -519,6 +533,10 @@ class round_service {
     public static function timeout(array $state, \stdClass $instance, int $cmid, int $userid): array {
         if (empty($state['wordid']) || !empty($state['finished'])) {
             return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning'];
+        }
+
+        if (empty($state['roundstarted'])) {
+            return [$state, get_string('roundnotstarted', 'mod_playerwords'), 'warning'];
         }
 
         // The client fires this the moment its own countdown reaches zero — never trust
