@@ -45,6 +45,20 @@ let cooldownHandle = null;
 let activeRowCells = [];
 
 /**
+ * Maps a notification type to its core rendering template — mirrors core/notification's
+ * own internal (unexported) mapping, needed here because that module offers no
+ * "replace instead of stack" mode of its own to reuse directly (see notify() below).
+ *
+ * @type {Object<string, string>}
+ */
+const NOTIFICATION_TEMPLATES = {
+    success: 'core/notification_success',
+    info: 'core/notification_info',
+    warning: 'core/notification_warning',
+    error: 'core/notification_error',
+};
+
+/**
  * Writes a message into the live region so screen readers announce it.
  *
  * @param {string} message Message to announce.
@@ -58,15 +72,35 @@ const announce = (message) => {
 
 /**
  * Shows a visible Moodle notification for a server-side rejection message (e.g. an
- * insufficient PlayerHUD item balance, or a stale action on an already-finished
- * round). Without this, the message only ever reached the aria-live region — silent
- * for sighted users, who would just see the button do nothing.
+ * insufficient PlayerHUD item balance, a stale action on an already-finished round, or
+ * a guess whose length does not match the target word). Without this, the message only
+ * ever reached the aria-live region — invisible to sighted users, who would just see
+ * the button do nothing.
+ *
+ * Renders the same core notification templates core/notification.addNotification()
+ * itself uses, but replaces the notification region's contents instead of calling that
+ * helper directly. addNotification() only ever prepends and never clears on its own —
+ * only a manual close-button dismisses a banner — so a message that recurs on routine
+ * play (e.g. the guess-length mismatch, rejected again on every too-short/too-long
+ * guess) would otherwise pile up into a permanent wall of identical banners instead of
+ * reflecting just the current state, exactly as a usability test with real students
+ * showed. Tracking "the node addNotification() just added" from the outside to remove
+ * it on the next call is not a reliable fix either: addNotification()'s own returned
+ * promise resolves before its internal render chain has actually updated the DOM (a
+ * timing gap in core/notification.js itself, confirmed by inspection), so a caller has
+ * no dependable moment at which to read back which node was just inserted.
  *
  * @param {string} message Notification text.
  * @param {string} type Notification type: success, info, warning or error.
  */
-const notify = (message, type) => {
-    Notification.addNotification({message, type: type || 'info'});
+const notify = async(message, type) => {
+    const region = document.getElementById('user-notifications');
+    if (!region) {
+        return;
+    }
+    const template = NOTIFICATION_TEMPLATES[type] || NOTIFICATION_TEMPLATES.info;
+    const {html, js} = await Templates.renderForPromise(template, {message, closebutton: true, announce: true});
+    Templates.replaceNodeContents(region, html, js);
 };
 
 /**
