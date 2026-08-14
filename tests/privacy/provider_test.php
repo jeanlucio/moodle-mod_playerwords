@@ -551,4 +551,63 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
 
         $this->assertSame([], $userlist->get_userids());
     }
+
+    /**
+     * Regression test for a course_modules.instance collision with another module
+     * type: get_users_in_context() must resolve the instance id via
+     * get_coursemodule_from_id('playerwords', ...), not a bare instance lookup, so a
+     * page module whose row happens to carry the same numeric instance id as a real
+     * playerwords activity is never mistaken for it.
+     *
+     * @covers \mod_playerwords\privacy\provider::get_users_in_context
+     * @return void
+     */
+    public function test_get_users_in_context_ignores_colliding_instance_id_from_other_module_type(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $cm = $this->make_cm($course);
+        $student = $this->getDataGenerator()->create_user();
+        $wordid = $this->make_word(get_admin()->id, (int)$cm->id);
+        $this->make_attempt($student->id, (int)$cm->id, $wordid);
+
+        $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id]);
+        $DB->set_field('course_modules', 'instance', $cm->id, ['id' => $page->cmid]);
+
+        $context = \context_module::instance($page->cmid);
+        $userlist = new userlist($context, 'mod_playerwords');
+        provider::get_users_in_context($userlist);
+
+        $this->assertSame([], $userlist->get_userids());
+    }
+
+    /**
+     * Regression test mirroring the one above, for get_contexts_for_userid(): a page
+     * module whose course_modules row was made to carry the same numeric instance id
+     * as a real playerwords activity must not appear in the contextlist of a user who
+     * only ever interacted with the playerwords activity itself.
+     *
+     * @covers \mod_playerwords\privacy\provider::get_contexts_for_userid
+     * @return void
+     */
+    public function test_get_contexts_for_userid_ignores_colliding_instance_id_from_other_module_type(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $cm = $this->make_cm($course);
+        $student = $this->getDataGenerator()->create_user();
+        $wordid = $this->make_word(get_admin()->id, (int)$cm->id);
+        $this->make_attempt($student->id, (int)$cm->id, $wordid);
+
+        $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id]);
+        $DB->set_field('course_modules', 'instance', $cm->id, ['id' => $page->cmid]);
+
+        $contextlist = provider::get_contexts_for_userid($student->id);
+        $contextids = $contextlist->get_contextids();
+
+        $realcontext = \context_module::instance($cm->cmid)->id;
+        $collidingcontext = \context_module::instance($page->cmid)->id;
+        $this->assertContains((string)$realcontext, $contextids);
+        $this->assertNotContains((string)$collidingcontext, $contextids);
+    }
 }

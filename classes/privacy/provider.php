@@ -119,19 +119,27 @@ class provider implements
                   FROM {context} ctx
                   JOIN {course_modules} cm ON cm.id = ctx.instanceid
                        AND ctx.contextlevel = :ctxlevel1
+                  JOIN {modules} m1 ON m1.id = cm.module AND m1.name = :modname1
                   JOIN {playerwords} pw ON pw.id = cm.instance
                   JOIN {playerwords_attempts} pa ON pa.playerwordsid = pw.id
                  WHERE pa.userid = :userid1";
-        $contextlist->add_from_sql($sql, ['ctxlevel1' => CONTEXT_MODULE, 'userid1' => $userid]);
+        $contextlist->add_from_sql(
+            $sql,
+            ['ctxlevel1' => CONTEXT_MODULE, 'modname1' => 'playerwords', 'userid1' => $userid]
+        );
 
         $sql = "SELECT ctx.id
                   FROM {context} ctx
                   JOIN {course_modules} cm ON cm.id = ctx.instanceid
                        AND ctx.contextlevel = :ctxlevel2
+                  JOIN {modules} m2 ON m2.id = cm.module AND m2.name = :modname2
                   JOIN {playerwords} pw ON pw.id = cm.instance
                   JOIN {playerwords_words} pww ON pww.playerwordsid = pw.id
                  WHERE pww.addedby = :userid2";
-        $contextlist->add_from_sql($sql, ['ctxlevel2' => CONTEXT_MODULE, 'userid2' => $userid]);
+        $contextlist->add_from_sql(
+            $sql,
+            ['ctxlevel2' => CONTEXT_MODULE, 'modname2' => 'playerwords', 'userid2' => $userid]
+        );
 
         return $contextlist;
     }
@@ -145,10 +153,11 @@ class provider implements
             return;
         }
 
-        $instanceid = (int)$DB->get_field('course_modules', 'instance', ['id' => $context->instanceid]);
-        if (!$instanceid) {
+        $cm = get_coursemodule_from_id('playerwords', $context->instanceid, 0, false, IGNORE_MISSING);
+        if (!$cm) {
             return;
         }
+        $instanceid = (int)$cm->instance;
 
         $params = ['pid' => $instanceid];
 
