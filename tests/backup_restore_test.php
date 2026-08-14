@@ -29,6 +29,9 @@ use core_courseformat\local\cmactions;
 
 /**
  * Tests that duplicating a playerwords activity completes without error.
+ *
+ * @covers \backup_playerwords_activity_structure_step
+ * @covers \restore_playerwords_activity_structure_step
  */
 final class backup_restore_test extends \advanced_testcase {
     #[\Override]
@@ -46,7 +49,6 @@ final class backup_restore_test extends \advanced_testcase {
      * calendar-events restore step both depend on; without it, duplicating threw
      * unknown_context_mapping and left the copy invisible until caches were purged.
      *
-     * @covers \restore_playerwords_activity_structure_step::define_structure
      * @return void
      */
     public function test_duplicate_activity(): void {
@@ -114,7 +116,6 @@ final class backup_restore_test extends \advanced_testcase {
      * implementation silently reverts to its DB default on restore otherwise, with
      * nothing in PHPCS/moodlecheck/PHPStan catching the omission.
      *
-     * @covers \backup_playerwords_activity_structure_step::define_structure
      * @return void
      */
     public function test_backup_restore_preserves_scoring_settings_and_ranking_points(): void {
@@ -171,8 +172,6 @@ final class backup_restore_test extends \advanced_testcase {
      * attribute list, so it silently reverted to its DB default (0) on every restore instead
      * of preserving the original value.
      *
-     * @covers \backup_playerwords_activity_structure_step::define_structure
-     * @covers \restore_playerwords_activity_structure_step::process_playerwords_word
      * @return void
      */
     public function test_backup_restore_preserves_word_timemodified(): void {
@@ -309,7 +308,6 @@ final class backup_restore_test extends \advanced_testcase {
      * hud_win_grant_item — still a genuinely valid item in that same course — must survive
      * unchanged, even though no playerhud_item restore mapping was ever registered.
      *
-     * @covers \restore_playerwords_activity_structure_step::resolve_hud_item
      * @return void
      */
     public function test_duplicate_activity_preserves_hud_item_from_same_course(): void {
@@ -345,7 +343,6 @@ final class backup_restore_test extends \advanced_testcase {
      * the restored activity's hud_win_grant_item must point at the item's NEW id, via the
      * playerhud_item mapping block_playerhud's own restore step registers.
      *
-     * @covers \restore_playerwords_activity_structure_step::resolve_hud_item
      * @return void
      */
     public function test_backup_restore_full_course_remaps_hud_item(): void {
@@ -383,7 +380,6 @@ final class backup_restore_test extends \advanced_testcase {
      * The foreign course's own PlayerHUD block is deliberately not part of this backup, so no
      * playerhud_item mapping exists for it either.
      *
-     * @covers \restore_playerwords_activity_structure_step::resolve_hud_item
      * @return void
      */
     public function test_backup_restore_drops_hud_item_from_foreign_course(): void {

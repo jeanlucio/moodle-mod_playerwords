@@ -30,6 +30,8 @@ use mod_playerwords\local\round_service;
 
 /**
  * Tests for the mod_playerwords_reveal_hint web service.
+ *
+ * @covers \mod_playerwords\external\reveal_hint
  */
 final class reveal_hint_test extends \advanced_testcase {
     /** @var \stdClass Course used by the tests. */
@@ -143,7 +145,6 @@ final class reveal_hint_test extends \advanced_testcase {
     /**
      * Tests that revealing the hint returns the hint text.
      *
-     * @covers \mod_playerwords\external\reveal_hint::execute
      * @return void
      */
     public function test_reveals_hint(): void {
@@ -161,7 +162,6 @@ final class reveal_hint_test extends \advanced_testcase {
     /**
      * Tests that revealing the hint twice is idempotent and does not error.
      *
-     * @covers \mod_playerwords\external\reveal_hint::execute
      * @return void
      */
     public function test_reveal_hint_is_idempotent(): void {
@@ -180,7 +180,6 @@ final class reveal_hint_test extends \advanced_testcase {
     /**
      * Tests that a finished round rejects the hint request.
      *
-     * @covers \mod_playerwords\external\reveal_hint::execute
      * @return void
      */
     public function test_rejects_when_round_finished(): void {
@@ -203,7 +202,6 @@ final class reveal_hint_test extends \advanced_testcase {
     /**
      * Tests that a user without the view capability in the module context is rejected.
      *
-     * @covers \mod_playerwords\external\reveal_hint::execute
      * @return void
      */
     public function test_requires_view_capability(): void {
@@ -219,7 +217,6 @@ final class reveal_hint_test extends \advanced_testcase {
     /**
      * Tests that an insufficient PlayerHUD item balance blocks revealing the hint.
      *
-     * @covers \mod_playerwords\external\reveal_hint::execute
      * @return void
      */
     public function test_hud_insufficient_item_blocks_reveal(): void {
@@ -242,7 +239,6 @@ final class reveal_hint_test extends \advanced_testcase {
      * deleted after the activity was configured) is waived rather than blocking the hint
      * forever with a broken notification.
      *
-     * @covers \mod_playerwords\external\reveal_hint::execute
      * @return void
      */
     public function test_hud_deleted_item_waives_reveal_cost(): void {
@@ -264,7 +260,6 @@ final class reveal_hint_test extends \advanced_testcase {
      * never fires it — must still be stopped from revealing the hint through
      * mod_playerwords_reveal_hint after the round's own deadline has passed.
      *
-     * @covers \mod_playerwords\external\reveal_hint::execute
      * @return void
      */
     public function test_rejects_hint_reveal_once_deadline_has_passed(): void {

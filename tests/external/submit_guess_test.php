@@ -30,6 +30,8 @@ use mod_playerwords\local\round_service;
 
 /**
  * Tests for the mod_playerwords_submit_guess web service.
+ *
+ * @covers \mod_playerwords\external\submit_guess
  */
 final class submit_guess_test extends \advanced_testcase {
     /** @var \stdClass Course used by the tests. */
@@ -195,7 +197,6 @@ final class submit_guess_test extends \advanced_testcase {
     /**
      * Tests that a wrong guess never leaks the word or definition in the response.
      *
-     * @covers \mod_playerwords\external\submit_guess::execute
      * @return void
      */
     public function test_wrong_guess_never_reveals_the_word(): void {
@@ -217,7 +218,6 @@ final class submit_guess_test extends \advanced_testcase {
     /**
      * Tests that the word and definition are only revealed once the round actually finishes.
      *
-     * @covers \mod_playerwords\external\submit_guess::execute
      * @return void
      */
     public function test_correct_guess_reveals_the_word_only_once_finished(): void {
@@ -241,7 +241,6 @@ final class submit_guess_test extends \advanced_testcase {
     /**
      * Tests that an out-of-attempts loss also reveals the word, and never before that.
      *
-     * @covers \mod_playerwords\external\submit_guess::execute
      * @return void
      */
     public function test_losing_guess_also_reveals_the_word(): void {
@@ -267,7 +266,6 @@ final class submit_guess_test extends \advanced_testcase {
      * there before the student ever clicks anything). The round must not finish, must
      * not be scored, and must leave no {playerwords_attempts} row behind.
      *
-     * @covers \mod_playerwords\external\submit_guess::execute
      * @return void
      */
     public function test_rejects_guess_when_round_not_started_bypassing_hud_cost(): void {
@@ -296,7 +294,6 @@ final class submit_guess_test extends \advanced_testcase {
     /**
      * Tests that a user without the view capability in the module context is rejected.
      *
-     * @covers \mod_playerwords\external\submit_guess::execute
      * @return void
      */
     public function test_requires_view_capability(): void {
@@ -317,7 +314,6 @@ final class submit_guess_test extends \advanced_testcase {
      * visitor to a course shares the same account, so nothing here could be safely
      * attributed to one specific person.
      *
-     * @covers \mod_playerwords\external\submit_guess::execute
      * @return void
      */
     public function test_guest_can_win_demo_without_persisting(): void {
@@ -342,7 +338,6 @@ final class submit_guess_test extends \advanced_testcase {
      * Tests that timeleft reflects seconds actually remaining while the round is
      * still in progress (timer enabled).
      *
-     * @covers \mod_playerwords\external\submit_guess::execute
      * @return void
      */
     public function test_timeleft_reflects_remaining_seconds_while_in_progress(): void {
@@ -362,7 +357,6 @@ final class submit_guess_test extends \advanced_testcase {
      * Tests that timeleft is frozen at the moment the round finished, instead of
      * continuing to tick down against the wall clock on a later call.
      *
-     * @covers \mod_playerwords\external\submit_guess::execute
      * @return void
      */
     public function test_timeleft_is_frozen_after_round_finishes(): void {
@@ -387,8 +381,6 @@ final class submit_guess_test extends \advanced_testcase {
      * (a value not declared correctly is stripped/mangled by clean_returnvalue(),
      * regardless of what the PHP context actually produced).
      *
-     * @covers \mod_playerwords\external\submit_guess::execute
-     * @covers \mod_playerwords\external\submit_guess::roundresult_structure
      * @return void
      */
     public function test_fractional_ranking_points_survive_the_webservice_call(): void {

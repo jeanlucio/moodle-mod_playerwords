@@ -30,6 +30,8 @@ use mod_playerwords\event\round_started;
 
 /**
  * Tests for round_service — requires database.
+ *
+ * @covers \mod_playerwords\local\round_service
  */
 final class round_service_test extends \advanced_testcase {
     /** @var \stdClass Course used by the tests. */
@@ -162,7 +164,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that ensure_round_state picks the only approved word and fires round_started once.
      *
-     * @covers \mod_playerwords\local\round_service::ensure_round_state
      * @return void
      */
     public function test_ensure_round_state_picks_word_and_fires_event(): void {
@@ -192,7 +193,6 @@ final class round_service_test extends \advanced_testcase {
      * a correct guess for the word already sitting in session. The round stays
      * unfinished and unscored so a repeat with start_round() first still works normally.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_rejected_when_round_not_started(): void {
@@ -226,7 +226,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that a wrong guess is recorded without finishing the round.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_wrong_does_not_finish_round(): void {
@@ -253,7 +252,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that a correct guess finishes the round, sets cooldown, and fires round_completed once.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_correct_finishes_round(): void {
@@ -293,7 +291,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that exhausting all attempts finishes the round as a loss.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_out_of_attempts_finishes_round_as_loss(): void {
@@ -319,7 +316,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that an already-finished round rejects further guesses without duplicating state.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_after_finish_is_rejected(): void {
@@ -355,7 +351,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that a length mismatch is rejected without mutating state.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_length_mismatch_rejected(): void {
@@ -380,7 +375,6 @@ final class round_service_test extends \advanced_testcase {
      * Tests that a guess of the right length is rejected without consuming an attempt
      * when restrict_guess_pool is enabled and the guess matches no approved word.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_rejected_when_not_in_pool_and_restricted(): void {
@@ -407,7 +401,6 @@ final class round_service_test extends \advanced_testcase {
      * Tests that a guess matching an approved pool word is still accepted and consumes
      * an attempt when restrict_guess_pool is enabled.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_accepted_when_in_pool_and_restricted(): void {
@@ -432,7 +425,6 @@ final class round_service_test extends \advanced_testcase {
      * Tests that an unrestricted activity still accepts a guess of the right length even
      * when it matches no approved word — the default behaviour must not change.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_accepted_when_not_in_pool_and_unrestricted(): void {
@@ -456,7 +448,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that forfeit finishes the round, sets cooldown, and fires round_completed once.
      *
-     * @covers \mod_playerwords\local\round_service::forfeit
      * @return void
      */
     public function test_forfeit_finishes_round(): void {
@@ -494,7 +485,6 @@ final class round_service_test extends \advanced_testcase {
      * — otherwise a student could burn one of their max_rounds, and trigger the
      * cooldown, on a round they never actually played.
      *
-     * @covers \mod_playerwords\local\round_service::forfeit
      * @return void
      */
     public function test_forfeit_rejected_when_round_not_started(): void {
@@ -516,7 +506,6 @@ final class round_service_test extends \advanced_testcase {
      * Tests that timeout finishes the round with the timedout flag set, once the
      * configured deadline has genuinely passed.
      *
-     * @covers \mod_playerwords\local\round_service::timeout
      * @return void
      */
     public function test_timeout_finishes_round(): void {
@@ -541,7 +530,6 @@ final class round_service_test extends \advanced_testcase {
      * Tests that a timeout claim is rejected server-side when the configured deadline
      * has not actually passed yet — the client's own countdown is never trusted alone.
      *
-     * @covers \mod_playerwords\local\round_service::timeout
      * @return void
      */
     public function test_timeout_rejected_before_deadline(): void {
@@ -564,7 +552,6 @@ final class round_service_test extends \advanced_testcase {
      * Tests that a timeout claim is rejected when the activity has no timer configured
      * at all — there is no deadline to have run out.
      *
-     * @covers \mod_playerwords\local\round_service::timeout
      * @return void
      */
     public function test_timeout_rejected_when_timer_disabled(): void {
@@ -584,7 +571,6 @@ final class round_service_test extends \advanced_testcase {
      * otherwise pass unconditionally, defeating the anti-forgery tolerance window it
      * documents.
      *
-     * @covers \mod_playerwords\local\round_service::timeout
      * @return void
      */
     public function test_timeout_rejected_when_round_not_started(): void {
@@ -612,7 +598,6 @@ final class round_service_test extends \advanced_testcase {
      * Before this guard, the guess was evaluated for correctness before the elapsed
      * time was even considered, so a very late but correct guess could still win.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_closes_round_once_deadline_has_passed(): void {
@@ -644,7 +629,6 @@ final class round_service_test extends \advanced_testcase {
      * anything, even though reveal_hint() has no attempt/word-correctness logic of its
      * own to bypass.
      *
-     * @covers \mod_playerwords\local\round_service::reveal_hint
      * @return void
      */
     public function test_reveal_hint_closes_round_once_deadline_has_passed(): void {
@@ -666,7 +650,6 @@ final class round_service_test extends \advanced_testcase {
      * view_page_service so a page reload after the deadline renders the round as
      * finished immediately, instead of it only closing on the player's next guess/hint.
      *
-     * @covers \mod_playerwords\local\round_service::close_if_expired
      * @return void
      */
     public function test_close_if_expired_only_closes_a_genuinely_expired_round(): void {
@@ -693,7 +676,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that new_round resets the session so the next load picks a fresh word.
      *
-     * @covers \mod_playerwords\local\round_service::new_round
      * @return void
      */
     public function test_new_round_resets_state(): void {
@@ -711,7 +693,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that the round-count restriction is enforced once max_rounds is reached.
      *
-     * @covers \mod_playerwords\local\round_service::get_round_restriction_notice
      * @return void
      */
     public function test_restriction_notice_max_rounds_reached(): void {
@@ -737,7 +718,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that no restriction applies when limits are disabled and no attempts exist.
      *
-     * @covers \mod_playerwords\local\round_service::get_round_restriction_notice
      * @return void
      */
     public function test_restriction_notice_none_when_unrestricted(): void {
@@ -754,7 +734,6 @@ final class round_service_test extends \advanced_testcase {
      * submit_guess from that state would sort a word and insert an attempt row past
      * max_rounds, ignoring the cooldown entirely.
      *
-     * @covers \mod_playerwords\local\round_service::ensure_round_state
      * @return void
      */
     public function test_ensure_round_state_refuses_new_word_when_restricted(): void {
@@ -792,7 +771,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that count_rounds_played counts only this instance's attempts for this user.
      *
-     * @covers \mod_playerwords\local\round_service::count_rounds_played
      * @return void
      */
     public function test_count_rounds_played(): void {
@@ -823,7 +801,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that no cooldown applies when the setting is disabled, even with a recent attempt.
      *
-     * @covers \mod_playerwords\local\round_service::compute_cooldown_until
      * @return void
      */
     public function test_compute_cooldown_until_disabled(): void {
@@ -848,7 +825,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that no cooldown applies when the player has never attempted the activity.
      *
-     * @covers \mod_playerwords\local\round_service::compute_cooldown_until
      * @return void
      */
     public function test_compute_cooldown_until_no_attempts_yet(): void {
@@ -859,7 +835,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that a cooldown already expired by elapsed time returns 0.
      *
-     * @covers \mod_playerwords\local\round_service::compute_cooldown_until
      * @return void
      */
     public function test_compute_cooldown_until_expired_by_time(): void {
@@ -886,7 +861,6 @@ final class round_service_test extends \advanced_testcase {
      * immediately on the next call — never cached from the moment the round finished, the
      * same way mod_quiz's inter-attempt delay always uses its current setting.
      *
-     * @covers \mod_playerwords\local\round_service::compute_cooldown_until
      * @return void
      */
     public function test_compute_cooldown_until_reflects_a_later_settings_change(): void {
@@ -919,7 +893,6 @@ final class round_service_test extends \advanced_testcase {
      * teacher deletes it from the pool), the next ensure_round_state() call discards
      * the stale reference and picks a fresh word instead of returning an empty target.
      *
-     * @covers \mod_playerwords\local\round_service::ensure_round_state
      * @return void
      */
     public function test_ensure_round_state_recovers_when_word_removed_mid_round(): void {
@@ -969,7 +942,6 @@ final class round_service_test extends \advanced_testcase {
      * spends one of the student's max_rounds instead of a closed tab granting a
      * free re-roll.
      *
-     * @covers \mod_playerwords\local\round_service::start_round
      * @return void
      */
     public function test_start_round_reserves_attempt_row(): void {
@@ -996,7 +968,6 @@ final class round_service_test extends \advanced_testcase {
      * that ensure_round_state() already checked the restriction (it only checks when
      * a NEW word is picked, not when an already-armed one is reused).
      *
-     * @covers \mod_playerwords\local\round_service::start_round
      * @return void
      */
     public function test_start_round_revalidates_restriction_for_a_word_armed_before_the_limit_hit(): void {
@@ -1035,7 +1006,6 @@ final class round_service_test extends \advanced_testcase {
      * a second row — exactly one attempt row exists per round, whether it is still
      * pending or already finished.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_finish_round_completes_reservation_instead_of_duplicating(): void {
@@ -1068,8 +1038,6 @@ final class round_service_test extends \advanced_testcase {
      * spends one of the student's max_rounds: the very next round is blocked once the
      * limit is reached, even though the abandoned round was never actually finished.
      *
-     * @covers \mod_playerwords\local\round_service::start_round
-     * @covers \mod_playerwords\local\round_service::get_round_restriction_notice
      * @return void
      */
     public function test_abandoned_round_counts_towards_max_rounds(): void {
@@ -1087,7 +1055,6 @@ final class round_service_test extends \advanced_testcase {
      * it from the pool), the stale reservation is discarded rather than silently
      * spending one of the student's max_rounds for a round they never got to play.
      *
-     * @covers \mod_playerwords\local\round_service::ensure_round_state
      * @return void
      */
     public function test_ensure_round_state_discards_reservation_when_word_removed_mid_round(): void {
@@ -1112,7 +1079,6 @@ final class round_service_test extends \advanced_testcase {
      * PlayerHUD item together with its XP — a finite round limit is the same "bounded
      * source" case block_playerhud itself allows XP for on its own drops.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_correct_grants_item_with_xp_when_bounded(): void {
@@ -1146,7 +1112,6 @@ final class round_service_test extends \advanced_testcase {
      * item, but withholds its XP — the anti-farming safeguard this feature needs to
      * match PlayerHUD's own "infinite drop gives no XP" rule.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_correct_grants_item_without_xp_when_unlimited(): void {
@@ -1178,7 +1143,6 @@ final class round_service_test extends \advanced_testcase {
     /**
      * Tests that a lost round never grants the win item, regardless of configuration.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_submit_guess_wrong_does_not_grant_item(): void {
@@ -1205,7 +1169,6 @@ final class round_service_test extends \advanced_testcase {
      * it would be a permanent lockout. Mirrors round_presenter::build_hud_cost_info(), which
      * already hides the cost badge in this same case.
      *
-     * @covers \mod_playerwords\local\round_service::start_round
      * @return void
      */
     public function test_start_round_waives_cost_when_item_deleted(): void {
@@ -1229,7 +1192,6 @@ final class round_service_test extends \advanced_testcase {
      * This course has its own PlayerHUD block instance too, proving the rejection is about
      * this specific item's ownership, not merely "no PlayerHUD available in this course".
      *
-     * @covers \mod_playerwords\local\round_service::start_round
      * @return void
      */
     public function test_start_round_waives_cost_when_item_belongs_to_other_course(): void {
@@ -1254,7 +1216,6 @@ final class round_service_test extends \advanced_testcase {
      * A hint cost pointing at a PlayerHUD item that no longer exists is waived, same
      * rationale as test_start_round_waives_cost_when_item_deleted().
      *
-     * @covers \mod_playerwords\local\round_service::reveal_hint
      * @return void
      */
     public function test_reveal_hint_waives_cost_when_item_deleted(): void {
@@ -1274,7 +1235,6 @@ final class round_service_test extends \advanced_testcase {
      * their balance is short. Disabling is reversible, so the cost is deliberately not
      * waived here — only a deleted item (permanently unobtainable) gets that treatment.
      *
-     * @covers \mod_playerwords\local\round_service::start_round
      * @return void
      */
     public function test_start_round_still_blocks_when_item_disabled_and_insufficient(): void {
@@ -1303,7 +1263,6 @@ final class round_service_test extends \advanced_testcase {
      * regular student is still blocked by the same kind of configuration, so this is a
      * guest-specific waiver, not a general bypass.
      *
-     * @covers \mod_playerwords\local\round_service::start_round
      * @return void
      */
     public function test_start_round_guest_never_charges_or_reserves(): void {
@@ -1331,7 +1290,6 @@ final class round_service_test extends \advanced_testcase {
      * even when a real cost item is configured and the guest's balance would otherwise
      * block it.
      *
-     * @covers \mod_playerwords\local\round_service::reveal_hint
      * @return void
      */
     public function test_reveal_hint_guest_never_charges(): void {
@@ -1359,7 +1317,6 @@ final class round_service_test extends \advanced_testcase {
      * gradebook — every guest visitor to a course shares the same account, so none of
      * this could be safely attributed to one specific person.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_finish_round_guest_never_persists(): void {

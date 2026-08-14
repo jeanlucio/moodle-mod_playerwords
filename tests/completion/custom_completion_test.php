@@ -157,8 +157,6 @@ final class custom_completion_test extends advanced_testcase {
 
     /**
      * The module declares exactly one custom completion rule: completionattempts.
-     *
-     * @covers \mod_playerwords\completion\custom_completion::get_defined_custom_rules
      */
     public function test_get_defined_custom_rules_returns_completionattempts(): void {
         $this->assertSame(['completionattempts'], custom_completion::get_defined_custom_rules());

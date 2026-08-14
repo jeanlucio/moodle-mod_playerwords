@@ -27,6 +27,8 @@ namespace mod_playerwords\local;
 
 /**
  * Tests for words_repository — requires database.
+ *
+ * @covers \mod_playerwords\local\words_repository
  */
 final class words_repository_test extends \advanced_testcase {
     /** @var \stdClass Shared user for addedby FK. */
@@ -115,7 +117,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that has_cedilla_word is false when no word contains one.
      *
-     * @covers \mod_playerwords\local\words_repository::has_cedilla_word
      * @return void
      */
     public function test_has_cedilla_word_false_when_absent(): void {
@@ -127,7 +128,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that has_cedilla_word is true once any approved word contains one.
      *
-     * @covers \mod_playerwords\local\words_repository::has_cedilla_word
      * @return void
      */
     public function test_has_cedilla_word_true_when_present(): void {
@@ -140,7 +140,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that has_cedilla_word ignores unapproved (pending) words.
      *
-     * @covers \mod_playerwords\local\words_repository::has_cedilla_word
      * @return void
      */
     public function test_has_cedilla_word_ignores_unapproved(): void {
@@ -152,7 +151,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that has_cedilla_word is scoped to its own activity, never a sibling one.
      *
-     * @covers \mod_playerwords\local\words_repository::has_cedilla_word
      * @return void
      */
     public function test_has_cedilla_word_is_scoped_to_its_own_activity(): void {
@@ -166,7 +164,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that pick_round_word returns null when no words exist.
      *
-     * @covers \mod_playerwords\local\words_repository::pick_round_word
      * @return void
      */
     public function test_pick_word_returns_null_when_empty(): void {
@@ -177,7 +174,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that unapproved words are excluded from picks.
      *
-     * @covers \mod_playerwords\local\words_repository::pick_round_word
      * @return void
      */
     public function test_pick_word_excludes_unapproved(): void {
@@ -189,7 +185,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that words shorter than min_length are not returned.
      *
-     * @covers \mod_playerwords\local\words_repository::pick_round_word
      * @return void
      */
     public function test_pick_word_excludes_too_short(): void {
@@ -201,7 +196,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that words longer than max_length are not returned.
      *
-     * @covers \mod_playerwords\local\words_repository::pick_round_word
      * @return void
      */
     public function test_pick_word_excludes_too_long(): void {
@@ -213,7 +207,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that an approved word within length bounds is returned in random mode.
      *
-     * @covers \mod_playerwords\local\words_repository::pick_round_word
      * @return void
      */
     public function test_pick_word_random_returns_approved_word(): void {
@@ -227,7 +220,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that shared mode is deterministic: same round always picks the same word.
      *
-     * @covers \mod_playerwords\local\words_repository::pick_round_word
      * @return void
      */
     public function test_pick_word_shared_is_deterministic(): void {
@@ -245,7 +237,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that shared mode cycles: round N and round (N + count) return the same word.
      *
-     * @covers \mod_playerwords\local\words_repository::pick_round_word
      * @return void
      */
     public function test_pick_word_shared_cycles(): void {
@@ -263,7 +254,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Tests that words containing non-letter characters are excluded.
      *
-     * @covers \mod_playerwords\local\words_repository::pick_round_word
      * @return void
      */
     public function test_pick_word_excludes_non_letter_chars(): void {
@@ -276,7 +266,6 @@ final class words_repository_test extends \advanced_testcase {
      * In random mode, the excluded word id is never picked while another candidate
      * is available — repeated calls always land on the other word.
      *
-     * @covers \mod_playerwords\local\words_repository::pick_round_word
      * @return void
      */
     public function test_pick_word_random_avoids_excluded_word_when_alternative_exists(): void {
@@ -298,7 +287,6 @@ final class words_repository_test extends \advanced_testcase {
      * than blocking play — the same graceful fallback local_playergames' quiz_loader
      * uses when its "already seen" pool is exhausted.
      *
-     * @covers \mod_playerwords\local\words_repository::pick_round_word
      * @return void
      */
     public function test_pick_word_random_allows_excluded_word_when_it_is_the_only_candidate(): void {
@@ -316,7 +304,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * get_last_played_word_id() returns 0 when the student has no finished rounds yet.
      *
-     * @covers \mod_playerwords\local\words_repository::get_last_played_word_id
      * @return void
      */
     public function test_get_last_played_word_id_none_yet(): void {
@@ -328,7 +315,6 @@ final class words_repository_test extends \advanced_testcase {
      * get_last_played_word_id() returns the word from the most recently finished round,
      * ignoring a still-pending reservation (timefinished = 0) for a later word.
      *
-     * @covers \mod_playerwords\local\words_repository::get_last_played_word_id
      * @return void
      */
     public function test_get_last_played_word_id_ignores_pending_reservation(): void {
@@ -423,7 +409,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * A manually added word is trimmed, saved pre-approved, and attributed to its author.
      *
-     * @covers \mod_playerwords\local\words_repository::add_manual_word
      * @return void
      */
     public function test_add_manual_word_inserts_approved_record(): void {
@@ -444,7 +429,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * word_exists() matches an existing word case-insensitively.
      *
-     * @covers \mod_playerwords\local\words_repository::word_exists
      * @return void
      */
     public function test_word_exists_matches_case_insensitively(): void {
@@ -458,7 +442,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * word_exists() is false when no word matches, and scoped to the given instance.
      *
-     * @covers \mod_playerwords\local\words_repository::word_exists
      * @return void
      */
     public function test_word_exists_false_when_no_match_or_wrong_instance(): void {
@@ -475,7 +458,6 @@ final class words_repository_test extends \advanced_testcase {
      * that carries no source of its own, which is exactly what a duplicate-guard call
      * needs regardless of where the colliding text came from.
      *
-     * @covers \mod_playerwords\local\words_repository::word_exists
      * @return void
      */
     public function test_word_exists_matches_regardless_of_source(): void {
@@ -489,7 +471,6 @@ final class words_repository_test extends \advanced_testcase {
      * word_exists() ignores the excluded word id, so renaming a word to its own current
      * text is not reported as a collision with itself.
      *
-     * @covers \mod_playerwords\local\words_repository::word_exists
      * @return void
      */
     public function test_word_exists_ignores_excluded_word_id(): void {
@@ -505,7 +486,6 @@ final class words_repository_test extends \advanced_testcase {
      * get_all_word_texts() returns every word for the instance regardless of source or
      * approval status, since the AI generator needs to avoid pending words too.
      *
-     * @covers \mod_playerwords\local\words_repository::get_all_word_texts
      * @return void
      */
     public function test_get_all_word_texts_returns_every_word_regardless_of_status(): void {
@@ -523,7 +503,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * get_all_word_texts() is scoped to the given instance and empty when it has no words.
      *
-     * @covers \mod_playerwords\local\words_repository::get_all_word_texts
      * @return void
      */
     public function test_get_all_word_texts_scoped_to_instance(): void {
@@ -539,7 +518,6 @@ final class words_repository_test extends \advanced_testcase {
      * word_in_pool() matches an approved word regardless of accent or case, mirroring
      * the same normalization submit_guess() applies to both the guess and the target.
      *
-     * @covers \mod_playerwords\local\words_repository::word_in_pool
      * @return void
      */
     public function test_word_in_pool_matches_normalized(): void {
@@ -554,7 +532,6 @@ final class words_repository_test extends \advanced_testcase {
      * word_in_pool() is false when no approved word matches, and ignores pending words
      * and other activities' pools.
      *
-     * @covers \mod_playerwords\local\words_repository::word_in_pool
      * @return void
      */
     public function test_word_in_pool_false_when_no_match_or_unapproved_or_wrong_instance(): void {
@@ -571,7 +548,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * An AI-generated word is saved as pending approval, never pre-approved.
      *
-     * @covers \mod_playerwords\local\words_repository::add_ai_word
      * @return void
      */
     public function test_add_ai_word_inserts_pending_unapproved(): void {
@@ -589,7 +565,6 @@ final class words_repository_test extends \advanced_testcase {
      * get_word_by_id() returns a word regardless of approval status, but only when
      * it belongs to the given activity instance.
      *
-     * @covers \mod_playerwords\local\words_repository::get_word_by_id
      * @return void
      */
     public function test_get_word_by_id_ignores_approval_but_is_scoped_to_instance(): void {
@@ -610,7 +585,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Updating a word trims the new text and stamps timemodified.
      *
-     * @covers \mod_playerwords\local\words_repository::update_word
      * @return void
      */
     public function test_update_word_updates_fields_and_timemodified(): void {
@@ -633,7 +607,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * A word cannot be updated through an instance id it does not belong to.
      *
-     * @covers \mod_playerwords\local\words_repository::update_word
      * @return void
      */
     public function test_update_word_returns_false_for_wrong_instance(): void {
@@ -653,7 +626,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * A word is deleted when the given instance id actually owns it.
      *
-     * @covers \mod_playerwords\local\words_repository::delete_word
      * @return void
      */
     public function test_delete_word_removes_when_instance_matches(): void {
@@ -671,7 +643,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * A word cannot be deleted through an instance id it does not belong to.
      *
-     * @covers \mod_playerwords\local\words_repository::delete_word
      * @return void
      */
     public function test_delete_word_does_not_remove_when_instance_differs(): void {
@@ -690,7 +661,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Bulk delete removes only the specified ids, leaving the rest untouched.
      *
-     * @covers \mod_playerwords\local\words_repository::delete_words_bulk
      * @return void
      */
     public function test_delete_words_bulk_removes_only_specified_ids(): void {
@@ -713,7 +683,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Bulk delete with an empty id list is a no-op.
      *
-     * @covers \mod_playerwords\local\words_repository::delete_words_bulk
      * @return void
      */
     public function test_delete_words_bulk_noop_on_empty_array(): void {
@@ -729,7 +698,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Bulk approve marks every given word approved and stamps timemodified.
      *
-     * @covers \mod_playerwords\local\words_repository::approve_words_bulk
      * @return void
      */
     public function test_approve_words_bulk_sets_approved_and_timemodified(): void {
@@ -755,7 +723,6 @@ final class words_repository_test extends \advanced_testcase {
      * the set across pages, and the reported total always reflects the full count
      * regardless of how many rows the current page actually returned.
      *
-     * @covers \mod_playerwords\local\words_repository::get_recent_words
      * @return void
      */
     public function test_get_recent_words_orders_and_paginates(): void {
@@ -783,7 +750,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * An empty word pool is reported as such.
      *
-     * @covers \mod_playerwords\local\words_repository::get_recent_words
      * @return void
      */
     public function test_get_recent_words_reports_isempty_when_pool_is_empty(): void {
@@ -799,7 +765,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * A word imported from a glossary reports that glossary's name in the listing.
      *
-     * @covers \mod_playerwords\local\words_repository::get_recent_words
      * @return void
      */
     public function test_get_recent_words_includes_glossary_name(): void {
@@ -827,7 +792,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Sync is a no-op when the glossary source bit is not enabled.
      *
-     * @covers \mod_playerwords\local\words_repository::sync_glossary_words
      * @return void
      */
     public function test_sync_glossary_words_disabled_when_source_bit_not_set(): void {
@@ -847,7 +811,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * A single-word glossary concept is imported as one approved word.
      *
-     * @covers \mod_playerwords\local\words_repository::sync_glossary_words
      * @return void
      */
     public function test_sync_glossary_words_imports_single_word_concept(): void {
@@ -874,7 +837,6 @@ final class words_repository_test extends \advanced_testcase {
      * strip_tags() was meant to remove; content_to_text() followed by
      * strip_tags(html_entity_decode()) neutralises it regardless of encoding.
      *
-     * @covers \mod_playerwords\local\words_repository::sync_glossary_words
      * @return void
      */
     public function test_sync_glossary_words_strips_entity_encoded_markup_from_hint(): void {
@@ -894,7 +856,6 @@ final class words_repository_test extends \advanced_testcase {
      * A multi-word concept is split into one candidate word per token when no
      * stopwords are configured.
      *
-     * @covers \mod_playerwords\local\words_repository::sync_glossary_words
      * @return void
      */
     public function test_sync_glossary_words_splits_multiword_concept_without_stopwords(): void {
@@ -912,7 +873,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * A configured stopword is dropped from a multi-word concept before import.
      *
-     * @covers \mod_playerwords\local\words_repository::sync_glossary_words
      * @return void
      */
     public function test_sync_glossary_words_filters_configured_stopwords(): void {
@@ -931,7 +891,6 @@ final class words_repository_test extends \advanced_testcase {
      * Re-syncing after the glossary definition changed updates the existing word's
      * hint in place, instead of creating a duplicate.
      *
-     * @covers \mod_playerwords\local\words_repository::sync_glossary_words
      * @return void
      */
     public function test_sync_glossary_words_updates_hint_on_resync(): void {
@@ -954,7 +913,6 @@ final class words_repository_test extends \advanced_testcase {
      * When a previously imported glossary entry disappears, the next sync removes
      * the orphaned word, without touching manually added words.
      *
-     * @covers \mod_playerwords\local\words_repository::sync_glossary_words
      * @return void
      */
     public function test_sync_glossary_words_removes_orphaned_words(): void {
@@ -977,7 +935,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * glossaryid = 0 imports from every glossary in the course, not just one.
      *
-     * @covers \mod_playerwords\local\words_repository::sync_glossary_words
      * @return void
      */
     public function test_sync_glossary_words_zero_glossaryid_covers_all_course_glossaries(): void {
@@ -994,7 +951,6 @@ final class words_repository_test extends \advanced_testcase {
      * A glossary concept whose text already belongs to a manually added word is skipped:
      * no duplicate row is inserted, and the manual word's own hint is left untouched.
      *
-     * @covers \mod_playerwords\local\words_repository::sync_glossary_words
      * @return void
      */
     public function test_sync_glossary_words_skips_word_owned_by_another_source(): void {
@@ -1017,7 +973,6 @@ final class words_repository_test extends \advanced_testcase {
      * A multi-word glossary concept split into several sibling word rows is
      * reported by get_fragmented_concepts(), keyed by the shared concept text.
      *
-     * @covers \mod_playerwords\local\words_repository::get_fragmented_concepts
      * @return void
      */
     public function test_get_fragmented_concepts_reports_split_multiword_concept(): void {
@@ -1034,7 +989,6 @@ final class words_repository_test extends \advanced_testcase {
      * A single-word glossary concept never appears in get_fragmented_concepts(),
      * since it produced only one word row — nothing was actually split.
      *
-     * @covers \mod_playerwords\local\words_repository::get_fragmented_concepts
      * @return void
      */
     public function test_get_fragmented_concepts_excludes_single_word_concept(): void {
@@ -1050,7 +1004,6 @@ final class words_repository_test extends \advanced_testcase {
      * insert time), so they can never collide into a false positive here even when
      * two of them happen to share the same text as their concept.
      *
-     * @covers \mod_playerwords\local\words_repository::get_fragmented_concepts
      * @return void
      */
     public function test_get_fragmented_concepts_ignores_non_glossary_sources(): void {
@@ -1066,7 +1019,6 @@ final class words_repository_test extends \advanced_testcase {
      * split concept in one instance must not leak into another instance's report,
      * even when both import from glossaries in the same course.
      *
-     * @covers \mod_playerwords\local\words_repository::get_fragmented_concepts
      * @return void
      */
     public function test_get_fragmented_concepts_is_scoped_to_its_own_instance(): void {
@@ -1082,7 +1034,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * A word with no issues never appears in get_inactive_words().
      *
-     * @covers \mod_playerwords\local\words_repository::get_inactive_words
      * @return void
      */
     public function test_get_inactive_words_empty_when_no_issues(): void {
@@ -1096,7 +1047,6 @@ final class words_repository_test extends \advanced_testcase {
      * An approved word outside the current length range is reported with reason
      * "length".
      *
-     * @covers \mod_playerwords\local\words_repository::get_inactive_words
      * @return void
      */
     public function test_get_inactive_words_reports_length_mismatch(): void {
@@ -1115,7 +1065,6 @@ final class words_repository_test extends \advanced_testcase {
      * reason "invalidchars" — this can only happen from data saved before charset
      * validation existed on the manual-word form, or inserted through another path.
      *
-     * @covers \mod_playerwords\local\words_repository::get_inactive_words
      * @return void
      */
     public function test_get_inactive_words_reports_invalid_charset(): void {
@@ -1133,7 +1082,6 @@ final class words_repository_test extends \advanced_testcase {
      * A pending (unapproved) word is never reported — it was never eligible to play
      * in the first place, so there is nothing "newly" inactive about it.
      *
-     * @covers \mod_playerwords\local\words_repository::get_inactive_words
      * @return void
      */
     public function test_get_inactive_words_ignores_unapproved_words(): void {
@@ -1147,7 +1095,6 @@ final class words_repository_test extends \advanced_testcase {
      * No attempts recorded means no entry in the draw-count map at all — a word
      * that was never drawn is absent, not present with a zero.
      *
-     * @covers \mod_playerwords\local\words_repository::get_draw_counts
      * @return void
      */
     public function test_get_draw_counts_absent_when_never_drawn(): void {
@@ -1160,7 +1107,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * Every attempt row counts towards the total, regardless of outcome.
      *
-     * @covers \mod_playerwords\local\words_repository::get_draw_counts
      * @return void
      */
     public function test_get_draw_counts_sums_all_attempts_regardless_of_outcome(): void {
@@ -1202,7 +1148,6 @@ final class words_repository_test extends \advanced_testcase {
      * Draw counts are scoped to their own instance — attempts recorded against the
      * same word id in a different instance must never be added in.
      *
-     * @covers \mod_playerwords\local\words_repository::get_draw_counts
      * @return void
      */
     public function test_get_draw_counts_is_scoped_to_its_own_instance(): void {
@@ -1241,7 +1186,6 @@ final class words_repository_test extends \advanced_testcase {
      * Counts only the candidate words within the requested length range, for a
      * specific glossary — mirrors what sync_glossary_words() would actually import.
      *
-     * @covers \mod_playerwords\local\words_repository::count_glossary_candidates
      * @return void
      */
     public function test_count_glossary_candidates_counts_within_range(): void {
@@ -1257,7 +1201,6 @@ final class words_repository_test extends \advanced_testcase {
      * glossaryid = 0 counts candidates across every glossary in the course, not
      * just the first one created.
      *
-     * @covers \mod_playerwords\local\words_repository::count_glossary_candidates
      * @return void
      */
     public function test_count_glossary_candidates_zero_covers_all_course_glossaries(): void {
@@ -1278,7 +1221,6 @@ final class words_repository_test extends \advanced_testcase {
      * Two different concepts tokenising into the same word are only counted once
      * — the same deduplication sync_glossary_words() itself applies.
      *
-     * @covers \mod_playerwords\local\words_repository::count_glossary_candidates
      * @return void
      */
     public function test_count_glossary_candidates_deduplicates_repeated_tokens(): void {
@@ -1297,7 +1239,6 @@ final class words_repository_test extends \advanced_testcase {
      * though the id itself is a real, valid glossary — the instance-isolation
      * rule for any externally-supplied id.
      *
-     * @covers \mod_playerwords\local\words_repository::count_glossary_candidates
      * @return void
      */
     public function test_count_glossary_candidates_ignores_glossary_from_another_course(): void {
@@ -1317,7 +1258,6 @@ final class words_repository_test extends \advanced_testcase {
     /**
      * A course with no glossaries at all counts zero, without error.
      *
-     * @covers \mod_playerwords\local\words_repository::count_glossary_candidates
      * @return void
      */
     public function test_count_glossary_candidates_zero_when_no_glossaries_exist(): void {

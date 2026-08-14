@@ -35,6 +35,10 @@ use mod_playerwords\local\words_repository;
  * activities share the same course. The architecture relies on this by construction
  * (session state keyed by cmid+userid, word lookups scoped by playerwordsid), but no
  * test asserted it explicitly until this one.
+ *
+ * @covers \mod_playerwords\local\round_service
+ * @covers \mod_playerwords\local\words_repository
+ * @covers \mod_playerwords\local\attempts_history_service
  */
 final class cross_instance_security_test extends \advanced_testcase {
     #[\Override]
@@ -87,8 +91,6 @@ final class cross_instance_security_test extends \advanced_testcase {
      * A freshly loaded state for one activity must never inherit the word picked in
      * another activity, even for the same student in the same course.
      *
-     * @covers \mod_playerwords\local\round_service::load_state
-     * @covers \mod_playerwords\local\round_service::ensure_round_state
      * @return void
      */
     public function test_session_state_is_isolated_per_activity(): void {
@@ -121,7 +123,6 @@ final class cross_instance_security_test extends \advanced_testcase {
      * activity's wordid alongside this activity's cmid could reveal that activity's
      * target word.
      *
-     * @covers \mod_playerwords\local\words_repository::get_approved_word_by_id
      * @return void
      */
     public function test_word_lookup_is_scoped_to_its_own_activity(): void {
@@ -147,7 +148,6 @@ final class cross_instance_security_test extends \advanced_testcase {
      * A round played in one activity must only ever create an attempt record for that
      * activity, never for another one owned by the same student.
      *
-     * @covers \mod_playerwords\local\round_service::submit_guess
      * @return void
      */
     public function test_attempts_are_scoped_to_their_own_activity(): void {
@@ -173,7 +173,6 @@ final class cross_instance_security_test extends \advanced_testcase {
      * another student's rounds within the same activity — both are filtered directly
      * in the SQL, not merely by capability, so this proves the query itself is safe.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_history
      * @return void
      */
     public function test_attempts_history_is_scoped_to_activity_and_user(): void {

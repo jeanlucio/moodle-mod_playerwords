@@ -35,6 +35,8 @@ use context_module;
  * restriction notice (cooldown/round limit). Earlier bugs in this project stemmed
  * exactly from this kind of orchestration logic being duplicated or not persisting
  * state correctly, so each branch is asserted explicitly here.
+ *
+ * @covers \mod_playerwords\local\view_page_service
  */
 final class view_page_service_test extends \advanced_testcase {
     /** @var \stdClass Course used by the tests. */
@@ -99,7 +101,6 @@ final class view_page_service_test extends \advanced_testcase {
     /**
      * A fresh visit picks a word and shows the lobby, without starting the timer.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_shows_lobby_for_fresh_round(): void {
@@ -119,7 +120,6 @@ final class view_page_service_test extends \advanced_testcase {
      * The word picked on a fresh visit is persisted to session, so a second call
      * sees the same round instead of picking another word.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_persists_picked_word_across_calls(): void {
@@ -142,7 +142,6 @@ final class view_page_service_test extends \advanced_testcase {
      * a real cooldown from the attempt that was just recorded, instead of picking
      * a fresh word.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_reflects_finished_round_and_computes_cooldown(): void {
@@ -166,7 +165,6 @@ final class view_page_service_test extends \advanced_testcase {
      * hidden in the lobby (nothing to forfeit yet), shown once the round starts, and
      * hidden again once it finishes (forfeiting an already-finished round makes no sense).
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_shows_forfeit_only_during_active_round(): void {
@@ -194,7 +192,6 @@ final class view_page_service_test extends \advanced_testcase {
      * The template context always carries the attempt-history toolbar URL and the
      * how-to-play help content shown in the in-game modal, regardless of round state.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_includes_toolbar_urls(): void {
@@ -219,7 +216,6 @@ final class view_page_service_test extends \advanced_testcase {
      * The help modal omits the ranking tie-break explanation when the teacher has
      * turned ranking off for the activity.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_hides_ranking_help_when_ranking_disabled(): void {
@@ -236,7 +232,6 @@ final class view_page_service_test extends \advanced_testcase {
      * The help modal shows the PlayerHUD explanation as soon as any of the round cost,
      * hint cost, or win-grant settings is configured — one is enough to trigger it.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_shows_hud_help_when_win_grant_configured(): void {
@@ -253,7 +248,6 @@ final class view_page_service_test extends \advanced_testcase {
      * When the round limit is reached before a word is even picked, the
      * restriction notice is surfaced instead of a target word.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_shows_restriction_notice_when_round_limit_reached(): void {
@@ -287,7 +281,6 @@ final class view_page_service_test extends \advanced_testcase {
      * site-wide preference so it is never repeated — including on the very same
      * lobby, matching intro_service's own contract.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_flags_autoshow_intro_once_on_lobby(): void {
@@ -307,7 +300,6 @@ final class view_page_service_test extends \advanced_testcase {
      * The auto-show flag is site-wide, not per-activity: a user who already saw
      * the intro on one activity must not see it again on a second, different one.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_autoshow_intro_does_not_repeat_across_activities(): void {
@@ -327,7 +319,6 @@ final class view_page_service_test extends \advanced_testcase {
      * very first visit happens to already have a finished round recorded (e.g. an
      * imported attempt) would never see the intro automatically.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_flags_autoshow_intro_on_finished_round_branch(): void {
@@ -349,7 +340,6 @@ final class view_page_service_test extends \advanced_testcase {
      * The auto-show flag is still surfaced on the round-restriction branch of
      * build_page_data (round limit already reached before a word is even picked).
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_flags_autoshow_intro_on_restriction_branch(): void {
@@ -379,7 +369,6 @@ final class view_page_service_test extends \advanced_testcase {
      * The help modal content always carries the review hint pointing back to the
      * toolbar help icon, regardless of round state.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_includes_review_hint_in_help_context(): void {
@@ -394,7 +383,6 @@ final class view_page_service_test extends \advanced_testcase {
      * A student — who cannot manage the activity — never sees the inactive-words
      * warning, even when the pool genuinely has an inactive word.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_hides_inactive_words_for_non_manager(): void {
@@ -423,7 +411,6 @@ final class view_page_service_test extends \advanced_testcase {
      * Whoever can manage the activity sees the inactive-words warning, naming the
      * word and its exclusion reason, alongside the active-word count.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_shows_inactive_words_for_manager(): void {
@@ -463,7 +450,6 @@ final class view_page_service_test extends \advanced_testcase {
      * The active-word count is shown to a manager even when the pool has no
      * inactive words at all — it is a standing reassurance, not tied to a warning.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_shows_active_count_without_any_inactive_words(): void {
@@ -487,7 +473,6 @@ final class view_page_service_test extends \advanced_testcase {
      * at its own dedicated page (attemptsreport.php), separate from the personal
      * my-attempts view.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_shows_report_link_for_viewer_with_capability(): void {
@@ -513,7 +498,6 @@ final class view_page_service_test extends \advanced_testcase {
      * grant. This role deliberately holds addinstance and nothing else, proving
      * build_page_data() now checks mod/playerwords:managewords specifically.
      *
-     * @covers \mod_playerwords\local\view_page_service::build_page_data
      * @return void
      */
     public function test_build_page_data_addinstance_alone_does_not_show_manage_affordances(): void {

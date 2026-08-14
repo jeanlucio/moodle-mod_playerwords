@@ -27,6 +27,8 @@ namespace mod_playerwords\local;
 
 /**
  * Tests for word_normalizer — pure logic, no database required.
+ *
+ * @covers \mod_playerwords\local\word_normalizer
  */
 final class word_normalizer_test extends \basic_testcase {
     /**
@@ -50,7 +52,6 @@ final class word_normalizer_test extends \basic_testcase {
     /**
      * Tests that normalize produces the expected lowercase accent-free string.
      *
-     * @covers \mod_playerwords\local\word_normalizer::normalize
      * @dataProvider normalize_provider
      * @param string $input    Raw input string.
      * @param string $expected Expected normalized string.
@@ -81,7 +82,6 @@ final class word_normalizer_test extends \basic_testcase {
     /**
      * Tests that is_valid_charset accepts only strings made up of letters.
      *
-     * @covers \mod_playerwords\local\word_normalizer::is_valid_charset
      * @dataProvider is_valid_charset_provider
      * @param string $word Word to check.
      * @param bool $expected Expected result.

@@ -34,6 +34,8 @@ use mod_playerwords\local\intro_service;
 
 /**
  * Tests for the Privacy API provider.
+ *
+ * @covers \mod_playerwords\privacy\provider
  */
 final class provider_test extends \core_privacy\tests\provider_testcase {
     #[\Override]
@@ -106,7 +108,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * Tests that get_metadata declares both playerwords tables and the
      * site-wide "seen intro" user preference.
      *
-     * @covers \mod_playerwords\privacy\provider::get_metadata
      * @return void
      */
     public function test_get_metadata(): void {
@@ -126,7 +127,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * added to install.xml without a matching metadata entry fails this test — the
      * exact drift that left rankingpoints undeclared until this test was added.
      *
-     * @covers \mod_playerwords\privacy\provider::get_metadata
      * @return void
      */
     public function test_get_metadata_playerwords_attempts_fields_match_schema(): void {
@@ -167,8 +167,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * playerwordsid columns are deliberately not exported themselves, since the
      * export is already scoped by both — that is checked separately.
      *
-     * @covers \mod_playerwords\privacy\provider::get_metadata
-     * @covers \mod_playerwords\privacy\provider::export_user_data
      * @return void
      */
     public function test_playerwords_words_export_keys_are_all_declared_in_metadata(): void {
@@ -215,7 +213,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * sets, not necessarily addedby; timemodified can likewise be touched by a manager
      * acting on someone else's word.
      *
-     * @covers \mod_playerwords\privacy\provider::get_metadata
      * @return void
      */
     public function test_get_metadata_playerwords_words_every_column_is_declared_or_documented(): void {
@@ -256,7 +253,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * A user who never had the intro preference set exports no preference data.
      *
-     * @covers \mod_playerwords\privacy\provider::export_user_preferences
      * @return void
      */
     public function test_export_user_preferences_no_pref(): void {
@@ -272,7 +268,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * A user who has seen the intro exports exactly that one preference, under
      * the mod_playerwords component.
      *
-     * @covers \mod_playerwords\privacy\provider::export_user_preferences
      * @return void
      */
     public function test_export_user_preferences_seen(): void {
@@ -292,7 +287,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Tests that get_contexts_for_userid finds the context via attempts.
      *
-     * @covers \mod_playerwords\privacy\provider::get_contexts_for_userid
      * @return void
      */
     public function test_get_contexts_for_userid_by_attempts(): void {
@@ -312,7 +306,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Tests that get_contexts_for_userid finds the context via added words.
      *
-     * @covers \mod_playerwords\privacy\provider::get_contexts_for_userid
      * @return void
      */
     public function test_get_contexts_for_userid_by_words_added(): void {
@@ -331,7 +324,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Tests that get_users_in_context returns both attempt users and word authors.
      *
-     * @covers \mod_playerwords\privacy\provider::get_users_in_context
      * @return void
      */
     public function test_get_users_in_context(): void {
@@ -354,7 +346,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Tests that delete_data_for_user removes only that user's attempts and anonymises their words.
      *
-     * @covers \mod_playerwords\privacy\provider::delete_data_for_user
      * @return void
      */
     public function test_delete_data_for_user(): void {
@@ -383,7 +374,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Tests that delete_data_for_users removes data for the listed users only.
      *
-     * @covers \mod_playerwords\privacy\provider::delete_data_for_users
      * @return void
      */
     public function test_delete_data_for_users(): void {
@@ -408,7 +398,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Tests that export_user_data writes both attempts and added-word data for the user.
      *
-     * @covers \mod_playerwords\privacy\provider::export_user_data
      * @return void
      */
     public function test_export_user_data(): void {
@@ -441,7 +430,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Tests that export_user_data is a no-op for an empty approved contextlist.
      *
-     * @covers \mod_playerwords\privacy\provider::export_user_data
      * @return void
      */
     public function test_export_user_data_empty_contextlist_is_noop(): void {
@@ -457,7 +445,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * Tests that delete_data_for_user clears attempts and anonymises word authorship
      * across every context in the approved list, not just the first one.
      *
-     * @covers \mod_playerwords\privacy\provider::delete_data_for_user
      * @return void
      */
     public function test_delete_data_for_user_across_multiple_contexts(): void {
@@ -489,7 +476,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * anonymises every word author within that context only, leaving another activity's
      * data untouched.
      *
-     * @covers \mod_playerwords\privacy\provider::delete_data_for_all_users_in_context
      * @return void
      */
     public function test_delete_data_for_all_users_in_context(): void {
@@ -521,7 +507,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * Tests that delete_data_for_all_users_in_context is a silent no-op for a
      * non-module context.
      *
-     * @covers \mod_playerwords\privacy\provider::delete_data_for_all_users_in_context
      * @return void
      */
     public function test_delete_data_for_all_users_in_context_ignores_non_module_context(): void {
@@ -541,7 +526,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     /**
      * Tests that get_users_in_context is a silent no-op for a non-module context.
      *
-     * @covers \mod_playerwords\privacy\provider::get_users_in_context
      * @return void
      */
     public function test_get_users_in_context_ignores_non_module_context(): void {
@@ -559,7 +543,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * page module whose row happens to carry the same numeric instance id as a real
      * playerwords activity is never mistaken for it.
      *
-     * @covers \mod_playerwords\privacy\provider::get_users_in_context
      * @return void
      */
     public function test_get_users_in_context_ignores_colliding_instance_id_from_other_module_type(): void {
@@ -587,7 +570,6 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * as a real playerwords activity must not appear in the contextlist of a user who
      * only ever interacted with the playerwords activity itself.
      *
-     * @covers \mod_playerwords\privacy\provider::get_contexts_for_userid
      * @return void
      */
     public function test_get_contexts_for_userid_ignores_colliding_instance_id_from_other_module_type(): void {

@@ -27,6 +27,8 @@ namespace mod_playerwords\local;
 
 /**
  * Tests for attempts_history_service — requires database.
+ *
+ * @covers \mod_playerwords\local\attempts_history_service
  */
 final class attempts_history_service_test extends \advanced_testcase {
     /** @var \stdClass Course used by the tests. */
@@ -103,7 +105,6 @@ final class attempts_history_service_test extends \advanced_testcase {
     /**
      * An activity with no finished attempts yields an empty history and no grade.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_history
      * @return void
      */
     public function test_get_history_is_empty_without_finished_attempts(): void {
@@ -120,7 +121,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * A still-pending reservation (round in progress, or abandoned without ever
      * finishing) is excluded from the history, mirroring ranking_service.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_history
      * @return void
      */
     public function test_get_history_excludes_pending_attempts(): void {
@@ -137,7 +137,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * Rows are shown most-recent-first, the reverse of the ASC order used for the
      * grade calculation.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_history
      * @return void
      */
     public function test_get_history_rows_are_most_recent_first(): void {
@@ -156,7 +155,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * configured grading method — the whole point of this service is to never
      * duplicate that aggregation logic.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_history
      * @return void
      */
     public function test_get_history_grade_matches_calculate_user_grade(): void {
@@ -175,7 +173,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * The grade summary is hidden entirely for an ungraded instance, even with
      * finished attempts on record — there is nothing meaningful to show.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_history
      * @return void
      */
     public function test_get_history_hides_grade_when_ungraded(): void {
@@ -191,7 +188,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * The word column prefers the joined word's concept, falling back to its raw
      * word text when no concept was recorded (e.g. a manually added word).
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_history
      * @return void
      */
     public function test_get_history_row_shows_word_text(): void {
@@ -219,7 +215,6 @@ final class attempts_history_service_test extends \advanced_testcase {
     /**
      * Time used is formatted as m:ss for display.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_history
      * @return void
      */
     public function test_get_history_row_formats_time_used(): void {
@@ -235,7 +230,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * The ranking-points column is included, formatted to 2 decimals, when the
      * activity has ranking enabled.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_history
      * @return void
      */
     public function test_get_history_shows_ranking_points_when_ranking_enabled(): void {
@@ -253,7 +247,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * ranking disabled — there is nothing meaningful to show a student about a
      * ranking they can never see.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_history
      * @return void
      */
     public function test_get_history_hides_ranking_points_when_ranking_disabled(): void {
@@ -270,7 +263,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * get_all_history() returns every student's finished attempts, ordered most-recent-first
      * by default, with the student's full name attached to each row.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
      * @return void
      */
     public function test_get_all_history_includes_every_student_most_recent_first(): void {
@@ -303,8 +295,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * A user who can manage the activity (editingteacher) never appears in the report,
      * even with attempts of their own — same rule as ranking_service::get_ranking().
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
-     * @covers \mod_playerwords\local\attempts_history_service::get_players_for_filter
      * @return void
      */
     public function test_get_all_history_excludes_users_who_can_manage_the_activity(): void {
@@ -339,7 +329,6 @@ final class attempts_history_service_test extends \advanced_testcase {
     /**
      * The studentid filter restricts the report to a single student's own rows.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
      * @return void
      */
     public function test_get_all_history_filters_by_student(): void {
@@ -371,7 +360,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * Sorting by score ascending puts the lowest-scoring row first, and an unknown sort
      * key falls back to the default (date) instead of causing a SQL error.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
      * @return void
      */
     public function test_get_all_history_sorts_by_allowed_column(): void {
@@ -412,7 +400,6 @@ final class attempts_history_service_test extends \advanced_testcase {
     /**
      * Pagination returns distinct slices of the full result set.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
      * @return void
      */
     public function test_get_all_history_paginates(): void {
@@ -474,7 +461,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * by default) must not see another group's students in the all-students report —
      * mirroring the restriction ranking_service::get_ranking() already applies.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
      * @return void
      */
     public function test_get_all_history_separategroups_restricts_to_viewers_own_group(): void {
@@ -520,7 +506,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * directly via the studentid parameter must still return nothing — the group
      * scope is enforced as an additional SQL condition, not just a UI-level filter.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
      * @return void
      */
     public function test_get_all_history_separategroups_studentid_filter_cannot_bypass_group_scope(): void {
@@ -560,7 +545,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * The filter dropdown itself must not offer a student from another group either —
      * otherwise the UI would advertise an id the report then (correctly) refuses.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_players_for_filter
      * @return void
      */
     public function test_get_players_for_filter_separategroups_excludes_other_group(): void {
@@ -595,7 +579,6 @@ final class attempts_history_service_test extends \advanced_testcase {
      * despite SEPARATEGROUPS — the standard Moodle override for a report-viewing
      * role, mirrored from the fix's own recommendation rather than left unhandled.
      *
-     * @covers \mod_playerwords\local\attempts_history_service::get_all_history
      * @return void
      */
     public function test_get_all_history_accessallgroups_overrides_separategroups(): void {

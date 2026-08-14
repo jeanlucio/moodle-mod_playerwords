@@ -30,6 +30,8 @@ use mod_playerwords\local\round_service;
 
 /**
  * Tests for the mod_playerwords_start_round web service.
+ *
+ * @covers \mod_playerwords\external\start_round
  */
 final class start_round_test extends \advanced_testcase {
     /** @var \stdClass Course used by the tests. */
@@ -159,7 +161,6 @@ final class start_round_test extends \advanced_testcase {
     /**
      * Tests that starting the round begins the timer and marks it as started.
      *
-     * @covers \mod_playerwords\external\start_round::execute
      * @return void
      */
     public function test_starts_round(): void {
@@ -188,7 +189,6 @@ final class start_round_test extends \advanced_testcase {
     /**
      * Tests that starting an already-started round is rejected without restarting the timer.
      *
-     * @covers \mod_playerwords\external\start_round::execute
      * @return void
      */
     public function test_rejects_when_already_started(): void {
@@ -205,7 +205,6 @@ final class start_round_test extends \advanced_testcase {
     /**
      * Tests that a user without the view capability in the module context is rejected.
      *
-     * @covers \mod_playerwords\external\start_round::execute
      * @return void
      */
     public function test_requires_view_capability(): void {
@@ -225,7 +224,6 @@ final class start_round_test extends \advanced_testcase {
      * {playerwords_attempts} row behind — every guest visitor to a course shares the
      * same account, so nothing here could be safely attributed to one specific person.
      *
-     * @covers \mod_playerwords\external\start_round::execute
      * @return void
      */
     public function test_guest_can_play_demo_without_persisting(): void {
@@ -251,7 +249,6 @@ final class start_round_test extends \advanced_testcase {
      * (wordid=0, finished=false) as one left behind by a blocked new_round() call, so
      * this reproduces the report's PoC without needing to go through new_round first.
      *
-     * @covers \mod_playerwords\external\start_round::execute
      * @return void
      */
     public function test_blocked_when_round_limit_already_reached(): void {
@@ -284,7 +281,6 @@ final class start_round_test extends \advanced_testcase {
     /**
      * Tests that an insufficient PlayerHUD item balance blocks starting the round.
      *
-     * @covers \mod_playerwords\external\start_round::execute
      * @return void
      */
     public function test_hud_insufficient_item_blocks_start(): void {
@@ -308,7 +304,6 @@ final class start_round_test extends \advanced_testcase {
      * deleted after the activity was configured) is waived rather than blocking the round
      * forever with a broken notification.
      *
-     * @covers \mod_playerwords\external\start_round::execute
      * @return void
      */
     public function test_hud_deleted_item_waives_start_cost(): void {
