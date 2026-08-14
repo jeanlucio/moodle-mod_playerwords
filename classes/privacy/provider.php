@@ -19,7 +19,8 @@
  *
  * Personal data stored:
  *   - playerwords_attempts: one record per round per user (userid).
- *   - playerwords_words.addedby: userid of the teacher/user who added the word.
+ *   - playerwords_words: addedby (userid of the teacher/user who added the word),
+ *     plus the word, source and timecreated of that same row.
  *
  * @package    mod_playerwords
  * @copyright  2026 Jean Lúcio
@@ -67,7 +68,10 @@ class provider implements
         $collection->add_database_table(
             'playerwords_words',
             [
-                'addedby' => 'privacy:metadata:playerwords_words:addedby',
+                'addedby'     => 'privacy:metadata:playerwords_words:addedby',
+                'word'        => 'privacy:metadata:playerwords_words:word',
+                'source'      => 'privacy:metadata:playerwords_words:source',
+                'timecreated' => 'privacy:metadata:playerwords_words:timecreated',
             ],
             'privacy:metadata:playerwords_words'
         );

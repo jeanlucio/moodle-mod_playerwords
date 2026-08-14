@@ -154,6 +154,56 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     }
 
     /**
+     * Regression test for metadata drift: every field export_user_data() actually
+     * puts in a playerwords_words row must be declared in get_metadata() — asserted
+     * against what export_user_data() really returns, not by hardcoding the expected
+     * key list, so a field added to one without the other fails this test rather than
+     * silently drifting. Unlike playerwords_attempts above, playerwords_words is not
+     * checked against the full table schema: most of its columns (concept, hint,
+     * glossaryid, approved) are catalogue/config data the teacher authored, not
+     * personal data about the addedby user, so a strict schema diff would demand
+     * declaring fields that do not belong in the metadata registry at all. The addedby
+     * column is deliberately not exported itself, since the export is already scoped
+     * by it — that column is checked separately.
+     *
+     * @covers \mod_playerwords\privacy\provider::get_metadata
+     * @covers \mod_playerwords\privacy\provider::export_user_data
+     * @return void
+     */
+    public function test_playerwords_words_export_keys_are_all_declared_in_metadata(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $cm = $this->make_cm($course);
+        $user = $this->getDataGenerator()->create_user();
+        $this->make_word($user->id, (int)$cm->id);
+
+        $context = \context_module::instance($cm->cmid);
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', [$context->id]);
+        provider::export_user_data($contextlist);
+
+        $wordsdata = writer::with_context($context)->get_data([
+            get_string('pluginname', 'mod_playerwords'),
+            get_string('privacy:words', 'mod_playerwords'),
+        ]);
+        $this->assertNotEmpty($wordsdata->words);
+
+        $declaredfields = [];
+        foreach (provider::get_metadata(new collection('mod_playerwords'))->get_collection() as $item) {
+            if ($item->get_name() === 'playerwords_words') {
+                $declaredfields = array_keys($item->get_privacy_fields());
+            }
+        }
+        $this->assertContains('addedby', $declaredfields);
+
+        foreach (array_keys($wordsdata->words[0]) as $exportedkey) {
+            $this->assertContains(
+                $exportedkey,
+                $declaredfields,
+                "Field '$exportedkey' is exported but not declared in get_metadata()."
+            );
+        }
+    }
+
+    /**
      * A user who never had the intro preference set exports no preference data.
      *
      * @covers \mod_playerwords\privacy\provider::export_user_preferences
