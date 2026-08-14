@@ -184,6 +184,26 @@
     background-color: var(--gray-100, #f8f9fa);
 }
 
+/*
+ * The one row currently being typed is upgraded from plain spans into real <input>
+ * boxes by game.js (activateRow()) — reset the browser's own text-field styling so a
+ * box stays visually identical to the read-only .mod-playerwords-cell spans around it,
+ * only revealing itself as editable through focus/caret and the outline below.
+ */
+.path-mod-playerwords .mod-playerwords-game .mod-playerwords-tile-input {
+    padding: 0;
+    text-align: center;
+    text-transform: uppercase;
+    font-family: inherit;
+    color: inherit;
+    caret-color: var(--primary, #0f6cbf);
+}
+
+.path-mod-playerwords .mod-playerwords-game .mod-playerwords-tile-input:focus {
+    outline: 2px solid var(--primary, #0f6cbf);
+    outline-offset: 1px;
+}
+
 .path-mod-playerwords .mod-playerwords-game .mod-playerwords-cell.is-absent {
     color: var(--white, #fff);
     background-color: #495057;
@@ -426,8 +446,7 @@
     }
 }
 
-.path-mod-playerwords .mod-playerwords-game .mod-playerwords-row.pw-shake,
-.path-mod-playerwords .mod-playerwords-game #playerwords-guess.pw-shake {
+.path-mod-playerwords .mod-playerwords-game .mod-playerwords-row.pw-shake {
     animation: pw-shake 0.45s ease-in-out;
 }
 

@@ -17,13 +17,23 @@
 {{!
     @template mod_playerwords/round_play
 
-    Guess input for an active round. Letters, Backspace and Enter are captured at the
-    document level by game.js's initPhysicalKeyboardCapture(), so physical typing works
-    regardless of whether this input has DOM focus — it no longer relies on native text
-    entry into the field itself. Submitting happens via Enter or the on-screen keyboard's
-    own ENTER key, both routed through the same submitGuessForm() helper
-    (form.requestSubmit()) — there is no separate submit button. The forfeit action
-    lives in the page-level toolbar (mod_playerwords/toolbar), not here.
+    Guess submission trigger for an active round — the actual letter-by-letter entry
+    happens in the grid itself (see mod_playerwords/round_panel), not here. game.js
+    dynamically turns the grid's current (empty) row into one real single-character
+    <input> per letter, mirroring mod_playercross's own tile-input pattern: clicking a
+    specific box focuses exactly that one, so a wrong letter can be fixed without
+    retyping the whole word — every other row (already played, or not yet reached)
+    stays plain, non-interactive spans. Physical typing works even without a box
+    focused, via game.js's document-level initPhysicalKeyboardCapture(); once a box
+    does have native focus, ordinary typing/backspace/click-to-position all behave like
+    a normal text field.
+
+    This form exists purely as a submit-event target: game.js reads the guess by
+    collecting every box's value from the active row when this form is submitted, via
+    Enter or the on-screen keyboard's own ENTER key (both routed through the same
+    submitGuessForm() helper — form.requestSubmit()). The visually-hidden submit button
+    below is the discoverable action for keyboard/screen-reader users; sighted/mouse
+    users never see it, since the whole flow already works via typing.
 
     The on-screen keyboard itself is a sibling in mod_playerwords/round_panel, not here,
     so it keeps sharing that template's own (tall) containing block for
@@ -34,24 +44,11 @@
 
     Example context (json):
     {
-        "guesslabel": "Your guess",
-        "guessplaceholder": "Type a word",
-        "guessmaxlength": 7
+        "submitguess": "Submit guess"
     }
 }}
 <div id="playerwords-round-play">
     <form id="playerwords-guess-form" class="mod-playerwords-form">
-        <label for="playerwords-guess" class="visually-hidden">{{guesslabel}}</label>
-        <input
-            type="text"
-            id="playerwords-guess"
-            name="guess"
-            maxlength="{{guessmaxlength}}"
-            class="form-control"
-            placeholder="{{guessplaceholder}}"
-            inputmode="none"
-            autocomplete="off"
-            required
-        >
+        <button type="submit" class="visually-hidden">{{submitguess}}</button>
     </form>
 </div>

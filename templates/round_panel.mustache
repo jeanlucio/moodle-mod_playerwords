@@ -18,9 +18,17 @@
     @template mod_playerwords/round_panel
 
     Active-round panel: status line, hint control and letter grid, followed by either
-    the guess input (mod_playerwords/round_play) plus the on-screen keyboard, or the
-    post-round result (mod_playerwords/round_result), depending on whether the round
-    has finished.
+    the guess submission form (mod_playerwords/round_play) plus the on-screen keyboard,
+    or the post-round result (mod_playerwords/round_result), depending on whether the
+    round has finished.
+
+    Every grid cell renders server-side as a plain, non-interactive <span> — already
+    played rows carry real per-letter feedback, not-yet-reached rows are simply empty.
+    game.js turns the one row currently being typed into real single-character <input>
+    boxes at runtime (see activateRow() in amd/src/game.js), which is why the grid
+    itself is role="group" rather than role="img": it can legitimately contain
+    focusable, editable descendants once a round is under way, not just a static
+    read-only history.
 
     The keyboard renders here rather than inside round_play so it shares this
     template's own (tall) containing block — position: sticky needs enough scrollable
@@ -86,7 +94,7 @@
         <strong>{{hintlabel}}</strong> <span id="playerwords-hint-value">{{hintvalue}}</span>
     </div>
 
-    <div class="mod-playerwords-grid mb-3" role="img" aria-label="{{attemptslabel}}">
+    <div class="mod-playerwords-grid mb-3" role="group" aria-label="{{attemptslabel}}">
         {{#rows}}
             <div class="mod-playerwords-row">
                 {{#letters}}

@@ -42,8 +42,8 @@ let timerHandle = null;
 /** @type {?number} Handle of the pending cooldown-countdown tick, if any. */
 let cooldownHandle = null;
 
-/** @type {HTMLElement[]} Cells of the grid row currently mirroring the guess input. */
-let activeRowCells = [];
+/** @type {?HTMLElement} Letter box the virtual keyboard / physical capture currently writes into. */
+let activeBox = null;
 
 /**
  * Maps a notification type to its core rendering template — mirrors core/notification's
@@ -112,24 +112,6 @@ const notify = async(message, type, toast) => {
     const template = NOTIFICATION_TEMPLATES[type] || NOTIFICATION_TEMPLATES.info;
     const {html, js} = await Templates.renderForPromise(template, {message, closebutton: true, announce: true});
     Templates.replaceNodeContents(region, html, js);
-};
-
-/**
- * Strips non-letter characters from the guess input as the user types.
- *
- * Handles physical keyboard input; the on-screen keyboard only sends letters by design.
- */
-const initInputFilter = () => {
-    const input = document.getElementById('playerwords-guess');
-    if (!input) {
-        return;
-    }
-    input.addEventListener('input', () => {
-        const filtered = input.value.replace(/[^\p{L}]/gu, '');
-        if (filtered !== input.value) {
-            input.value = filtered;
-        }
-    });
 };
 
 /**
@@ -465,33 +447,65 @@ const ACCENT_LONG_PRESS_MS = 450;
 let accentPopup = null;
 
 /**
- * Writes one letter into the guess input, respecting maxlength — shared by a normal
- * keyboard tap and an accent-popup selection so both go through the same length check
- * and shake feedback.
+ * Returns every letter box belonging to the currently active (still-being-typed) guess
+ * row, in left-to-right order. Empty whenever no round is in progress.
  *
- * @param {HTMLElement} input Guess text input.
- * @param {string} letter Single letter to append.
+ * @returns {HTMLElement[]}
  */
-const writeLetter = (input, letter) => {
-    const max = parseInt(input.getAttribute('maxlength'), 10);
-    if (input.value.length < max) {
-        input.value += letter;
-    } else {
-        shakeElement(input);
-    }
-    input.dispatchEvent(new Event('input'));
+const getActiveRowBoxes = () => {
+    const row = document.querySelector('.mod-playerwords-row.pw-row-active');
+    return row ? Array.from(row.querySelectorAll('.mod-playerwords-tile-input')) : [];
 };
 
 /**
- * Removes the last letter from the guess input — shared by a Backspace tap on the
- * on-screen keyboard and a physical Backspace keypress, so both go through the same
- * input-event contract as writeLetter.
+ * Moves focus to the editable box immediately before or after the given one, within
+ * the same active row, if any.
  *
- * @param {HTMLElement} input Guess text input.
+ * @param {HTMLElement} box A .mod-playerwords-tile-input element.
+ * @param {number} offset -1 for the previous box, 1 for the next.
  */
-const removeLastLetter = (input) => {
-    input.value = input.value.slice(0, -1);
-    input.dispatchEvent(new Event('input'));
+const focusAdjacentBox = (box, offset) => {
+    const boxes = getActiveRowBoxes();
+    boxes[boxes.indexOf(box) + offset]?.focus();
+};
+
+/**
+ * Writes one letter into whichever box last had focus and advances to the next one —
+ * shared by a normal keyboard tap, an accent-popup selection and the physical-keyboard
+ * capture, so all three go through the exact same write-and-advance step. A no-op if
+ * no box has been activated yet.
+ *
+ * @param {string} letter Single letter to write.
+ */
+const writeLetterIntoActiveBox = (letter) => {
+    if (!activeBox) {
+        return;
+    }
+    activeBox.value = letter;
+    focusAdjacentBox(activeBox, 1);
+};
+
+/**
+ * Clears whichever box last had focus — if it already holds a letter, that letter is
+ * simply removed in place; if it is already empty, the previous box in the row is
+ * cleared and focused instead, mirroring how Backspace behaves once every box in the
+ * row has native focus. Shared by the on-screen keyboard's Backspace key and the
+ * physical-keyboard capture. A no-op if no box has been activated yet.
+ */
+const backspaceActiveBox = () => {
+    if (!activeBox) {
+        return;
+    }
+    if (activeBox.value !== '') {
+        activeBox.value = '';
+        return;
+    }
+    const boxes = getActiveRowBoxes();
+    const prev = boxes[boxes.indexOf(activeBox) - 1];
+    if (prev) {
+        prev.value = '';
+        prev.focus();
+    }
 };
 
 /**
@@ -583,9 +597,8 @@ const showAccentPopup = (keyboard, btn, baseLetter) => {
  * wireKeyboardClicks' own click handler exactly as before.
  *
  * @param {HTMLElement} keyboard The keyboard container.
- * @param {HTMLElement} input Guess text input.
  */
-const initAccentLongPress = (keyboard, input) => {
+const initAccentLongPress = (keyboard) => {
     let pressTimer = null;
     let longPressActive = false;
 
@@ -600,7 +613,7 @@ const initAccentLongPress = (keyboard, input) => {
         if (commit && accentPopup) {
             const active = accentPopup.querySelector('.pw-accent-option.is-active');
             if (active) {
-                writeLetter(input, active.dataset.letter);
+                writeLetterIntoActiveBox(active.dataset.letter);
             }
         }
         removeAccentPopup();
@@ -653,13 +666,13 @@ const initAccentLongPress = (keyboard, input) => {
 };
 
 /**
- * Wires on-screen keyboard clicks to the guess input and form. Wired once per keyboard
- * element — the keyboard DOM node persists across guesses within the same round.
+ * Wires on-screen keyboard clicks to whichever letter box last had focus. Wired once
+ * per keyboard element — the keyboard DOM node persists across guesses within the same
+ * round.
  *
- * @param {HTMLElement} input Guess text input.
- * @param {HTMLElement} form  Guess form.
+ * @param {HTMLElement} form Guess form.
  */
-const wireKeyboardClicks = (input, form) => {
+const wireKeyboardClicks = (form) => {
     const keyboard = document.getElementById('playerwords-keyboard');
     if (!keyboard) {
         return;
@@ -671,65 +684,151 @@ const wireKeyboardClicks = (input, form) => {
         }
         const key = btn.dataset.key;
         if (key === 'BACKSPACE') {
-            removeLastLetter(input);
+            backspaceActiveBox();
         } else if (key === 'ENTER') {
             submitGuessForm(form);
         } else {
-            writeLetter(input, key);
+            writeLetterIntoActiveBox(key);
         }
     });
-    initAccentLongPress(keyboard, input);
+    initAccentLongPress(keyboard);
 };
 
 /**
- * Finds the first fully-empty grid row and marks it as the live preview row, replacing
- * any previous marker. Call again after every guess/round transition, since the row that
- * was active is no longer empty once a guess lands in it.
+ * Converts a not-yet-played row's plain "is-empty" span cells into real, single-letter
+ * input boxes — the one row a player can currently type into. Every other row (already
+ * played, or not yet reached) stays plain, non-interactive spans, mirroring
+ * mod_playercross's own locked-span/editable-box split. Each box keeps the source
+ * cell's own aria-label ("Empty cell"), so screen readers announce the same thing they
+ * already did before it became editable.
+ *
+ * @param {HTMLElement} row A .mod-playerwords-row element whose cells are all empty.
  */
-const refreshActiveRow = () => {
-    document.querySelectorAll('.mod-playerwords-row.pw-row-active').forEach((row) => {
-        row.classList.remove('pw-row-active');
+const activateRow = (row) => {
+    row.querySelectorAll('.mod-playerwords-cell').forEach((cell) => {
+        const box = document.createElement('input');
+        box.type = 'text';
+        box.className = 'mod-playerwords-cell is-empty mod-playerwords-tile-input';
+        box.inputMode = 'none';
+        box.autocomplete = 'off';
+        box.maxLength = 1;
+        box.setAttribute('aria-label', cell.getAttribute('aria-label') || '');
+        cell.replaceWith(box);
     });
-    activeRowCells = [];
+    row.classList.add('pw-row-active');
+};
+
+/**
+ * Converts the active row's input boxes back into plain, inert spans — used when a
+ * round ends (forfeit/timeout) before that row was ever submitted, so no stray
+ * focusable/editable box lingers on the post-round result screen.
+ */
+const deactivateRow = () => {
+    const row = document.querySelector('.mod-playerwords-row.pw-row-active');
+    if (!row) {
+        return;
+    }
+    row.querySelectorAll('.mod-playerwords-tile-input').forEach((box) => {
+        const cell = document.createElement('span');
+        cell.className = 'mod-playerwords-cell is-empty';
+        cell.setAttribute('aria-label', box.getAttribute('aria-label') || '');
+        box.replaceWith(cell);
+    });
+    row.classList.remove('pw-row-active');
+    activeBox = null;
+};
+
+/**
+ * Finds the first fully-empty grid row and activates it (see activateRow()). Call
+ * again after every guess, since the row that was active is no longer empty once a
+ * guess lands in it — a no-op if every row is already played or activated.
+ */
+const initActiveRow = () => {
     for (const row of document.querySelectorAll('.mod-playerwords-row')) {
         const cells = Array.from(row.querySelectorAll('.mod-playerwords-cell'));
         if (cells.length && cells.every((c) => c.classList.contains('is-empty'))) {
-            row.classList.add('pw-row-active');
-            activeRowCells = cells;
+            activateRow(row);
             break;
         }
     }
 };
 
 /**
- * Mirrors the guess input value (uppercased) into the active row's cells.
+ * Marks the given box as the virtual keyboard's / physical-capture's write target and
+ * selects its existing content, so a physical keystroke replaces it instead of being
+ * silently rejected by the box's own maxlength="1". Delegated on focusin (see
+ * wireGridInput), so it fires whether focus arrived via a click on a specific box,
+ * physical Tab navigation, or a script-driven .focus() call.
+ *
+ * @param {HTMLElement} box Letter box that just gained focus.
  */
-const updateRowPreview = () => {
-    const input = document.getElementById('playerwords-guess');
-    if (!input || !activeRowCells.length) {
-        return;
+const setActiveBox = (box) => {
+    activeBox = box;
+    box.select();
+};
+
+/**
+ * Filters a letter box's value down to a single uppercase letter and, once filled,
+ * advances focus to the next editable box in the active row. Delegated on the grid
+ * (see wireGridInput), so it applies uniformly to physical typing landing directly in
+ * a focused box — paste and IME input included — without needing per-box listeners.
+ *
+ * @param {HTMLElement} box Letter box that just changed.
+ */
+const handleBoxInput = (box) => {
+    const filtered = box.value.replace(/[^\p{L}]/gu, '').slice(0, 1).toUpperCase();
+    box.value = filtered;
+    if (filtered !== '') {
+        focusAdjacentBox(box, 1);
     }
-    const val = input.value.toUpperCase();
-    activeRowCells.forEach((cell, i) => {
-        cell.textContent = i < val.length ? val[i] : '';
+};
+
+/**
+ * Wires the grid's delegated input handling: tracking which box last had focus,
+ * filtering/advancing on physical typing landing directly in a focused box, moving
+ * back a box on Backspace once the focused box is already empty (the 'input' listener
+ * alone never fires for that, since the value does not change), and focusing the
+ * active row's first box when a click lands elsewhere in that row (its padding, a gap)
+ * rather than on one specific box. Wired once per grid element — the grid DOM node
+ * persists across guesses within the same round, only its cells' element types change.
+ *
+ * @param {HTMLElement} grid The .mod-playerwords-grid container.
+ */
+const wireGridInput = (grid) => {
+    grid.addEventListener('focusin', (e) => {
+        const box = e.target.closest('.mod-playerwords-tile-input');
+        if (box) {
+            setActiveBox(box);
+        }
+    });
+    grid.addEventListener('input', (e) => {
+        const box = e.target.closest('.mod-playerwords-tile-input');
+        if (box) {
+            handleBoxInput(box);
+        }
+    });
+    grid.addEventListener('keydown', (e) => {
+        if (e.key !== 'Backspace') {
+            return;
+        }
+        const box = e.target.closest('.mod-playerwords-tile-input');
+        if (!box || box.value !== '') {
+            return;
+        }
+        e.preventDefault();
+        backspaceActiveBox();
+    });
+    grid.addEventListener('click', (e) => {
+        if (e.target.closest('.mod-playerwords-tile-input')) {
+            return;
+        }
+        const row = e.target.closest('.mod-playerwords-row.pw-row-active');
+        row?.querySelector('.mod-playerwords-tile-input')?.focus();
     });
 };
 
 /**
- * Sets up the live guess preview: finds the active row and mirrors typed letters into it.
- */
-const initGridPreview = () => {
-    const input = document.getElementById('playerwords-guess');
-    if (!input) {
-        return;
-    }
-    refreshActiveRow();
-    input.addEventListener('input', updateRowPreview);
-};
-
-/**
- * Briefly shakes an element — used both for a wrong guess (grid row) and for a
- * rejected keystroke past the guess input's maxlength.
+ * Briefly shakes an element — used for a wrong guess (grid row).
  *
  * @param {HTMLElement} el Element to shake.
  */
@@ -739,7 +838,9 @@ const shakeElement = (el) => {
 };
 
 /**
- * Paints one guess's per-letter feedback onto its grid row.
+ * Paints one guess's per-letter feedback onto its grid row, converting the row's
+ * boxes (or, for a row that was never activated, plain spans) into locked feedback
+ * spans — this row is no longer the one being typed into.
  *
  * @param {number} attemptsused Attempts used so far, 1-based; identifies the row.
  * @param {Array} feedback Per-letter {letter, state, arialabel} objects.
@@ -757,11 +858,13 @@ const paintGuessRow = (attemptsused, feedback) => {
         if (!cell) {
             return;
         }
-        cell.textContent = letterinfo.letter;
-        cell.classList.remove('is-empty');
-        cell.classList.add(`is-${letterinfo.state}`);
-        cell.setAttribute('aria-label', letterinfo.arialabel);
+        const span = document.createElement('span');
+        span.className = `mod-playerwords-cell is-${letterinfo.state}`;
+        span.setAttribute('aria-label', letterinfo.arialabel);
+        span.textContent = letterinfo.letter;
+        cell.replaceWith(span);
     });
+    row.classList.remove('pw-row-active');
     return row;
 };
 
@@ -793,7 +896,7 @@ const setForfeitButtonVisible = (visible) => {
 };
 
 /**
- * Wires every control inside a freshly-rendered round panel: keyboard, grid preview,
+ * Wires every control inside a freshly-rendered round panel: keyboard, grid input,
  * guess form and hint button. Safe to call again after each panel re-render, since each
  * wired element only ever exists once at a time in the DOM.
  *
@@ -802,8 +905,11 @@ const setForfeitButtonVisible = (visible) => {
  */
 const wireRoundPanel = (cmid, timertotal) => {
     recolorKeyboard();
-    initInputFilter();
-    initGridPreview();
+    const grid = document.querySelector('.mod-playerwords-grid');
+    if (grid) {
+        wireGridInput(grid);
+    }
+    initActiveRow();
     initGuessForm(cmid, timertotal);
     initHintButton(cmid);
 };
@@ -828,6 +934,11 @@ const showRoundResult = async(roundresult, cmid, timertotal) => {
     // The keyboard is a sibling of playNode (see round_panel.mustache), not a
     // descendant, so replacing playNode alone would leave it lingering on screen.
     document.getElementById('playerwords-keyboard')?.remove();
+    // A round ended by forfeit/timeout can leave the active row's boxes still live
+    // (the round finished before that row was ever submitted) — the grid itself is
+    // also not a descendant of playNode, so it would otherwise leave stray editable
+    // boxes behind on the result screen.
+    deactivateRow();
     const {html, js} = await Templates.renderForPromise('mod_playerwords/round_result', roundresult);
     await Templates.replaceNode(playNode, html, js);
     initNewRound(cmid, timertotal);
@@ -861,10 +972,7 @@ const showRoundPanel = async(panelcontext, cmid, timertotal) => {
     if (panelcontext.timerenabled && panelcontext.timeleft > 0) {
         startTimer(panelcontext.timeleft, timertotal, cmid);
     }
-    const guessInput = document.getElementById('playerwords-guess');
-    if (guessInput) {
-        guessInput.focus();
-    }
+    getActiveRowBoxes()[0]?.focus();
 };
 
 /**
@@ -995,16 +1103,15 @@ const endRound = async(cmid, reason, timertotal) => {
  */
 const initGuessForm = (cmid, timertotal) => {
     const form = document.getElementById('playerwords-guess-form');
-    const input = document.getElementById('playerwords-guess');
-    if (!form || !input) {
+    if (!form) {
         return;
     }
 
-    wireKeyboardClicks(input, form);
+    wireKeyboardClicks(form);
 
     form.addEventListener('submit', async(e) => {
         e.preventDefault();
-        const guess = input.value;
+        const guess = getActiveRowBoxes().map((box) => box.value).join('');
 
         let payload;
         try {
@@ -1022,7 +1129,9 @@ const initGuessForm = (cmid, timertotal) => {
         }
 
         if (!payload.feedback.length) {
-            // Guess was rejected server-side (wrong length, invalid characters, round over).
+            // Guess was rejected server-side (wrong length, invalid characters, round
+            // over) — leave the boxes exactly as typed so a specific letter can be
+            // fixed without retyping the whole word.
             return;
         }
 
@@ -1035,36 +1144,39 @@ const initGuessForm = (cmid, timertotal) => {
 
         const row = paintGuessRow(payload.attemptsused, payload.feedback);
         recolorKeyboard();
-        // Move the live-preview marker to the next empty row BEFORE clearing the input,
-        // otherwise the input-clear below would mirror an empty value into the row we
-        // just painted (the old active row) and wipe out the letters we just drew.
-        refreshActiveRow();
-        input.value = '';
-        input.dispatchEvent(new Event('input'));
 
         if (payload.finished) {
             await showRoundResult(payload.roundresult, cmid, timertotal);
             return;
         }
 
+        initActiveRow();
         startTimer(payload.timeleft, timertotal, cmid);
         if (row) {
             shakeElement(row);
         }
-        input.focus();
+        getActiveRowBoxes()[0]?.focus();
     });
 };
 
 /**
- * Whether the given element is a genuinely different text-editing surface (so letters
- * typed into it are unrelated to the guess and must be left alone).
+ * Whether the given element is one of the active row's own letter boxes.
  *
  * @param {?Element} el Element to check, typically document.activeElement.
- * @param {HTMLElement} guessInput The guess input, exempted since it is never "other".
  * @returns {boolean}
  */
-const isOtherTextField = (el, guessInput) => {
-    if (!el || el === guessInput) {
+const isOwnBox = (el) => Boolean(el) && el.classList?.contains('mod-playerwords-tile-input');
+
+/**
+ * Whether the given element is a genuinely different text-editing surface (so letters
+ * typed into it are unrelated to the guess and must be left alone) — one of our own
+ * letter boxes is exempted, since that is never "other".
+ *
+ * @param {?Element} el Element to check, typically document.activeElement.
+ * @returns {boolean}
+ */
+const isOtherTextField = (el) => {
+    if (!el || isOwnBox(el)) {
         return false;
     }
     return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable;
@@ -1083,52 +1195,51 @@ const isActivatableControl = (el) => {
 
 /**
  * Captures physical-keyboard input at the document level so typing works regardless of
- * where focus happens to be on the page. Without this, typing only reached the guess
- * because game.js keeps refocusing a small text input sitting between the letter grid
- * and the on-screen keyboard — a usability test with real students showed they would
- * click elsewhere first (a grid row, the hint button) and then type, expecting it to
- * just work, the same way a physical keyboard works in Wordle. Wired once in init(),
- * never inside wireRoundPanel(): it targets document, which persists across every
- * round-panel re-render, so wiring it again per round would stack duplicate listeners
- * and type every letter multiple times.
+ * where focus happens to be on the page — a usability test with real students showed
+ * they would click elsewhere first (a grid row, the hint button) and then type,
+ * expecting it to just work, the same way a physical keyboard works in Wordle. Wired
+ * once in init(), never inside wireRoundPanel(): it targets document, which persists
+ * across every round-panel re-render, so wiring it again per round would stack
+ * duplicate listeners and type every letter multiple times.
  *
- * Routes letters/Backspace/Enter through the exact same writeLetter/removeLastLetter/
- * submitGuessForm helpers the on-screen keyboard already uses, so both input sources
- * stay one code path. Letters and Backspace are safe to redirect unconditionally (plain
- * keys have no native meaning on a focused button), but Enter is only redirected when
- * focus is on the guess input itself or on nothing interactive (body, grid cells,
- * status text) — a focused button/link still activates normally on Enter, e.g. the
- * hint or forfeit button, instead of submitting an unrelated guess.
+ * Letters and Backspace are only handled here when no letter box currently has native
+ * focus — a focused box already handles its own typing natively (see wireGridInput's
+ * delegated 'input'/'focusin'/'keydown' listeners on the grid), exactly like a normal
+ * text field; this only steps in as a fallback so typing still reaches the active box
+ * when nothing (or something inert) has focus. Enter is always handled here
+ * unconditionally instead, since there is no visible submit button and no native
+ * "press Enter in a box to submit" behaviour to fall back on — except when focus is on
+ * a genuinely different text field or a button/link, which must still activate
+ * normally on Enter (e.g. the hint or forfeit button) instead of submitting an
+ * unrelated guess.
  */
 const initPhysicalKeyboardCapture = () => {
     document.addEventListener('keydown', (e) => {
         if (e.isComposing || e.ctrlKey || e.metaKey || e.altKey) {
             return;
         }
-        const input = document.getElementById('playerwords-guess');
-        const form = document.getElementById('playerwords-guess-form');
-        if (!input || !form) {
-            return;
-        }
         const active = document.activeElement;
-        if (e.key === 'Backspace') {
-            if (isOtherTextField(active, input)) {
+        if (e.key === 'Enter') {
+            if (isOtherTextField(active) || isActivatableControl(active)) {
                 return;
             }
-            e.preventDefault();
-            removeLastLetter(input);
-        } else if (e.key === 'Enter') {
-            if (isOtherTextField(active, input) || isActivatableControl(active)) {
+            const form = document.getElementById('playerwords-guess-form');
+            if (!form) {
                 return;
             }
             e.preventDefault();
             submitGuessForm(form);
-        } else if (e.key.length === 1 && /\p{L}/u.test(e.key)) {
-            if (isOtherTextField(active, input)) {
-                return;
-            }
+            return;
+        }
+        if (isOwnBox(active) || isOtherTextField(active) || !activeBox) {
+            return;
+        }
+        if (e.key === 'Backspace') {
             e.preventDefault();
-            writeLetter(input, e.key.toUpperCase());
+            backspaceActiveBox();
+        } else if (e.key.length === 1 && /\p{L}/u.test(e.key)) {
+            e.preventDefault();
+            writeLetterIntoActiveBox(e.key.toUpperCase());
         }
     });
 };
@@ -1155,9 +1266,8 @@ const init = (cooldownUntil, timeleft, timertotal, cmid, shouldAutoShowIntro) =>
     if (cooldownUntil > 0) {
         startCountdown(cooldownUntil, cmid);
     }
-    const guessInput = document.getElementById('playerwords-guess');
-    if (guessInput && document.getElementById('playerwords-round-play')) {
-        guessInput.focus({preventScroll: true});
+    if (document.getElementById('playerwords-round-play')) {
+        getActiveRowBoxes()[0]?.focus({preventScroll: true});
     }
 };
 
