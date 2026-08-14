@@ -159,12 +159,13 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
      * against what export_user_data() really returns, not by hardcoding the expected
      * key list, so a field added to one without the other fails this test rather than
      * silently drifting. Unlike playerwords_attempts above, playerwords_words is not
-     * checked against the full table schema: most of its columns (concept, hint,
-     * glossaryid, approved) are catalogue/config data the teacher authored, not
-     * personal data about the addedby user, so a strict schema diff would demand
-     * declaring fields that do not belong in the metadata registry at all. The addedby
-     * column is deliberately not exported itself, since the export is already scoped
-     * by it — that column is checked separately.
+     * checked against the full table schema here: some of its columns (concept,
+     * glossaryid, approved, timemodified) are catalogue/config data the teacher
+     * authored or a manager changed, not personal data about the addedby user — see
+     * test_get_metadata_playerwords_words_every_column_is_declared_or_documented()
+     * below for the exhaustive column-by-column accounting. The addedby and
+     * playerwordsid columns are deliberately not exported themselves, since the
+     * export is already scoped by both — that is checked separately.
      *
      * @covers \mod_playerwords\privacy\provider::get_metadata
      * @covers \mod_playerwords\privacy\provider::export_user_data
@@ -200,6 +201,55 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
                 $declaredfields,
                 "Field '$exportedkey' is exported but not declared in get_metadata()."
             );
+        }
+    }
+
+    /**
+     * Exhaustive accounting for every real column of playerwords_words, not just the
+     * ones export_user_data() happens to touch: each column is either declared in
+     * get_metadata() or explicitly listed here as a documented, justified exclusion.
+     * Kept in sync by hand with the comment in provider.php::get_metadata(): concept
+     * mirrors word verbatim for manual/AI rows and otherwise carries glossary content
+     * on addedby=0 rows (never attributable to a real user); glossaryid only means
+     * anything on those same addedby=0 rows; approved is a moderation flag a manager
+     * sets, not necessarily addedby; timemodified can likewise be touched by a manager
+     * acting on someone else's word.
+     *
+     * @covers \mod_playerwords\privacy\provider::get_metadata
+     * @return void
+     */
+    public function test_get_metadata_playerwords_words_every_column_is_declared_or_documented(): void {
+        global $DB;
+
+        $documentedexclusions = ['concept', 'glossaryid', 'approved', 'timemodified'];
+
+        $tableitem = null;
+        foreach (provider::get_metadata(new collection('mod_playerwords'))->get_collection() as $item) {
+            if ($item->get_name() === 'playerwords_words') {
+                $tableitem = $item;
+                break;
+            }
+        }
+        $this->assertNotNull($tableitem);
+        $declaredfields = array_keys($tableitem->get_privacy_fields());
+
+        $realcolumns = array_keys($DB->get_columns('playerwords_words'));
+        $realcolumns = array_values(array_diff($realcolumns, ['id']));
+
+        $accountedfor = array_merge($declaredfields, $documentedexclusions);
+        foreach ($realcolumns as $column) {
+            $this->assertContains(
+                $column,
+                $accountedfor,
+                "Column '$column' is neither declared in get_metadata() nor listed as a documented exclusion."
+            );
+        }
+
+        // Also guards the other direction: an exclusion left in the list after the
+        // column itself was renamed or dropped would otherwise go unnoticed.
+        foreach ($documentedexclusions as $excluded) {
+            $this->assertContains($excluded, $realcolumns);
+            $this->assertNotContains($excluded, $declaredfields);
         }
     }
 

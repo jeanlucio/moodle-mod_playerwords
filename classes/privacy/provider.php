@@ -20,7 +20,18 @@
  * Personal data stored:
  *   - playerwords_attempts: one record per round per user (userid).
  *   - playerwords_words: addedby (userid of the teacher/user who added the word),
- *     plus the word, source and timecreated of that same row.
+ *     plus the playerwordsid, word, hint, source and timecreated of that same row.
+ *
+ * Every column of playerwords_words that is not declared in get_metadata() has an
+ * explicit reason to be excluded: concept mirrors word verbatim for manual/AI-sourced
+ * rows and otherwise carries glossary content on rows imported with addedby=0 (never
+ * attributable to a real user, and mod_glossary's own privacy provider already covers
+ * the source glossary entry); glossaryid only has a meaning on those same addedby=0
+ * rows; approved is a moderation flag a manager sets, which may never be the addedby
+ * user at all (see words_repository::approve_words_bulk()); timemodified likewise can
+ * be updated by a manager approving or editing someone else's word (see
+ * words_repository::update_word()), so it is not reliably a trace of the addedby
+ * user's own action.
  *
  * @package    mod_playerwords
  * @copyright  2026 Jean Lúcio
@@ -68,10 +79,12 @@ class provider implements
         $collection->add_database_table(
             'playerwords_words',
             [
-                'addedby'     => 'privacy:metadata:playerwords_words:addedby',
-                'word'        => 'privacy:metadata:playerwords_words:word',
-                'source'      => 'privacy:metadata:playerwords_words:source',
-                'timecreated' => 'privacy:metadata:playerwords_words:timecreated',
+                'addedby'       => 'privacy:metadata:playerwords_words:addedby',
+                'playerwordsid' => 'privacy:metadata:playerwords_words:playerwordsid',
+                'word'          => 'privacy:metadata:playerwords_words:word',
+                'hint'          => 'privacy:metadata:playerwords_words:hint',
+                'source'        => 'privacy:metadata:playerwords_words:source',
+                'timecreated'   => 'privacy:metadata:playerwords_words:timecreated',
             ],
             'privacy:metadata:playerwords_words'
         );
@@ -248,13 +261,14 @@ class provider implements
                 'addedby = :addedby AND playerwordsid = :pid',
                 ['addedby' => $userid, 'pid' => $instanceid],
                 'timecreated ASC',
-                'id, word, source, timecreated'
+                'id, word, hint, source, timecreated'
             );
 
             if (!empty($words)) {
                 $rows = array_values(array_map(function (\stdClass $w): array {
                     return [
                         'word'        => $w->word,
+                        'hint'        => $w->hint,
                         'source'      => $w->source,
                         'timecreated' => transform::datetime($w->timecreated),
                     ];
