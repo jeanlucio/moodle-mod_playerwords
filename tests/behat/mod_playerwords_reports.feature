@@ -53,7 +53,7 @@ Feature: PlayerWords attempt history and ranking
     And 31 PlayerWords attempts exist for "student1" with word "codar" in activity "Word Pagination"
     And I log in as "teacher1"
     And I am on the "Word Pagination" "playerwords activity" page
-    And I click on "a.pw-toolbar-btn[title=\"Attempt history\"]" "css_element"
+    And I click on "a.pw-toolbar-btn[title=\"Report\"]" "css_element"
     Then I should see "Attempt history — All students"
     And "li[data-page-number=\"2\"] a.page-link" "css_element" should exist
     When I click on "li[data-page-number=\"2\"] a.page-link" "css_element"
@@ -72,7 +72,7 @@ Feature: PlayerWords attempt history and ranking
       | student1 | codar | 90.00  |
     And I log in as "teacher1"
     And I am on the "Word Sort" "playerwords activity" page
-    And I click on "a.pw-toolbar-btn[title=\"Attempt history\"]" "css_element"
+    And I click on "a.pw-toolbar-btn[title=\"Report\"]" "css_element"
     When I click on "Score" "link"
     Then I should see "Score ▲" in the "table.mod-playerwords-myattempts-table thead" "css_element"
     And I should see "20.00" in the "table.mod-playerwords-myattempts-table tbody tr:nth-child(1)" "css_element"
@@ -96,7 +96,7 @@ Feature: PlayerWords attempt history and ranking
       | student2 | codar | 45.00  |
     And I log in as "teacher1"
     And I am on the "Word Filter" "playerwords activity" page
-    And I click on "a.pw-toolbar-btn[title=\"Attempt history\"]" "css_element"
+    And I click on "a.pw-toolbar-btn[title=\"Report\"]" "css_element"
     And I should see "70.00"
     And I should see "45.00"
     When I set the field "playerwords-filter-student" to "Student One"
