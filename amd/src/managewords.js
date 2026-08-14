@@ -30,11 +30,11 @@
 define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(ModalSaveCancel, ModalEvents, Str) {
     'use strict';
 
-    var bulkForm = null;
-    var bulkActionField = null;
-    var selectAllCheckbox = null;
-    var bulkDeleteBtn = null;
-    var bulkApproveBtn = null;
+    let bulkForm = null;
+    let bulkActionField = null;
+    let selectAllCheckbox = null;
+    let bulkDeleteBtn = null;
+    let bulkApproveBtn = null;
 
     /**
      * Refreshes both bulk-action button states and labels based on current selection.
@@ -43,20 +43,20 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
      * The delete button is enabled when at least one word (any status) is checked.
      * Both labels show the relevant count in parentheses.
      */
-    var updateBulkButtons = function() {
-        var totalCount = document.querySelectorAll('.playerwords-bulk-check:checked').length;
-        var pendingCount = document.querySelectorAll(
+    const updateBulkButtons = () => {
+        const totalCount = document.querySelectorAll('.playerwords-bulk-check:checked').length;
+        const pendingCount = document.querySelectorAll(
             '.playerwords-bulk-check:checked[data-pending="1"]'
         ).length;
 
         if (bulkDeleteBtn) {
             bulkDeleteBtn.disabled = totalCount === 0;
-            bulkDeleteBtn.textContent = bulkDeleteBtn.dataset.labelbase + ' (' + totalCount + ')';
+            bulkDeleteBtn.textContent = `${bulkDeleteBtn.dataset.labelbase} (${totalCount})`;
         }
 
         if (bulkApproveBtn) {
             bulkApproveBtn.disabled = pendingCount === 0;
-            bulkApproveBtn.textContent = bulkApproveBtn.dataset.labelbase + ' (' + pendingCount + ')';
+            bulkApproveBtn.textContent = `${bulkApproveBtn.dataset.labelbase} (${pendingCount})`;
         }
     };
 
@@ -67,53 +67,51 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
      * modal_save_cancel's own default "Save changes" button, before get_string('yes')
      * has resolved (a real, visible gap on a first, uncached call), reading as a wrong
      * dialog flashing before the real one settles. Calling .show() explicitly only once
-     * both promises in Promise.all() have resolved means the modal is never on screen
-     * with the wrong button label.
+     * both promises have resolved means the modal is never on screen with the wrong
+     * button label.
      *
      * @param {string} title Modal title string.
      * @param {string} body  Modal body string.
      * @param {Function} onConfirm Called when the user clicks the save button.
      */
-    var showModal = function(title, body, onConfirm) {
-        Promise.all([
-            ModalSaveCancel.create({
-                title: title,
-                body: body,
-                removeOnClose: true,
-            }),
-            Str.get_string('yes', 'core'),
-        ]).then(function(results) {
-            var modal = results[0];
-            var yesStr = results[1];
+    const showModal = async(title, body, onConfirm) => {
+        try {
+            const [modal, yesStr] = await Promise.all([
+                ModalSaveCancel.create({
+                    title: title,
+                    body: body,
+                    removeOnClose: true,
+                }),
+                Str.get_string('yes', 'core'),
+            ]);
             modal.setSaveButtonText(yesStr);
-            modal.getRoot().on(ModalEvents.save, function() {
-                onConfirm();
-            });
+            modal.getRoot().on(ModalEvents.save, () => onConfirm());
             modal.show();
-            return;
-        }).catch(window.console.error);
+        } catch (error) {
+            window.console.error(error);
+        }
     };
 
     /**
      * Wires up the "select all" checkbox and keeps indeterminate state in sync.
      */
-    var initSelectAll = function() {
+    const initSelectAll = () => {
         selectAllCheckbox = document.getElementById('playerwords-select-all');
         if (!selectAllCheckbox) {
             return;
         }
 
-        selectAllCheckbox.addEventListener('change', function() {
-            document.querySelectorAll('.playerwords-bulk-check').forEach(function(cb) {
+        selectAllCheckbox.addEventListener('change', () => {
+            document.querySelectorAll('.playerwords-bulk-check').forEach((cb) => {
                 cb.checked = selectAllCheckbox.checked;
             });
             updateBulkButtons();
         });
 
-        document.querySelectorAll('.playerwords-bulk-check').forEach(function(cb) {
-            cb.addEventListener('change', function() {
-                var total = document.querySelectorAll('.playerwords-bulk-check').length;
-                var checked = document.querySelectorAll('.playerwords-bulk-check:checked').length;
+        document.querySelectorAll('.playerwords-bulk-check').forEach((cb) => {
+            cb.addEventListener('change', () => {
+                const total = document.querySelectorAll('.playerwords-bulk-check').length;
+                const checked = document.querySelectorAll('.playerwords-bulk-check:checked').length;
                 selectAllCheckbox.checked = checked === total;
                 selectAllCheckbox.indeterminate = checked > 0 && checked < total;
                 updateBulkButtons();
@@ -127,7 +125,7 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
      * Each button sets the hidden bulkaction field to the appropriate action
      * value before submitting the shared form.
      */
-    var initBulkActions = function() {
+    const initBulkActions = () => {
         bulkForm = document.getElementById('playerwords-bulk-form');
         bulkActionField = document.getElementById('playerwords-bulk-action');
         bulkDeleteBtn = document.getElementById('playerwords-bulk-delete-btn');
@@ -138,11 +136,11 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
         }
 
         if (bulkDeleteBtn) {
-            bulkDeleteBtn.addEventListener('click', function() {
+            bulkDeleteBtn.addEventListener('click', () => {
                 showModal(
                     bulkDeleteBtn.dataset.title,
                     bulkDeleteBtn.dataset.confirm,
-                    function() {
+                    () => {
                         if (bulkActionField) {
                             bulkActionField.value = 'delete';
                         }
@@ -153,11 +151,11 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
         }
 
         if (bulkApproveBtn) {
-            bulkApproveBtn.addEventListener('click', function() {
+            bulkApproveBtn.addEventListener('click', () => {
                 showModal(
                     bulkApproveBtn.dataset.title,
                     bulkApproveBtn.dataset.confirm,
-                    function() {
+                    () => {
                         if (bulkActionField) {
                             bulkActionField.value = 'approve';
                         }
@@ -174,11 +172,11 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
      * Unchecks all checkboxes, checks only the clicked row, then shows a
      * confirmation modal and submits with bulkaction=delete on confirmation.
      */
-    var initSingleDelete = function() {
-        document.querySelectorAll('.playerwords-single-delete-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                var wordid = btn.dataset.wordid;
-                document.querySelectorAll('.playerwords-bulk-check').forEach(function(cb) {
+    const initSingleDelete = () => {
+        document.querySelectorAll('.playerwords-single-delete-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const wordid = btn.dataset.wordid;
+                document.querySelectorAll('.playerwords-bulk-check').forEach((cb) => {
                     cb.checked = cb.value === wordid;
                 });
                 if (selectAllCheckbox) {
@@ -188,7 +186,7 @@ define(['core/modal_save_cancel', 'core/modal_events', 'core/str'], function(Mod
                 showModal(
                     btn.dataset.title,
                     btn.dataset.confirm,
-                    function() {
+                    () => {
                         if (bulkActionField) {
                             bulkActionField.value = 'delete';
                         }
