@@ -314,7 +314,7 @@ class round_service {
      * @param array $state Current state.
      * @param \stdClass $instance Activity instance.
      * @param int $userid User id.
-     * @return array [$state, $notification, $notificationtype]
+     * @return array [$state, $notification, $notificationtype, $toast]
      */
     public static function start_round(array $state, \stdClass $instance, int $userid): array {
         global $DB;
@@ -322,7 +322,7 @@ class round_service {
         if (isguestuser()) {
             $state['starttime'] = time();
             $state['roundstarted'] = true;
-            return [$state, null, null];
+            return [$state, null, null, true];
         }
 
         $lockfactory = \core\lock\lock_config::get_lock_factory('mod_playerwords');
@@ -330,13 +330,13 @@ class round_service {
         if (!$lock) {
             // Could not serialise against a concurrent session within the timeout —
             // refuse to start rather than risk two sessions reserving past the limit.
-            return [$state, get_string('roundstartbusy', 'mod_playerwords'), 'warning'];
+            return [$state, get_string('roundstartbusy', 'mod_playerwords'), 'warning', true];
         }
 
         try {
             $restrictionnotice = self::get_round_restriction_notice($instance, $userid);
             if ($restrictionnotice !== null) {
-                return [$state, $restrictionnotice, 'warning'];
+                return [$state, $restrictionnotice, 'warning', true];
             }
 
             $roundcostitem = (int)($instance->hud_round_cost_item ?? 0);
@@ -350,7 +350,12 @@ class round_service {
                 );
                 if (!$consumed) {
                     $itemname = hud_service::get_item_name($blockinstanceid, $roundcostitem);
-                    return [$state, get_string('hud_insufficient_round', 'mod_playerwords', $itemname), 'warning'];
+                    return [
+                        $state,
+                        get_string('hud_insufficient_round', 'mod_playerwords', $itemname),
+                        'warning',
+                        true,
+                    ];
                 }
             }
 
@@ -375,7 +380,7 @@ class round_service {
             $lock->release();
         }
 
-        return [$state, null, null];
+        return [$state, null, null, true];
     }
 
     /**
@@ -409,11 +414,11 @@ class round_service {
      * @param \stdClass $instance Activity instance.
      * @param int $cmid Course module id.
      * @param int $userid User id.
-     * @return array [$state, $notification, $notificationtype]
+     * @return array [$state, $notification, $notificationtype, $toast]
      */
     public static function reveal_hint(array $state, \stdClass $instance, int $cmid, int $userid): array {
         if (!empty($state['finished'])) {
-            return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning'];
+            return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning', true];
         }
 
         // Requires roundstarted: see submit_guess() for why — a word armed at page-load
@@ -421,7 +426,7 @@ class round_service {
         // or hintable, let alone spend a PlayerHUD cost on a round never actually
         // committed to.
         if (empty($state['roundstarted'])) {
-            return [$state, get_string('roundnotstarted', 'mod_playerwords'), 'warning'];
+            return [$state, get_string('roundnotstarted', 'mod_playerwords'), 'warning', true];
         }
 
         // See submit_guess() for why this is re-checked here too, not just in timeout()
@@ -429,7 +434,7 @@ class round_service {
         if (self::round_expired($state, $instance)) {
             $roundwordid = (int)$state['wordid'];
             $state = self::finish_round($state, $instance, $cmid, $userid, $roundwordid, false, false, true);
-            return [$state, get_string('roundtimeout', 'mod_playerwords'), 'warning'];
+            return [$state, get_string('roundtimeout', 'mod_playerwords'), 'warning', true];
         }
 
         $hintcostitem = (int)($instance->hud_hint_cost_item ?? 0);
@@ -443,13 +448,13 @@ class round_service {
             );
             if (!$consumed) {
                 $itemname = hud_service::get_item_name($blockinstanceid, $hintcostitem);
-                return [$state, get_string('hud_insufficient_hint', 'mod_playerwords', $itemname), 'warning'];
+                return [$state, get_string('hud_insufficient_hint', 'mod_playerwords', $itemname), 'warning', true];
             }
         }
 
         $state['hintrevealed'] = true;
 
-        return [$state, null, null];
+        return [$state, null, null, true];
     }
 
     /**
@@ -466,7 +471,7 @@ class round_service {
      * @param int $roundwordid Current word id.
      * @param string $targetword Current normalized target word.
      * @param string $guess Raw guess text.
-     * @return array [$state, $feedback|null, $notification, $notificationtype]
+     * @return array [$state, $feedback|null, $notification, $notificationtype, $toast]
      */
     public static function submit_guess(
         array $state,
@@ -478,11 +483,11 @@ class round_service {
         string $guess
     ): array {
         if (!empty($state['finished']) || (int)$state['attemptsused'] >= (int)$instance->max_attempts) {
-            return [$state, null, get_string('roundfinished', 'mod_playerwords'), 'warning'];
+            return [$state, null, get_string('roundfinished', 'mod_playerwords'), 'warning', true];
         }
 
         if (empty($state['roundstarted'])) {
-            return [$state, null, get_string('roundnotstarted', 'mod_playerwords'), 'warning'];
+            return [$state, null, get_string('roundnotstarted', 'mod_playerwords'), 'warning', true];
         }
 
         // The client is expected to call mod_playerwords_end_round(reason=timeout)
@@ -496,11 +501,11 @@ class round_service {
         // the server the one actually enforcing the limit.
         if (self::round_expired($state, $instance)) {
             $state = self::finish_round($state, $instance, $cmid, $userid, $roundwordid, false, false, true);
-            return [$state, null, get_string('roundtimeout', 'mod_playerwords'), 'warning'];
+            return [$state, null, get_string('roundtimeout', 'mod_playerwords'), 'warning', true];
         }
 
         if ($targetword === '') {
-            return [$state, null, get_string('nogamewords', 'mod_playerwords'), 'warning'];
+            return [$state, null, get_string('nogamewords', 'mod_playerwords'), 'warning', true];
         }
 
         $normalizedguess = word_normalizer::normalize($guess);
@@ -508,12 +513,12 @@ class round_service {
         $guesslength = core_text::strlen($normalizedguess);
 
         if (!preg_match('/^[\p{L}]+$/u', $normalizedguess)) {
-            return [$state, null, get_string('error_invalidchars', 'mod_playerwords'), 'warning'];
+            return [$state, null, get_string('error_invalidchars', 'mod_playerwords'), 'warning', true];
         }
 
         if ($guesslength !== $targetlength) {
             $message = get_string('guesslengthmismatch', 'mod_playerwords', $targetlength);
-            return [$state, null, $message, 'warning'];
+            return [$state, null, $message, 'warning', true];
         }
 
         $state['attemptsused']++;
@@ -532,7 +537,7 @@ class round_service {
         }
 
         if (!($iscompleted || $outofattempts || $outoftime)) {
-            return [$state, $feedback, null, null];
+            return [$state, $feedback, null, null, true];
         }
 
         $state = self::finish_round($state, $instance, $cmid, $userid, $roundwordid, $iscompleted, false, false);
@@ -541,7 +546,7 @@ class round_service {
             ? get_string('roundwon', 'mod_playerwords')
             : get_string('roundlost', 'mod_playerwords');
 
-        return [$state, $feedback, $notification, $iscompleted ? 'success' : 'warning'];
+        return [$state, $feedback, $notification, $iscompleted ? 'success' : 'warning', true];
     }
 
     /**
@@ -556,21 +561,21 @@ class round_service {
      * @param \stdClass $instance Activity instance.
      * @param int $cmid Course module id.
      * @param int $userid User id.
-     * @return array [$state, $notification, $notificationtype]
+     * @return array [$state, $notification, $notificationtype, $toast]
      */
     public static function forfeit(array $state, \stdClass $instance, int $cmid, int $userid): array {
         if (empty($state['wordid']) || !empty($state['finished'])) {
-            return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning'];
+            return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning', true];
         }
 
         if (empty($state['roundstarted'])) {
-            return [$state, get_string('roundnotstarted', 'mod_playerwords'), 'warning'];
+            return [$state, get_string('roundnotstarted', 'mod_playerwords'), 'warning', true];
         }
 
         $roundwordid = (int)$state['wordid'];
         $state = self::finish_round($state, $instance, $cmid, $userid, $roundwordid, false, true, false);
 
-        return [$state, get_string('roundforfeited', 'mod_playerwords'), 'warning'];
+        return [$state, get_string('roundforfeited', 'mod_playerwords'), 'warning', true];
     }
 
     /**
@@ -585,15 +590,15 @@ class round_service {
      * @param \stdClass $instance Activity instance.
      * @param int $cmid Course module id.
      * @param int $userid User id.
-     * @return array [$state, $notification, $notificationtype]
+     * @return array [$state, $notification, $notificationtype, $toast]
      */
     public static function timeout(array $state, \stdClass $instance, int $cmid, int $userid): array {
         if (empty($state['wordid']) || !empty($state['finished'])) {
-            return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning'];
+            return [$state, get_string('roundfinished', 'mod_playerwords'), 'warning', true];
         }
 
         if (empty($state['roundstarted'])) {
-            return [$state, get_string('roundnotstarted', 'mod_playerwords'), 'warning'];
+            return [$state, get_string('roundnotstarted', 'mod_playerwords'), 'warning', true];
         }
 
         // The client fires this the moment its own countdown reaches zero — never trust
@@ -604,13 +609,13 @@ class round_service {
         // is the equivalent guard for the explicit "time's up" signal.
         $deadline = (int)$state['starttime'] + (int)$instance->timer_seconds;
         if ((int)$instance->timer_seconds <= 0 || time() < $deadline - self::TIMEOUT_TOLERANCE_SECONDS) {
-            return [$state, get_string('roundnottimedout', 'mod_playerwords'), 'warning'];
+            return [$state, get_string('roundnottimedout', 'mod_playerwords'), 'warning', true];
         }
 
         $roundwordid = (int)$state['wordid'];
         $state = self::finish_round($state, $instance, $cmid, $userid, $roundwordid, false, false, true);
 
-        return [$state, get_string('roundtimeout', 'mod_playerwords'), 'warning'];
+        return [$state, get_string('roundtimeout', 'mod_playerwords'), 'warning', true];
     }
 
     /**

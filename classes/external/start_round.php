@@ -78,6 +78,7 @@ class start_round extends external_api {
                 'success'          => false,
                 'notification'     => '',
                 'notificationtype' => '',
+                'toast'            => true,
                 'roundpanel'       => round_presenter::build_round_panel_context(
                     $instance,
                     $cm,
@@ -88,13 +89,14 @@ class start_round extends external_api {
             ];
         }
 
-        [$state, $notification, $notificationtype] = round_service::start_round($state, $instance, $userid);
+        [$state, $notification, $notificationtype, $toast] = round_service::start_round($state, $instance, $userid);
         round_service::save_state($cmid, $userid, $state);
 
         return [
             'success'          => ($notification === null),
             'notification'     => $notification ?? '',
             'notificationtype' => $notificationtype ?? '',
+            'toast'            => $toast,
             'roundpanel'       => round_presenter::build_round_panel_context(
                 $instance,
                 $cm,
@@ -115,6 +117,12 @@ class start_round extends external_api {
             'success'          => new external_value(PARAM_BOOL, 'Whether the round timer started'),
             'notification'     => new external_value(PARAM_TEXT, 'User-facing feedback message', VALUE_DEFAULT, ''),
             'notificationtype' => new external_value(PARAM_ALPHA, 'Notification type', VALUE_DEFAULT, ''),
+            'toast' => new external_value(
+                PARAM_BOOL,
+                'Whether to show the notification as an auto-dismissing toast instead of a persistent one',
+                VALUE_DEFAULT,
+                true
+            ),
             'roundpanel'       => self::roundpanel_structure(),
         ]);
     }

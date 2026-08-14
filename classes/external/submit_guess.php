@@ -81,7 +81,7 @@ class submit_guess extends external_api {
         $state = round_service::load_state($cmid, $userid);
         [$state, $targetword, $roundwordid] = round_service::ensure_round_state($state, $instance, $cmid, $userid);
 
-        [$state, $feedback, $notification, $notificationtype] = round_service::submit_guess(
+        [$state, $feedback, $notification, $notificationtype, $toast] = round_service::submit_guess(
             $state,
             $instance,
             $cmid,
@@ -110,6 +110,7 @@ class submit_guess extends external_api {
             'timeleft'         => self::compute_timeleft($instance, $state),
             'notification'     => $notification ?? '',
             'notificationtype' => $notificationtype ?? '',
+            'toast'            => $toast ?? true,
             'roundresult'      => round_presenter::build_round_result_context(
                 $instance,
                 $cm,
@@ -146,6 +147,12 @@ class submit_guess extends external_api {
                 'Notification type: success or warning',
                 VALUE_DEFAULT,
                 ''
+            ),
+            'toast' => new external_value(
+                PARAM_BOOL,
+                'Whether to show the notification as an auto-dismissing toast instead of a persistent one',
+                VALUE_DEFAULT,
+                true
             ),
             'roundresult' => self::roundresult_structure(),
         ]);

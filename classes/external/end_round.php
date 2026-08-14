@@ -84,7 +84,7 @@ class end_round extends external_api {
 
         $state = round_service::load_state($cmid, $userid);
 
-        [$state, $notification, $notificationtype] = $reason === 'forfeit'
+        [$state, $notification, $notificationtype, $toast] = $reason === 'forfeit'
             ? round_service::forfeit($state, $instance, $cmid, $userid)
             : round_service::timeout($state, $instance, $cmid, $userid);
 
@@ -97,6 +97,7 @@ class end_round extends external_api {
             'finished'         => $roundfinished,
             'notification'     => $notification ?? '',
             'notificationtype' => $notificationtype ?? '',
+            'toast'            => $toast,
             'roundresult'      => round_presenter::build_round_result_context(
                 $instance,
                 $cm,
@@ -118,6 +119,12 @@ class end_round extends external_api {
             'finished'         => new external_value(PARAM_BOOL, 'Whether the round has ended'),
             'notification'     => new external_value(PARAM_TEXT, 'User-facing feedback message', VALUE_DEFAULT, ''),
             'notificationtype' => new external_value(PARAM_ALPHA, 'Notification type', VALUE_DEFAULT, ''),
+            'toast' => new external_value(
+                PARAM_BOOL,
+                'Whether to show the notification as an auto-dismissing toast instead of a persistent one',
+                VALUE_DEFAULT,
+                true
+            ),
             'roundresult'      => submit_guess::roundresult_structure(),
         ]);
     }

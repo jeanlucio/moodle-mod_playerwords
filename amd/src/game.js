@@ -34,6 +34,7 @@ import ModalSaveCancel from 'core/modal_save_cancel';
 import Notification from 'core/notification';
 import {getString} from 'core/str';
 import Templates from 'core/templates';
+import {add as addToast} from 'core/toast';
 
 /** @type {?number} Handle of the pending round-timer tick, if any. */
 let timerHandle = null;
@@ -71,29 +72,39 @@ const announce = (message) => {
 };
 
 /**
- * Shows a visible Moodle notification for a server-side rejection message (e.g. an
- * insufficient PlayerHUD item balance, a stale action on an already-finished round, or
- * a guess whose length does not match the target word). Without this, the message only
- * ever reached the aria-live region — invisible to sighted users, who would just see
- * the button do nothing.
+ * Shows visible player feedback, either as an auto-dismissing toast or as a persistent
+ * Moodle notification the player must close themselves. round_service flags every
+ * round-flow message (wrong guess, hint revealed, round won, forfeited, timed out...)
+ * as toast-worthy: a persistent notification never clears on its own, so a wrong-guess
+ * warning could still be on screen next to a later "round won" message, reading as
+ * contradictory feedback. Toasts fade out on their own and never accumulate that way.
+ * Mirrors the same notify()/toast split already established in mod_playercross.
  *
- * Renders the same core notification templates core/notification.addNotification()
- * itself uses, but replaces the notification region's contents instead of calling that
- * helper directly. addNotification() only ever prepends and never clears on its own —
- * only a manual close-button dismisses a banner — so a message that recurs on routine
- * play (e.g. the guess-length mismatch, rejected again on every too-short/too-long
- * guess) would otherwise pile up into a permanent wall of identical banners instead of
- * reflecting just the current state, exactly as a usability test with real students
- * showed. Tracking "the node addNotification() just added" from the outside to remove
- * it on the next call is not a reliable fix either: addNotification()'s own returned
- * promise resolves before its internal render chain has actually updated the DOM (a
- * timing gap in core/notification.js itself, confirmed by inspection), so a caller has
- * no dependable moment at which to read back which node was just inserted.
+ * The persistent path renders the same core notification templates
+ * core/notification.addNotification() itself uses, but replaces the notification
+ * region's contents instead of calling that helper directly. addNotification() only
+ * ever prepends and never clears on its own — only a manual close-button dismisses a
+ * banner — so a message that recurs on routine play would otherwise pile up into a
+ * permanent wall of identical banners instead of reflecting just the current state,
+ * exactly as a usability test with real students showed. Tracking "the node
+ * addNotification() just added" from the outside to remove it on the next call is not a
+ * reliable fix either: addNotification()'s own returned promise resolves before its
+ * internal render chain has actually updated the DOM (a timing gap in
+ * core/notification.js itself, confirmed by inspection), so a caller has no dependable
+ * moment at which to read back which node was just inserted.
  *
  * @param {string} message Notification text.
  * @param {string} type Notification type: success, info, warning or error.
+ * @param {boolean} [toast] Whether the server flagged this message as toast-worthy.
  */
-const notify = async(message, type) => {
+const notify = async(message, type, toast) => {
+    if (!message) {
+        return;
+    }
+    if (toast) {
+        addToast(message, {type: type || 'success'});
+        return;
+    }
     const region = document.getElementById('user-notifications');
     if (!region) {
         return;
@@ -221,7 +232,7 @@ const initHintButton = (cmid) => {
             return;
         }
         if (payload.notification) {
-            notify(payload.notification, payload.notificationtype);
+            notify(payload.notification, payload.notificationtype, payload.toast);
         }
         if (!payload.success) {
             return;
@@ -899,7 +910,7 @@ const initStartRound = (cmid, timertotal) => {
             return;
         }
         if (payload.notification) {
-            notify(payload.notification, payload.notificationtype);
+            notify(payload.notification, payload.notificationtype, payload.toast);
         }
         if (!payload.success) {
             return;
@@ -928,7 +939,7 @@ const initNewRound = (cmid, timertotal) => {
             return;
         }
         if (payload.notification) {
-            notify(payload.notification, payload.notificationtype);
+            notify(payload.notification, payload.notificationtype, payload.toast);
         }
         if (!payload.hastargetword) {
             // Round-limit or lingering cooldown restriction: mirror the classic
@@ -967,7 +978,7 @@ const endRound = async(cmid, reason, timertotal) => {
         return;
     }
     if (payload.notification) {
-        notify(payload.notification, payload.notificationtype);
+        notify(payload.notification, payload.notificationtype, payload.toast);
     }
     if (payload.finished) {
         await showRoundResult(payload.roundresult, cmid, timertotal);
@@ -1007,7 +1018,7 @@ const initGuessForm = (cmid, timertotal) => {
         }
 
         if (payload.notification) {
-            notify(payload.notification, payload.notificationtype);
+            notify(payload.notification, payload.notificationtype, payload.toast);
         }
 
         if (!payload.feedback.length) {

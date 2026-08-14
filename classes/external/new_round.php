@@ -76,6 +76,7 @@ class new_round extends external_api {
                 'hastargetword'    => false,
                 'notification'     => $restrictionnotice,
                 'notificationtype' => 'warning',
+                'toast'            => true,
                 'lobby'            => round_presenter::build_lobby_context(
                     $instance,
                     round_service::load_state($cmid, $userid),
@@ -94,6 +95,7 @@ class new_round extends external_api {
             'hastargetword'    => ($targetword !== ''),
             'notification'     => '',
             'notificationtype' => '',
+            'toast'            => true,
             'lobby'            => round_presenter::build_lobby_context($instance, $state, $userid),
         ];
     }
@@ -113,6 +115,12 @@ class new_round extends external_api {
                 ''
             ),
             'notificationtype' => new external_value(PARAM_ALPHA, 'Notification type', VALUE_DEFAULT, ''),
+            'toast' => new external_value(
+                PARAM_BOOL,
+                'Whether to show the notification as an auto-dismissing toast instead of a persistent one',
+                VALUE_DEFAULT,
+                true
+            ),
             'lobby'            => new external_single_structure([
                 'timerenabled'      => new external_value(PARAM_BOOL, 'Whether the timer is enabled'),
                 'lobbytimerinfo'    => new external_value(PARAM_TEXT, 'Timer info message for the lobby'),

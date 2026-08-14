@@ -69,26 +69,32 @@ class reveal_hint extends external_api {
         [$state, $targetword] = round_service::ensure_round_state($state, $instance, $cmid, $userid);
 
         if ($targetword === '' || !empty($state['finished'])) {
-            return self::result(false, '', get_string('roundfinished', 'mod_playerwords'), 'warning');
+            return self::result(false, '', get_string('roundfinished', 'mod_playerwords'), 'warning', true);
         }
 
         if (!empty($state['hintrevealed'])) {
             // Idempotent: already revealed, never charge the PlayerHUD cost twice.
-            return self::result(true, $state['hint'] ?? '', '', '');
+            return self::result(true, $state['hint'] ?? '', '', '', true);
         }
 
         if (empty($state['hint'])) {
-            return self::result(false, '', '', '');
+            return self::result(false, '', '', '', true);
         }
 
-        [$state, $notification, $notificationtype] = round_service::reveal_hint($state, $instance, $cmid, $userid);
+        [$state, $notification, $notificationtype, $toast] = round_service::reveal_hint(
+            $state,
+            $instance,
+            $cmid,
+            $userid
+        );
         round_service::save_state($cmid, $userid, $state);
 
         return self::result(
             empty($notification),
             !empty($state['hintrevealed']) ? ($state['hint'] ?? '') : '',
             $notification ?? '',
-            $notificationtype ?? ''
+            $notificationtype ?? '',
+            $toast
         );
     }
 
@@ -103,6 +109,12 @@ class reveal_hint extends external_api {
             'hintvalue'        => new external_value(PARAM_RAW, 'Hint text, empty when not revealed'),
             'notification'     => new external_value(PARAM_TEXT, 'User-facing feedback message', VALUE_DEFAULT, ''),
             'notificationtype' => new external_value(PARAM_ALPHA, 'Notification type', VALUE_DEFAULT, ''),
+            'toast' => new external_value(
+                PARAM_BOOL,
+                'Whether to show the notification as an auto-dismissing toast instead of a persistent one',
+                VALUE_DEFAULT,
+                true
+            ),
         ]);
     }
 
@@ -113,14 +125,22 @@ class reveal_hint extends external_api {
      * @param string $hintvalue Hint text, empty when not revealed.
      * @param string $notification Notification message.
      * @param string $notificationtype Notification type.
+     * @param bool $toast Whether to show the notification as an auto-dismissing toast.
      * @return array
      */
-    private static function result(bool $success, string $hintvalue, string $notification, string $notificationtype): array {
+    private static function result(
+        bool $success,
+        string $hintvalue,
+        string $notification,
+        string $notificationtype,
+        bool $toast
+    ): array {
         return [
             'success'          => $success,
             'hintvalue'        => $hintvalue,
             'notification'     => $notification,
             'notificationtype' => $notificationtype,
+            'toast'            => $toast,
         ];
     }
 }
