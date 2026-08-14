@@ -592,4 +592,194 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $this->assertContains((string)$realcontext, $contextids);
         $this->assertNotContains((string)$collidingcontext, $contextids);
     }
+
+    /**
+     * Tests that export_user_data ignores a non-module context in the approved list —
+     * both get_instance_ids_by_cmid()'s own empty-cmids short-circuit and the export
+     * loop's own guard are exercised by the same setup.
+     *
+     * @return void
+     */
+    public function test_export_user_data_ignores_non_module_context(): void {
+        $user = $this->getDataGenerator()->create_user();
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', [\context_system::instance()->id]);
+
+        provider::export_user_data($contextlist);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Regression test mirroring the instance-id collision above, for export_user_data():
+     * a context whose instance id cannot be resolved to a real playerwords activity must
+     * be skipped instead of exporting nothing under a wrongly-resolved instance.
+     *
+     * @return void
+     */
+    public function test_export_user_data_ignores_context_with_no_matching_instance(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $cm = $this->make_cm($course);
+        $user = $this->getDataGenerator()->create_user();
+
+        $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id]);
+        $DB->set_field('course_modules', 'instance', $cm->id, ['id' => $page->cmid]);
+
+        $context = \context_module::instance($page->cmid);
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', [$context->id]);
+
+        provider::export_user_data($contextlist);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Regression test mirroring the instance-id collision above, for
+     * delete_data_for_all_users_in_context(): a page module whose course_modules row was
+     * made to carry the same numeric instance id as a real playerwords activity must not
+     * be mistaken for it, leaving the real activity's data untouched.
+     *
+     * @return void
+     */
+    public function test_delete_data_for_all_users_in_context_ignores_unresolvable_cm(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $cm = $this->make_cm($course);
+        $user = $this->getDataGenerator()->create_user();
+        $wordid = $this->make_word($user->id, (int)$cm->id);
+        $this->make_attempt($user->id, (int)$cm->id, $wordid);
+
+        $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id]);
+        $DB->set_field('course_modules', 'instance', $cm->id, ['id' => $page->cmid]);
+
+        provider::delete_data_for_all_users_in_context(\context_module::instance($page->cmid));
+
+        $this->assertSame(1, $DB->count_records('playerwords_attempts', ['playerwordsid' => (int)$cm->id]));
+        $this->assertEquals($user->id, $DB->get_field('playerwords_words', 'addedby', ['id' => $wordid]));
+    }
+
+    /**
+     * Tests that delete_data_for_user is a no-op for an empty approved contextlist.
+     *
+     * @return void
+     */
+    public function test_delete_data_for_user_empty_contextlist_is_noop(): void {
+        $user = $this->getDataGenerator()->create_user();
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', []);
+
+        provider::delete_data_for_user($contextlist);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Tests that delete_data_for_user ignores a non-module context in the approved list.
+     *
+     * @return void
+     */
+    public function test_delete_data_for_user_ignores_non_module_context(): void {
+        $user = $this->getDataGenerator()->create_user();
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', [\context_system::instance()->id]);
+
+        provider::delete_data_for_user($contextlist);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Regression test mirroring the instance-id collision above, for
+     * delete_data_for_user(): a context whose instance id cannot be resolved to a real
+     * playerwords activity must be skipped rather than deleting under a wrongly-resolved
+     * instance.
+     *
+     * @return void
+     */
+    public function test_delete_data_for_user_ignores_context_with_no_matching_instance(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $cm = $this->make_cm($course);
+        $user = $this->getDataGenerator()->create_user();
+        $wordid = $this->make_word($user->id, (int)$cm->id);
+        $this->make_attempt($user->id, (int)$cm->id, $wordid);
+
+        $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id]);
+        $DB->set_field('course_modules', 'instance', $cm->id, ['id' => $page->cmid]);
+
+        $context = \context_module::instance($page->cmid);
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', [$context->id]);
+
+        provider::delete_data_for_user($contextlist);
+
+        $this->assertSame(1, $DB->count_records('playerwords_attempts', ['userid' => $user->id]));
+        $this->assertEquals($user->id, $DB->get_field('playerwords_words', 'addedby', ['id' => $wordid]));
+    }
+
+    /**
+     * Tests that delete_data_for_users ignores a non-module context.
+     *
+     * @return void
+     */
+    public function test_delete_data_for_users_ignores_non_module_context(): void {
+        $user = $this->getDataGenerator()->create_user();
+        $approvedlist = new approved_userlist(\context_system::instance(), 'mod_playerwords', [$user->id]);
+
+        provider::delete_data_for_users($approvedlist);
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    /**
+     * Regression test mirroring the instance-id collision above, for
+     * delete_data_for_users(): a page module whose course_modules row was made to carry
+     * the same numeric instance id as a real playerwords activity must not be mistaken
+     * for it.
+     *
+     * @return void
+     */
+    public function test_delete_data_for_users_ignores_unresolvable_cm(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $cm = $this->make_cm($course);
+        $user = $this->getDataGenerator()->create_user();
+        $wordid = $this->make_word($user->id, (int)$cm->id);
+        $this->make_attempt($user->id, (int)$cm->id, $wordid);
+
+        $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id]);
+        $DB->set_field('course_modules', 'instance', $cm->id, ['id' => $page->cmid]);
+
+        $context = \context_module::instance($page->cmid);
+        $approvedlist = new approved_userlist($context, 'mod_playerwords', [$user->id]);
+
+        provider::delete_data_for_users($approvedlist);
+
+        $this->assertSame(1, $DB->count_records('playerwords_attempts', ['userid' => $user->id]));
+        $this->assertEquals($user->id, $DB->get_field('playerwords_words', 'addedby', ['id' => $wordid]));
+    }
+
+    /**
+     * Tests that delete_data_for_users is a no-op when the approved userlist carries no
+     * users, even though its context resolves to a real activity.
+     *
+     * @return void
+     */
+    public function test_delete_data_for_users_ignores_empty_userids(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $cm = $this->make_cm($course);
+        $user = $this->getDataGenerator()->create_user();
+        $wordid = $this->make_word($user->id, (int)$cm->id);
+        $this->make_attempt($user->id, (int)$cm->id, $wordid);
+
+        $context = \context_module::instance($cm->cmid);
+        $approvedlist = new approved_userlist($context, 'mod_playerwords', []);
+
+        provider::delete_data_for_users($approvedlist);
+
+        $this->assertSame(1, $DB->count_records('playerwords_attempts', ['userid' => $user->id]));
+    }
 }

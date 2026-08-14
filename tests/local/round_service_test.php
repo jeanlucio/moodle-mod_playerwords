@@ -1319,6 +1319,354 @@ final class round_service_test extends \advanced_testcase {
      *
      * @return void
      */
+    /**
+     * new_round() is a no-op when no session state has ever been loaded for this
+     * cmid/user pair — there is nothing to reset yet.
+     *
+     * @return void
+     */
+    public function test_new_round_noop_when_no_session_state(): void {
+        $instance = $this->make_instance();
+
+        round_service::new_round($instance->cmid, $this->user->id);
+
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        $this->assertSame(0, $state['wordid']);
+        $this->assertFalse($state['finished']);
+    }
+
+    /**
+     * Tests that the cooldown restriction is reported once a finished round's cooldown
+     * window has not yet elapsed, distinct from the max_rounds restriction.
+     *
+     * @return void
+     */
+    public function test_restriction_notice_reports_active_cooldown(): void {
+        global $DB;
+
+        $instance = $this->make_instance();
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => 0,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+
+        $notice = round_service::get_round_restriction_notice($instance, $this->user->id);
+        $this->assertNotNull($notice);
+    }
+
+    /**
+     * ensure_round_state() returns immediately once the round is already finished,
+     * never re-arming a word.
+     *
+     * @return void
+     */
+    public function test_ensure_round_state_returns_early_when_already_finished(): void {
+        $instance = $this->make_instance();
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+        [$state] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'boca'
+        );
+        $this->assertTrue($state['finished']);
+
+        [$statereturned, $targetword, $returnedwordid] = round_service::ensure_round_state(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id
+        );
+
+        $this->assertSame($state, $statereturned);
+        $this->assertSame('', $targetword);
+        $this->assertSame((int)$state['wordid'], $returnedwordid);
+    }
+
+    /**
+     * Regression test for sessions created before the roundstarted flag existed:
+     * ensure_round_state() must backfill it from starttime when it resumes an
+     * in-progress round whose word is still there.
+     *
+     * @return void
+     */
+    public function test_ensure_round_state_backfills_roundstarted_flag_for_legacy_session(): void {
+        $instance = $this->make_instance();
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state, , $roundwordid] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+        $this->assertGreaterThan(0, $roundwordid);
+        $this->assertFalse($state['roundstarted']);
+
+        // Simulate a session created before the roundstarted flag existed: the round
+        // was genuinely started (starttime is set) but the flag was never recorded.
+        $state['starttime'] = time();
+        $state['roundstarted'] = false;
+
+        [$state, $targetword] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertSame('boca', $targetword);
+        $this->assertTrue($state['roundstarted']);
+    }
+
+    /**
+     * reveal_hint() is rejected once the round is already finished.
+     *
+     * @return void
+     */
+    public function test_reveal_hint_rejected_when_already_finished(): void {
+        $instance = $this->make_instance();
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+        [$state] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'boca'
+        );
+        $this->assertTrue($state['finished']);
+
+        [$state, $notification] = round_service::reveal_hint($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertNotEmpty($notification);
+        $this->assertFalse($state['hintrevealed']);
+    }
+
+    /**
+     * reveal_hint() is rejected for a word armed at page-load time but never actually
+     * started — the same guard submit_guess()/forfeit()/timeout() apply.
+     *
+     * @return void
+     */
+    public function test_reveal_hint_rejected_when_round_not_started(): void {
+        $instance = $this->make_instance();
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->user->id);
+        $this->assertFalse($state['roundstarted']);
+
+        [$state, $notification] = round_service::reveal_hint($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertNotEmpty($notification);
+        $this->assertFalse($state['hintrevealed']);
+    }
+
+    /**
+     * A hint cost pointing at a disabled (not deleted) item still blocks the student
+     * when their balance is short — same rationale as
+     * test_start_round_still_blocks_when_item_disabled_and_insufficient(), for the hint
+     * cost instead of the round cost.
+     *
+     * @return void
+     */
+    public function test_reveal_hint_blocked_when_hud_cost_insufficient(): void {
+        global $DB;
+        $this->skip_if_no_playerhud();
+
+        $biid = $this->make_block_instance($this->course);
+        $itemid = $this->make_item($biid);
+        $DB->set_field('block_playerhud_items', 'enabled', 0, ['id' => $itemid]);
+
+        $instance = $this->make_instance(['hud_hint_cost_item' => $itemid, 'hud_hint_cost_qty' => 1]);
+        [$state] = $this->start_ready_round($instance);
+
+        [$state, $notification] = round_service::reveal_hint($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertNotNull($notification);
+        $this->assertFalse($state['hintrevealed']);
+    }
+
+    /**
+     * submit_guess() rejects an empty target word — the "no game words available" case.
+     *
+     * @return void
+     */
+    public function test_submit_guess_rejected_when_no_target_word(): void {
+        $instance = $this->make_instance();
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+
+        [$state, $feedback, $notification] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            '',
+            'boca'
+        );
+
+        $this->assertNull($feedback);
+        $this->assertNotEmpty($notification);
+        $this->assertFalse($state['finished']);
+    }
+
+    /**
+     * submit_guess() rejects a guess containing non-alphabetic characters before ever
+     * comparing it against the target word.
+     *
+     * @return void
+     */
+    public function test_submit_guess_rejected_on_invalid_characters(): void {
+        $instance = $this->make_instance();
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+
+        [$state, $feedback, $notification] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'b0c4'
+        );
+
+        $this->assertNull($feedback);
+        $this->assertNotEmpty($notification);
+        $this->assertFalse($state['finished']);
+    }
+
+    /**
+     * Regression test for the guess-triggered elapsed-time check: a wrong guess landing
+     * exactly on the deadline (inside round_expired()'s own tolerance window, so the
+     * earlier pre-check does not intervene) must still finish the round as a loss —
+     * submit_guess() re-derives elapsed time independently instead of relying solely on
+     * round_expired().
+     *
+     * @return void
+     */
+    public function test_submit_guess_finishes_round_when_time_runs_out_during_guess(): void {
+        $instance = $this->make_instance(['timer_minutes' => 1]);
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+        $state['starttime'] = time() - (int)$instance->timer_seconds;
+
+        [$state, $feedback, $notification, $notificationtype] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'xxxx'
+        );
+
+        $this->assertTrue($state['finished']);
+        $this->assertFalse($state['won']);
+        $this->assertSame('warning', $notificationtype);
+    }
+
+    /**
+     * forfeit() is rejected when there is no active word at all — distinct from the
+     * "armed but not started" guard already covered by
+     * test_forfeit_rejected_when_round_not_started().
+     *
+     * @return void
+     */
+    public function test_forfeit_rejected_when_no_active_word(): void {
+        $instance = $this->make_instance();
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+
+        [$state, $notification] = round_service::forfeit($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertNotEmpty($notification);
+        $this->assertFalse($state['finished']);
+    }
+
+    /**
+     * timeout() is rejected when there is no active word at all — distinct from the
+     * "armed but not started" guard already covered by
+     * test_timeout_rejected_when_round_not_started().
+     *
+     * @return void
+     */
+    public function test_timeout_rejected_when_no_active_word(): void {
+        $instance = $this->make_instance();
+        $state = round_service::load_state($instance->cmid, $this->user->id);
+
+        [$state, $notification] = round_service::timeout($state, $instance, $instance->cmid, $this->user->id);
+
+        $this->assertNotEmpty($notification);
+        $this->assertFalse($state['finished']);
+    }
+
+    /**
+     * Regression test for sessions left over from before the reserve-on-start split:
+     * finish_round() must insert a fresh attempt row when the state carries no
+     * reservation to complete, instead of assuming one always exists.
+     *
+     * @return void
+     */
+    public function test_finish_round_inserts_fresh_record_when_no_reservation_exists(): void {
+        global $DB;
+
+        $instance = $this->make_instance();
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+        $this->assertGreaterThan(0, $state['attemptid']);
+
+        $DB->delete_records('playerwords_attempts', ['id' => $state['attemptid']]);
+        $state['attemptid'] = 0;
+
+        [$state] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'boca'
+        );
+
+        $this->assertTrue($state['finished']);
+        $this->assertTrue($state['won']);
+        $this->assertSame(1, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
+    }
+
+    /**
+     * A genuine win recomputes and persists automatic completion immediately, so the
+     * activity page's completion badge reflects it without waiting for a cron sweep.
+     *
+     * @return void
+     */
+    public function test_finish_round_updates_completion_state_when_enabled(): void {
+        global $CFG;
+        $CFG->enablecompletion = true;
+        $completioncourse = $this->getDataGenerator()->create_course(['enablecompletion' => 1]);
+
+        $instance = $this->make_instance([
+            'course'                    => $completioncourse->id,
+            'completion'                => COMPLETION_TRACKING_AUTOMATIC,
+            'completionattemptsenabled' => true,
+            'completionattempts'        => 1,
+        ]);
+
+        [$state, $roundwordid] = $this->start_ready_round($instance);
+        [$state] = round_service::submit_guess(
+            $state,
+            $instance,
+            $instance->cmid,
+            $this->user->id,
+            $roundwordid,
+            'boca',
+            'boca'
+        );
+        $this->assertTrue($state['finished']);
+        $this->assertTrue($state['won']);
+
+        $cm = get_fast_modinfo($completioncourse)->get_cm($instance->cmid);
+        $completioninfo = new \completion_info($completioncourse);
+        $data = $completioninfo->get_data($cm, false, $this->user->id);
+        $this->assertEquals(COMPLETION_COMPLETE, $data->completionstate);
+    }
+
     public function test_finish_round_guest_never_persists(): void {
         global $DB;
         $this->skip_if_no_playerhud();
