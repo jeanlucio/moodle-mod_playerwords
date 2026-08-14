@@ -69,11 +69,15 @@ class round_presenter {
                 $rowletters = self::build_row_letters($rowstate['word'], $rowstate['feedback']);
             } else if ($targetword !== '') {
                 $rowletters = [];
-                for ($j = 0; $j < core_text::strlen($targetword); $j++) {
+                $wordlength = core_text::strlen($targetword);
+                for ($j = 0; $j < $wordlength; $j++) {
                     $rowletters[] = [
                         'letter' => '',
                         'state' => 'empty',
-                        'arialabel' => get_string('cell_state_empty', 'mod_playerwords'),
+                        'arialabel' => get_string('cell_state_empty_position', 'mod_playerwords', (object) [
+                            'position' => $j + 1,
+                            'total' => $wordlength,
+                        ]),
                     ];
                 }
             } else {
