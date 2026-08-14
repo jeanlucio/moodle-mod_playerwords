@@ -118,6 +118,13 @@ const notify = async(message, type, toast) => {
  * Attaches a Moodle confirmation modal to the forfeit button, ending the round via
  * mod_playerwords_end_round on confirm — no page reload.
  *
+ * Never passes show: true to create() — that would render the modal, with core/
+ * modal_save_cancel's own default "Save changes" button, before getString('yes') has
+ * resolved (a real, visible gap on a first, uncached call), reading as a wrong dialog
+ * flashing before the real one settles. Calling .show() explicitly only once both
+ * promises in Promise.all() have resolved means the modal is never on screen with the
+ * wrong button label.
+ *
  * @param {number} cmid Course-module id.
  * @param {number} timertotal Total seconds configured for the round (0 = no timer).
  */
@@ -131,7 +138,6 @@ const initForfeit = (cmid, timertotal) => {
             ModalSaveCancel.create({
                 title: button.dataset.title,
                 body: button.dataset.confirm,
-                show: true,
                 removeOnClose: true,
             }),
             getString('yes', 'core'),
@@ -140,6 +146,7 @@ const initForfeit = (cmid, timertotal) => {
             modal.getRoot().on(ModalEvents.save, () => {
                 endRound(cmid, 'forfeit', timertotal);
             });
+            modal.show();
             return;
         }).catch(Notification.exception);
     });
@@ -238,11 +245,13 @@ const initHintButton = (cmid) => {
             revealHint();
             return;
         }
+        // See initForfeit() for why show: true is never passed to create() here: it
+        // would render the modal, with the default "Save changes" button, before
+        // getString('yes') resolves.
         Promise.all([
             ModalSaveCancel.create({
                 title: button.dataset.hudConfirmTitle,
                 body: button.dataset.hudConfirmBody,
-                show: true,
                 removeOnClose: true,
             }),
             getString('yes', 'core'),
@@ -252,6 +261,7 @@ const initHintButton = (cmid) => {
                 modal.setButtonDisabled('save', true);
             }
             modal.getRoot().on(ModalEvents.save, revealHint);
+            modal.show();
             return;
         }).catch(Notification.exception);
     });
