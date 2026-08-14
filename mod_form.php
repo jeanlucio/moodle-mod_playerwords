@@ -122,15 +122,6 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setDefault('max_attempts', 6);
         $mform->addRule('max_attempts', null, 'numeric', null, 'client');
 
-        $mform->addElement(
-            'advcheckbox',
-            'restrict_guess_pool',
-            get_string('restrict_guess_pool', 'mod_playerwords')
-        );
-        $mform->setType('restrict_guess_pool', PARAM_INT);
-        $mform->setDefault('restrict_guess_pool', 0);
-        $mform->addHelpButton('restrict_guess_pool', 'restrict_guess_pool', 'mod_playerwords');
-
         $mform->addElement('text', 'min_length', get_string('min_length', 'mod_playerwords'));
         $mform->setType('min_length', PARAM_INT);
         $mform->setDefault('min_length', 4);
@@ -169,6 +160,15 @@ class mod_playerwords_mod_form extends moodleform_mod {
             );
             $mform->hideIf('glossarywordscount', 'source_glossary', 'notchecked');
         }
+
+        $mform->addElement(
+            'advcheckbox',
+            'restrict_guess_pool',
+            get_string('restrict_guess_pool', 'mod_playerwords')
+        );
+        $mform->setType('restrict_guess_pool', PARAM_INT);
+        $mform->setDefault('restrict_guess_pool', 0);
+        $mform->addHelpButton('restrict_guess_pool', 'restrict_guess_pool', 'mod_playerwords');
 
         $mform->addElement('text', 'timer_minutes', get_string('timer_minutes', 'mod_playerwords'));
         $mform->setType('timer_minutes', PARAM_INT);
