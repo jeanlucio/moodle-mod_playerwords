@@ -750,23 +750,50 @@ final class words_repository_test extends \advanced_testcase {
     }
 
     /**
-     * The word pool listing respects the requested sort column and limit.
+     * The word pool listing respects the requested sort column and paginates: the
+     * unpaginated (page=0, perpage=0) call returns everything, a page size splits
+     * the set across pages, and the reported total always reflects the full count
+     * regardless of how many rows the current page actually returned.
      *
      * @covers \mod_playerwords\local\words_repository::get_recent_words
      * @return void
      */
-    public function test_get_recent_words_orders_and_limits(): void {
+    public function test_get_recent_words_orders_and_paginates(): void {
         $instance = $this->make_instance();
         $this->make_word($instance->id, 'alfa');
         $this->make_word($instance->id, 'beta');
         $this->make_word($instance->id, 'gama');
 
-        $all = words_repository::get_recent_words($instance->id, 0, 'word', 'ASC');
-        $words = array_values(array_map(fn($record): string => $record->word, $all));
+        $all = words_repository::get_recent_words($instance->id, 0, 0, 'word', 'ASC');
+        $words = array_values(array_map(fn($record): string => $record->word, $all['rows']));
         $this->assertSame(['alfa', 'beta', 'gama'], $words);
+        $this->assertSame(3, $all['total']);
+        $this->assertFalse($all['isempty']);
 
-        $limited = words_repository::get_recent_words($instance->id, 2, 'word', 'ASC');
-        $this->assertCount(2, $limited);
+        $firstpage = words_repository::get_recent_words($instance->id, 0, 2, 'word', 'ASC');
+        $this->assertCount(2, $firstpage['rows']);
+        $this->assertSame(3, $firstpage['total']);
+
+        $secondpage = words_repository::get_recent_words($instance->id, 1, 2, 'word', 'ASC');
+        $secondpagewords = array_values(array_map(fn($record): string => $record->word, $secondpage['rows']));
+        $this->assertSame(['gama'], $secondpagewords);
+        $this->assertSame(3, $secondpage['total']);
+    }
+
+    /**
+     * An empty word pool is reported as such.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_recent_words
+     * @return void
+     */
+    public function test_get_recent_words_reports_isempty_when_pool_is_empty(): void {
+        $instance = $this->make_instance();
+
+        $wordpool = words_repository::get_recent_words($instance->id, 0, 0);
+
+        $this->assertTrue($wordpool['isempty']);
+        $this->assertSame(0, $wordpool['total']);
+        $this->assertSame([], $wordpool['rows']);
     }
 
     /**
@@ -792,8 +819,8 @@ final class words_repository_test extends \advanced_testcase {
             'addedby'       => 0,
         ]);
 
-        $rows = words_repository::get_recent_words($instance->id);
-        $row = reset($rows);
+        $wordpool = words_repository::get_recent_words($instance->id, 0, 0);
+        $row = reset($wordpool['rows']);
         $this->assertSame($glossary->name, $row->glossaryname);
     }
 
@@ -877,8 +904,8 @@ final class words_repository_test extends \advanced_testcase {
         $imported = words_repository::sync_glossary_words($instance);
 
         $this->assertSame(2, $imported);
-        $words = words_repository::get_recent_words($instance->id, 0, 'word', 'ASC');
-        $wordtexts = array_values(array_map(fn($record): string => $record->word, $words));
+        $wordpool = words_repository::get_recent_words($instance->id, 0, 0, 'word', 'ASC');
+        $wordtexts = array_values(array_map(fn($record): string => $record->word, $wordpool['rows']));
         $this->assertSame(['sistema', 'solar'], $wordtexts);
     }
 
