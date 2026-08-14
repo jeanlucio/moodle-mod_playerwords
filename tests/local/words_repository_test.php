@@ -502,6 +502,40 @@ final class words_repository_test extends \advanced_testcase {
     }
 
     /**
+     * get_all_word_texts() returns every word for the instance regardless of source or
+     * approval status, since the AI generator needs to avoid pending words too.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_all_word_texts
+     * @return void
+     */
+    public function test_get_all_word_texts_returns_every_word_regardless_of_status(): void {
+        $instance = $this->make_instance();
+        $this->make_word($instance->id, 'planeta', 1);
+        $this->make_word($instance->id, 'cometa', 0);
+        words_repository::add_ai_word($instance->id, $this->user->id, 'estrela', 'corpo celeste');
+
+        $texts = words_repository::get_all_word_texts($instance->id);
+
+        sort($texts);
+        $this->assertSame(['cometa', 'estrela', 'planeta'], $texts);
+    }
+
+    /**
+     * get_all_word_texts() is scoped to the given instance and empty when it has no words.
+     *
+     * @covers \mod_playerwords\local\words_repository::get_all_word_texts
+     * @return void
+     */
+    public function test_get_all_word_texts_scoped_to_instance(): void {
+        $instancea = $this->make_instance();
+        $instanceb = $this->make_instance();
+        $this->make_word($instancea->id, 'planeta');
+
+        $this->assertSame(['planeta'], words_repository::get_all_word_texts($instancea->id));
+        $this->assertSame([], words_repository::get_all_word_texts($instanceb->id));
+    }
+
+    /**
      * word_in_pool() matches an approved word regardless of accent or case, mirroring
      * the same normalization submit_guess() applies to both the guess and the target.
      *
