@@ -35,15 +35,30 @@ class round_presenter {
     /**
      * Builds the per-letter cell data for one guessed row.
      *
+     * Shows $originalword's own accented/cedilla'd letter rather than $word's
+     * normalized one, so a player who typed "café" sees their own accent echoed
+     * back instead of "cafe" — the feedback state passed in was already computed
+     * against the normalized form, which stays accent-insensitive either way. Falls
+     * back to the normalized letter if the two do not line up character-for-character
+     * (word_normalizer::normalize() is expected to only ever strip a diacritic off a
+     * letter, never merge or drop one, but this avoids a misaligned position on the
+     * rare word where that assumption does not hold).
+     *
      * @param string $word Normalized guess word for this row.
+     * @param string $originalword The same guess in its original, as-typed spelling.
      * @param array $feedback Per-letter state map, indexed by position.
      * @return array
      */
-    public static function build_row_letters(string $word, array $feedback): array {
+    public static function build_row_letters(string $word, string $originalword, array $feedback): array {
+        $chars = preg_split('//u', $word, -1, PREG_SPLIT_NO_EMPTY);
+        $originalchars = preg_split('//u', $originalword, -1, PREG_SPLIT_NO_EMPTY);
+        $useoriginal = count($originalchars) === count($chars);
+
         $letters = [];
-        foreach (preg_split('//u', $word, -1, PREG_SPLIT_NO_EMPTY) as $index => $letter) {
+        foreach ($chars as $index => $letter) {
             $cellstate = $feedback[$index] ?? 'absent';
-            $upperletter = core_text::strtoupper($letter);
+            $displaychar = $useoriginal ? $originalchars[$index] : $letter;
+            $upperletter = core_text::strtoupper($displaychar);
             $letters[] = [
                 'letter' => s($upperletter),
                 'state' => $cellstate,
@@ -66,7 +81,11 @@ class round_presenter {
         for ($i = 0; $i < $maxattempts; $i++) {
             $rowstate = $state['rows'][$i] ?? null;
             if ($rowstate) {
-                $rowletters = self::build_row_letters($rowstate['word'], $rowstate['feedback']);
+                $rowletters = self::build_row_letters(
+                    $rowstate['word'],
+                    $rowstate['originalword'] ?? $rowstate['word'],
+                    $rowstate['feedback']
+                );
             } else if ($targetword !== '') {
                 $rowletters = [];
                 $wordlength = core_text::strlen($targetword);

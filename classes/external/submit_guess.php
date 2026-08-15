@@ -96,7 +96,11 @@ class submit_guess extends external_api {
         $feedbackresult = [];
         if ($feedback !== null) {
             $lastrow = end($state['rows']);
-            $feedbackresult = round_presenter::build_row_letters($lastrow['word'], $lastrow['feedback']);
+            $feedbackresult = round_presenter::build_row_letters(
+                $lastrow['word'],
+                $lastrow['originalword'] ?? $lastrow['word'],
+                $lastrow['feedback']
+            );
         }
 
         $roundfinished = !empty($state['finished']);

@@ -217,12 +217,52 @@ final class round_presenter_test extends \advanced_testcase {
      * @return void
      */
     public function test_build_row_letters(): void {
-        $letters = round_presenter::build_row_letters('casa', [0 => 'absent', 1 => 'correct', 2 => 'correct', 3 => 'absent']);
+        $letters = round_presenter::build_row_letters(
+            'casa',
+            'casa',
+            [0 => 'absent', 1 => 'correct', 2 => 'correct', 3 => 'absent']
+        );
         $this->assertCount(4, $letters);
         $this->assertSame('C', $letters[0]['letter']);
         $this->assertSame('absent', $letters[0]['state']);
         $this->assertSame('A', $letters[1]['letter']);
         $this->assertSame('correct', $letters[1]['state']);
+    }
+
+    /**
+     * A row shows the player's own accented spelling, not the accent-stripped form
+     * feedback comparison uses internally — a player who typed "café" sees "CAFÉ"
+     * echoed back, not "CAFE".
+     *
+     * @return void
+     */
+    public function test_build_row_letters_shows_original_accent(): void {
+        $letters = round_presenter::build_row_letters(
+            'cafe',
+            'café',
+            [0 => 'correct', 1 => 'correct', 2 => 'correct', 3 => 'correct']
+        );
+
+        $this->assertSame(['C', 'A', 'F', 'É'], array_column($letters, 'letter'));
+    }
+
+    /**
+     * build_grid_rows() passes each row's own originalword through to
+     * build_row_letters(), so a submitted row shows the player's true accented
+     * spelling in the actual grid, not just when calling build_row_letters() directly.
+     *
+     * @return void
+     */
+    public function test_build_grid_rows_shows_original_accent(): void {
+        $state = $this->make_state([
+            'rows' => [
+                ['word' => 'pacoca', 'originalword' => 'paçoca', 'feedback' => array_fill(0, 6, 'correct')],
+            ],
+        ]);
+
+        $rows = round_presenter::build_grid_rows($state, 'boca', 6);
+
+        $this->assertSame(['P', 'A', 'Ç', 'O', 'C', 'A'], array_column($rows[0]['letters'], 'letter'));
     }
 
     /**

@@ -528,8 +528,13 @@ class round_service {
         $state['attemptsused']++;
         $feedback = gameplay_service::build_letter_feedback($normalizedguess, $targetword);
         $state['rows'][] = [
-            'word' => $normalizedguess,
-            'feedback' => $feedback,
+            'word'         => $normalizedguess,
+            // Kept only so round_presenter::build_row_letters() can show the player's
+            // own accented spelling back to them (e.g. "café") instead of the
+            // accent-stripped form comparison/feedback above already uses — matching
+            // is, and stays, accent-insensitive either way.
+            'originalword' => trim($guess),
+            'feedback'     => $feedback,
         ];
 
         $iscompleted = ($normalizedguess === $targetword);
