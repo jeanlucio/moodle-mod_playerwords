@@ -141,7 +141,7 @@ class start_round extends external_api {
             'timerlabel' => new external_value(PARAM_TEXT, 'Timer label'),
             'timeleft' => new external_value(PARAM_INT, 'Seconds remaining, 0 if timer is disabled'),
             'hintlabel' => new external_value(PARAM_TEXT, 'Hint label'),
-            'hintvalue' => new external_value(PARAM_RAW, 'Hint text, empty when not revealed'),
+            'hintvalue' => new external_value(PARAM_TEXT, 'Hint text, empty when not revealed'),
             'showhint' => new external_value(PARAM_BOOL, 'Whether the hint is shown'),
             'canhint' => new external_value(PARAM_BOOL, 'Whether the hint can be revealed'),
             'hintbuttonlabel' => new external_value(PARAM_TEXT, 'Hint button label'),

@@ -106,7 +106,7 @@ class reveal_hint extends external_api {
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
             'success'          => new external_value(PARAM_BOOL, 'Whether the hint is now revealed'),
-            'hintvalue'        => new external_value(PARAM_RAW, 'Hint text, empty when not revealed'),
+            'hintvalue'        => new external_value(PARAM_TEXT, 'Hint text, empty when not revealed'),
             'notification'     => new external_value(PARAM_TEXT, 'User-facing feedback message', VALUE_DEFAULT, ''),
             'notificationtype' => new external_value(PARAM_ALPHA, 'Notification type', VALUE_DEFAULT, ''),
             'toast' => new external_value(

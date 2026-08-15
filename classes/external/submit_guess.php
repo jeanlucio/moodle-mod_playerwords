@@ -182,7 +182,7 @@ class submit_guess extends external_api {
             'revealconcept'          => new external_value(PARAM_TEXT, 'Glossary concept, empty until finished'),
             'revealconceptlabel'     => new external_value(PARAM_TEXT, 'Label for the revealed concept'),
             'showdefinition'         => new external_value(PARAM_BOOL, 'Whether to show the definition/hint'),
-            'revealdefinition'       => new external_value(PARAM_RAW, 'Definition or hint, empty until finished'),
+            'revealdefinition'       => new external_value(PARAM_TEXT, 'Definition or hint, empty until finished'),
             'revealdefinitionlabel'  => new external_value(PARAM_TEXT, 'Label for the revealed definition'),
             'cooldownuntil'          => new external_value(PARAM_INT, 'Cooldown expiry epoch, 0 if inactive'),
             'cooldowntext'           => new external_value(PARAM_TEXT, 'Formatted cooldown countdown text'),
