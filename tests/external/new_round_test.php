@@ -150,6 +150,39 @@ final class new_round_test extends \advanced_testcase {
     }
 
     /**
+     * Tests that a round in progress cannot be discarded through the web service without
+     * being recorded, closing the gap where a student could call
+     * mod_playerwords_new_round directly to abandon a losing round unrecorded.
+     *
+     * @return void
+     */
+    public function test_blocked_while_round_in_progress(): void {
+        global $DB;
+
+        $instance = $this->make_instance(['max_rounds' => 0, 'cooldown_amount' => 0]);
+        $this->setUser($this->student);
+
+        $state = round_service::load_state($instance->cmid, $this->student->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->student->id);
+        [$state] = round_service::start_round($state, $instance, $this->student->id);
+        round_service::save_state($instance->cmid, $this->student->id, $state);
+
+        $result = $this->call_new_round($instance->cmid);
+
+        $this->assertFalse($result['error']);
+        $this->assertFalse($result['data']['hastargetword']);
+        $this->assertNotEmpty($result['data']['notification']);
+
+        // The in-progress round must still be there, untouched: not reset, and its
+        // reservation still open (not silently finished/recorded as a loss).
+        $state = round_service::load_state($instance->cmid, $this->student->id);
+        $this->assertFalse($state['finished']);
+        $this->assertTrue($state['roundstarted']);
+        $attempt = $DB->get_record('playerwords_attempts', ['id' => $state['attemptid']], '*', MUST_EXIST);
+        $this->assertEquals(0, $attempt->timefinished);
+    }
+
+    /**
      * Tests that a user without the view capability in the module context is rejected.
      *
      * @return void

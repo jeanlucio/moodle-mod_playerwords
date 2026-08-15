@@ -66,6 +66,22 @@ class new_round extends external_api {
         $instance = $DB->get_record('playerwords', ['id' => $cm->instance], '*', MUST_EXIST);
         $userid = (int)$USER->id;
 
+        // Must be checked before the restriction notice below: a round in progress is
+        // not a rate-limit/cooldown question, it is the same "server is the authority"
+        // invariant submit_guess()/reveal_hint()/forfeit()/timeout() already enforce.
+        // Without it, a client can call this web service directly mid-round to discard
+        // a losing round before it is ever recorded as a loss.
+        $state = round_service::load_state($cmid, $userid);
+        if (!empty($state['roundstarted']) && empty($state['finished'])) {
+            return [
+                'hastargetword'    => false,
+                'notification'     => get_string('roundinprogress', 'mod_playerwords'),
+                'notificationtype' => 'warning',
+                'toast'            => true,
+                'lobby'            => round_presenter::build_lobby_context($instance, $state, $userid),
+            ];
+        }
+
         // Checked before touching the session: round_service::new_round() clears
         // wordid/finished, and ensure_round_state() refuses to pick a word while
         // restricted anyway, but leaving the session pre-armed in that reset shape for
@@ -77,11 +93,7 @@ class new_round extends external_api {
                 'notification'     => $restrictionnotice,
                 'notificationtype' => 'warning',
                 'toast'            => true,
-                'lobby'            => round_presenter::build_lobby_context(
-                    $instance,
-                    round_service::load_state($cmid, $userid),
-                    $userid
-                ),
+                'lobby'            => round_presenter::build_lobby_context($instance, $state, $userid),
             ];
         }
 
