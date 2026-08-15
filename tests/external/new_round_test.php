@@ -183,6 +183,42 @@ final class new_round_test extends \advanced_testcase {
     }
 
     /**
+     * Tests that a word already armed in the lobby (ensure_round_state() has picked one,
+     * but start_round() was never called — roundstarted is still false) cannot be
+     * re-rolled for free through the web service. Before this guard covered wordid
+     * instead of only roundstarted, a client could call this endpoint repeatedly before
+     * ever starting the round to re-roll until a shorter/easier word came up, without
+     * spending max_rounds, cooldown or a PlayerHUD item — none of which are charged
+     * until start_round() actually runs.
+     *
+     * @return void
+     */
+    public function test_blocked_while_word_armed_in_lobby(): void {
+        $instance = $this->make_instance(['max_rounds' => 0, 'cooldown_amount' => 0]);
+        $this->setUser($this->student);
+
+        $state = round_service::load_state($instance->cmid, $this->student->id);
+        [$state] = round_service::ensure_round_state($state, $instance, $instance->cmid, $this->student->id);
+        round_service::save_state($instance->cmid, $this->student->id, $state);
+        $originalwordid = (int)$state['wordid'];
+        $this->assertGreaterThan(0, $originalwordid);
+        $this->assertFalse($state['roundstarted']);
+
+        $result = $this->call_new_round($instance->cmid);
+
+        $this->assertFalse($result['error']);
+        $this->assertFalse($result['data']['hastargetword']);
+        $this->assertNotEmpty($result['data']['notification']);
+
+        // The armed word must be untouched: same wordid, still not started, not
+        // finished — no free re-roll happened.
+        $state = round_service::load_state($instance->cmid, $this->student->id);
+        $this->assertSame($originalwordid, (int)$state['wordid']);
+        $this->assertFalse($state['roundstarted']);
+        $this->assertFalse($state['finished']);
+    }
+
+    /**
      * Tests that a user without the view capability in the module context is rejected.
      *
      * @return void

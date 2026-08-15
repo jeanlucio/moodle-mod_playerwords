@@ -66,13 +66,17 @@ class new_round extends external_api {
         $instance = $DB->get_record('playerwords', ['id' => $cm->instance], '*', MUST_EXIST);
         $userid = (int)$USER->id;
 
-        // Must be checked before the restriction notice below: a round in progress is
-        // not a rate-limit/cooldown question, it is the same "server is the authority"
-        // invariant submit_guess()/reveal_hint()/forfeit()/timeout() already enforce.
-        // Without it, a client can call this web service directly mid-round to discard
-        // a losing round before it is ever recorded as a loss.
+        // Must be checked before the restriction notice below: a word already armed —
+        // whether the round has actually been started or is still sitting in the lobby
+        // — is not a rate-limit/cooldown question, it is the same "server is the
+        // authority" invariant submit_guess()/reveal_hint()/forfeit()/timeout() already
+        // enforce. Checking roundstarted alone left the lobby state (wordid > 0,
+        // roundstarted still false) unguarded: a client could call this web service
+        // directly, before ever pressing "start round", to re-roll for free — no
+        // max_rounds/cooldown/PlayerHUD cost applies until start_round() runs — until a
+        // shorter/easier word came up. wordid is what both states share.
         $state = round_service::load_state($cmid, $userid);
-        if (!empty($state['roundstarted']) && empty($state['finished'])) {
+        if (!empty($state['wordid']) && empty($state['finished'])) {
             return [
                 'hastargetword'    => false,
                 'notification'     => get_string('roundinprogress', 'mod_playerwords'),
