@@ -239,6 +239,44 @@ final class submit_guess_test extends \advanced_testcase {
     }
 
     /**
+     * A winning guess's immediate per-row feedback shows the target word's own
+     * accented spelling, not the player's own (possibly unaccented) typed guess —
+     * matching what round_presenter::build_grid_rows() already does for the full
+     * grid, since this response is built through the same round_presenter::
+     * resolve_row_display_word() helper rather than duplicating the logic.
+     *
+     * @return void
+     */
+    public function test_correct_guess_feedback_shows_target_accent(): void {
+        global $DB;
+        $instance = $this->make_instance();
+        // Only one candidate word for the round, so pick_round_word() cannot pick
+        // anything but the accented one this test actually means to exercise.
+        $DB->delete_records('playerwords_words', ['playerwordsid' => $instance->id, 'word' => 'boca']);
+        $DB->insert_record('playerwords_words', (object)[
+            'playerwordsid' => $instance->id,
+            'word'          => 'açaí',
+            'concept'       => 'açaí',
+            'hint'          => 'fruto roxo da amazonia',
+            'source'        => 'manual',
+            'glossaryid'    => 0,
+            'approved'      => 1,
+            'timecreated'   => time(),
+            'addedby'       => $this->student->id,
+        ]);
+
+        $this->setUser($this->student);
+        $this->start_round_for_student($instance);
+
+        $result = $this->call_submit_guess($instance->cmid, 'acai');
+
+        $this->assertFalse($result['error']);
+        $data = $result['data'];
+        $this->assertTrue($data['won']);
+        $this->assertSame(['A', 'Ç', 'A', 'Í'], array_column($data['feedback'], 'letter'));
+    }
+
+    /**
      * Tests that an out-of-attempts loss also reveals the word, and never before that.
      *
      * @return void

@@ -247,22 +247,46 @@ final class round_presenter_test extends \advanced_testcase {
     }
 
     /**
-     * build_grid_rows() passes each row's own originalword through to
-     * build_row_letters(), so a submitted row shows the player's true accented
-     * spelling in the actual grid, not just when calling build_row_letters() directly.
+     * The winning row (every cell 'correct') shows the target word's own accented
+     * spelling from state['wordtext'] — "AÇAÍ" — even though the player typed the
+     * unaccented "acai", matching what the post-round reveal text already shows for
+     * the same word. A player who does type the accent still sees it too, since it
+     * matches wordtext either way; this specifically proves the row does not fall
+     * back to echoing the player's own (possibly unaccented) spelling once it has won.
      *
      * @return void
      */
-    public function test_build_grid_rows_shows_original_accent(): void {
+    public function test_build_grid_rows_winning_row_shows_target_spelling_not_players(): void {
         $state = $this->make_state([
+            'wordtext' => 'açaí',
             'rows' => [
-                ['word' => 'pacoca', 'originalword' => 'paçoca', 'feedback' => array_fill(0, 6, 'correct')],
+                ['word' => 'acai', 'originalword' => 'acai', 'feedback' => array_fill(0, 4, 'correct')],
             ],
         ]);
 
-        $rows = round_presenter::build_grid_rows($state, 'boca', 6);
+        $rows = round_presenter::build_grid_rows($state, 'acai', 6);
 
-        $this->assertSame(['P', 'A', 'Ç', 'O', 'C', 'A'], array_column($rows[0]['letters'], 'letter'));
+        $this->assertSame(['A', 'Ç', 'A', 'Í'], array_column($rows[0]['letters'], 'letter'));
+    }
+
+    /**
+     * A wrong row (at least one cell not 'correct') still echoes the player's own
+     * typed spelling, never the target word — only a fully correct row reveals the
+     * target's own spelling (see test_build_grid_rows_winning_row_shows_target_spelling_not_players()).
+     *
+     * @return void
+     */
+    public function test_build_grid_rows_wrong_row_keeps_players_own_spelling(): void {
+        $state = $this->make_state([
+            'wordtext' => 'açaí',
+            'rows' => [
+                ['word' => 'cafe', 'originalword' => 'café', 'feedback' => ['absent', 'absent', 'absent', 'present']],
+            ],
+        ]);
+
+        $rows = round_presenter::build_grid_rows($state, 'acai', 6);
+
+        $this->assertSame(['C', 'A', 'F', 'É'], array_column($rows[0]['letters'], 'letter'));
     }
 
     /**

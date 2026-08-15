@@ -33,6 +33,37 @@ use moodle_url;
  */
 class round_presenter {
     /**
+     * Resolves which spelling build_row_letters() should display for one submitted
+     * row: the target word's own original spelling once that row has won (every cell
+     * 'correct'), or the player's own as-typed spelling otherwise.
+     *
+     * A row where every position is 'correct' is, by construction, the winning guess
+     * (build_letter_feedback() can only mark every position 'correct' when the
+     * normalized guess exactly equals the normalized target — the length check in
+     * round_service::submit_guess() already guarantees equal length beforehand) — so
+     * it is exactly the target word itself, not merely a player-typed approximation of
+     * it. Showing the target's own original spelling there instead of the player's
+     * own — e.g. "AÇAÍ" even if they typed "acai" — matches what the reveal text below
+     * the grid already shows, without revealing anything about the word earlier than
+     * the player already established by winning on this exact row. Shared by
+     * build_grid_rows() (the full grid) and submit_guess's own immediate per-row
+     * response, so both agree on the same row.
+     *
+     * @param array $rowstate One row's state: word, feedback, and optionally originalword.
+     * @param string $wordtext The round's target word, in its own original spelling —
+     *     empty for a legacy session predating this field, in which case the row's own
+     *     spelling is always used regardless of whether it won.
+     * @return string
+     */
+    public static function resolve_row_display_word(array $rowstate, string $wordtext): string {
+        $iscorrectrow = $rowstate['feedback'] !== [] && array_diff($rowstate['feedback'], ['correct']) === [];
+        if ($iscorrectrow && $wordtext !== '') {
+            return $wordtext;
+        }
+        return $rowstate['originalword'] ?? $rowstate['word'];
+    }
+
+    /**
      * Builds the per-letter cell data for one guessed row.
      *
      * Shows $originalword's own accented/cedilla'd letter rather than $word's
@@ -45,7 +76,9 @@ class round_presenter {
      * rare word where that assumption does not hold).
      *
      * @param string $word Normalized guess word for this row.
-     * @param string $originalword The same guess in its original, as-typed spelling.
+     * @param string $originalword The letters to actually display: the player's own
+     *     as-typed spelling for an ordinary row, or the target word's own original
+     *     spelling for the winning row (see build_grid_rows()).
      * @param array $feedback Per-letter state map, indexed by position.
      * @return array
      */
@@ -71,21 +104,23 @@ class round_presenter {
     /**
      * Builds grid rows for template.
      *
+     * The winning row (every cell 'correct') shows the target word's own original
+     * spelling rather than the player's own typed one — see build_row_letters().
+     *
      * @param array $state Session state.
      * @param string $targetword Target word.
      * @param int $maxattempts Maximum attempts.
      * @return array
      */
     public static function build_grid_rows(array $state, string $targetword, int $maxattempts): array {
+        $wordtext = $state['wordtext'] ?? '';
+
         $rows = [];
         for ($i = 0; $i < $maxattempts; $i++) {
             $rowstate = $state['rows'][$i] ?? null;
             if ($rowstate) {
-                $rowletters = self::build_row_letters(
-                    $rowstate['word'],
-                    $rowstate['originalword'] ?? $rowstate['word'],
-                    $rowstate['feedback']
-                );
+                $displayword = self::resolve_row_display_word($rowstate, $wordtext);
+                $rowletters = self::build_row_letters($rowstate['word'], $displayword, $rowstate['feedback']);
             } else if ($targetword !== '') {
                 $rowletters = [];
                 $wordlength = core_text::strlen($targetword);

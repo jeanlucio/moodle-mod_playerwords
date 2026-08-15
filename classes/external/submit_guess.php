@@ -98,7 +98,7 @@ class submit_guess extends external_api {
             $lastrow = end($state['rows']);
             $feedbackresult = round_presenter::build_row_letters(
                 $lastrow['word'],
-                $lastrow['originalword'] ?? $lastrow['word'],
+                round_presenter::resolve_row_display_word($lastrow, $state['wordtext'] ?? ''),
                 $lastrow['feedback']
             );
         }
