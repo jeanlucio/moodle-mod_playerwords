@@ -13,25 +13,25 @@ services, and Privacy API compliance. Every CI push runs against the full matrix
 | `lib_grant_potential_test.php` | 6 |
 | `lib_reset_userdata_test.php` | 4 |
 | `completion/custom_completion_test.php` | 7 |
-| `privacy/provider_test.php` | 28 |
-| **Subtotal** | **55** |
+| `privacy/provider_test.php` | 30 |
+| **Subtotal** | **57** |
 
 ### Local Business-Logic Tests (`tests/local/`)
 
 | Test file | Cases |
 |-----------|------:|
-| `ai_word_generator_test.php` | 14 |
-| `attempts_history_service_test.php` | 18 |
+| `ai_word_generator_test.php` | 16 |
+| `attempts_history_service_test.php` | 19 |
 | `gameplay_service_test.php` | 19 |
-| `hud_service_test.php` | 26 |
+| `hud_service_test.php` | 27 |
 | `intro_service_test.php` | 5 |
-| `ranking_service_test.php` | 7 |
+| `ranking_service_test.php` | 9 |
 | `round_presenter_test.php` | 38 |
 | `round_service_test.php` | 58 |
 | `view_page_service_test.php` | 18 |
 | `word_normalizer_test.php` | 16 |
-| `words_repository_test.php` | 62 |
-| **Subtotal** | **281** |
+| `words_repository_test.php` | 64 |
+| **Subtotal** | **289** |
 
 ### Web Services Tests (`tests/external/`)
 
@@ -40,13 +40,13 @@ services, and Privacy API compliance. Every CI push runs against the full matrix
 | `count_eligible_words_test.php` | 6 |
 | `count_glossary_candidates_test.php` | 4 |
 | `end_round_test.php` | 6 |
-| `new_round_test.php` | 3 |
+| `new_round_test.php` | 5 |
 | `reveal_hint_test.php` | 7 |
 | `start_round_test.php` | 7 |
 | `submit_guess_test.php` | 9 |
-| **Subtotal** | **42** |
+| **Subtotal** | **44** |
 
-| **Grand Total** | **378** |
+| **Grand Total** | **390** |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords
