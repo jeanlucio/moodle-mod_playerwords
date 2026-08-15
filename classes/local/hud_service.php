@@ -119,6 +119,9 @@ class hud_service {
      * @return int
      */
     public static function get_available_quantity(int $blockinstanceid, int $userid, int $itemid): int {
+        if (!self::is_installed()) {
+            return 0;
+        }
         return \block_playerhud\local\external_items::get_available_quantity($blockinstanceid, $itemid, $userid);
     }
 
@@ -131,6 +134,9 @@ class hud_service {
      * @return string
      */
     public static function get_item_name(int $blockinstanceid, int $itemid): string {
+        if (!self::is_installed()) {
+            return '';
+        }
         return \block_playerhud\local\external_items::get_name($blockinstanceid, $itemid);
     }
 
@@ -149,6 +155,9 @@ class hud_service {
      * @return bool
      */
     public static function consume_items(int $blockinstanceid, int $userid, int $itemid, int $qty): bool {
+        if (!self::is_installed()) {
+            return true;
+        }
         return \block_playerhud\local\external_items::consume($blockinstanceid, $itemid, $userid, $qty) !== false;
     }
 
@@ -209,6 +218,9 @@ class hud_service {
      * @return void
      */
     public static function grant_items(int $blockinstanceid, int $userid, int $itemid, int $qty, bool $suppressxp): void {
+        if (!self::is_installed()) {
+            return;
+        }
         \block_playerhud\local\external_items::grant($blockinstanceid, $itemid, $userid, $qty, 'playerwords', $suppressxp);
     }
 }
