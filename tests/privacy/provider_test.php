@@ -428,6 +428,82 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     }
 
     /**
+     * Tests that export_user_data writes the correct, non-overlapping attempts/words for
+     * each context when the approved list spans several activities — the correctness side
+     * of the N+1 fix: batching by playerwordsid must not blend one activity's rows into
+     * another's export.
+     *
+     * @return void
+     */
+    public function test_export_user_data_across_multiple_contexts(): void {
+        $course = $this->getDataGenerator()->create_course();
+        $cm1    = $this->make_cm($course);
+        $cm2    = $this->make_cm($course);
+        $user   = $this->getDataGenerator()->create_user();
+
+        $wordid1 = $this->make_word($user->id, (int)$cm1->id);
+        $this->make_attempt($user->id, (int)$cm1->id, $wordid1, 10.0);
+        $wordid2 = $this->make_word($user->id, (int)$cm2->id);
+        $this->make_attempt($user->id, (int)$cm2->id, $wordid2, 20.0);
+
+        $context1    = \context_module::instance($cm1->cmid);
+        $context2    = \context_module::instance($cm2->cmid);
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', [$context1->id, $context2->id]);
+        provider::export_user_data($contextlist);
+
+        $data1 = writer::with_context($context1)->get_data([
+            get_string('pluginname', 'mod_playerwords'),
+            get_string('privacy:attempts', 'mod_playerwords'),
+        ]);
+        $data2 = writer::with_context($context2)->get_data([
+            get_string('pluginname', 'mod_playerwords'),
+            get_string('privacy:attempts', 'mod_playerwords'),
+        ]);
+
+        $this->assertCount(1, $data1->attempts);
+        $this->assertSame($wordid1, (int)$data1->attempts[0]['wordid']);
+        $this->assertSame(10.0, (float)$data1->attempts[0]['rankingpoints']);
+
+        $this->assertCount(1, $data2->attempts);
+        $this->assertSame($wordid2, (int)$data2->attempts[0]['wordid']);
+        $this->assertSame(20.0, (float)$data2->attempts[0]['rankingpoints']);
+    }
+
+    /**
+     * Regression test for the N+1 flagged in the 2026-08-15 security audit: reading
+     * attempts and words used to run two get_records_select() calls per context in the
+     * approved list. Asserts the DB read count stays bounded as the number of contexts
+     * grows, instead of scaling linearly with it — mirrors the read-count assertion
+     * style already used in blocks/playerhud/tests/quest_test.php.
+     *
+     * @return void
+     */
+    public function test_export_user_data_read_count_does_not_scale_with_contexts(): void {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $user   = $this->getDataGenerator()->create_user();
+        $contextids = [];
+        for ($i = 0; $i < 6; $i++) {
+            $cm = $this->make_cm($course);
+            $wordid = $this->make_word($user->id, (int)$cm->id);
+            $this->make_attempt($user->id, (int)$cm->id, $wordid);
+            $contextids[] = \context_module::instance($cm->cmid)->id;
+        }
+
+        $contextlist = new approved_contextlist($user, 'mod_playerwords', $contextids);
+
+        $readsbefore = $DB->perf_get_reads();
+        provider::export_user_data($contextlist);
+        $reads = $DB->perf_get_reads() - $readsbefore;
+
+        // Before the fix: 2 reads per context (12 for 6 contexts), plus the shared
+        // cmid=>instanceid lookup. After: the cmid=>instanceid lookup plus exactly one
+        // bulk read each for attempts and words, regardless of context count.
+        $this->assertLessThanOrEqual(4, $reads);
+    }
+
+    /**
      * Tests that export_user_data is a no-op for an empty approved contextlist.
      *
      * @return void
