@@ -240,6 +240,47 @@ class behat_mod_playerwords extends behat_base {
     }
 
     /**
+     * Asserts the active guess row's own tile boxes currently hold exactly the given
+     * letters, one per box, in position order — "_" marks a position expected to
+     * still be empty. Reads values via a single evaluateScript() call rather than
+     * per-element WebDriver traversal, mirroring mod_playercross's own equivalent
+     * step ("PlayerCross clue :position tiles should read :expected").
+     *
+     * @param string $expected Expected letters, "_" marking a still-empty box.
+     * @Then the PlayerWords guess tiles should read :expected
+     */
+    public function playerwords_guess_tiles_should_read(string $expected): void {
+        $js = <<<'JS'
+            (function() {
+                var row = document.querySelector('.mod-playerwords-row.pw-row-active');
+                if (!row) {
+                    return null;
+                }
+                var boxes = row.querySelectorAll('.mod-playerwords-tile-input');
+                return Array.from(boxes).map(function(box) {
+                    return box.value;
+                }).join('|');
+            })();
+JS;
+        $actual = $this->getSession()->evaluateScript($js);
+        if ($actual === null) {
+            throw new \Exception('No PlayerWords active guess row currently on screen.');
+        }
+
+        $actualchars = explode('|', $actual);
+        $expectedchars = preg_split('//u', $expected, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($actualchars as $i => $actualchar) {
+            $expectedchar = strtoupper($expectedchars[$i] ?? '');
+            $expectedchar = $expectedchar === '_' ? '' : $expectedchar;
+            if (strtoupper($actualchar) !== $expectedchar) {
+                throw new \Exception(
+                    'PlayerWords guess tile ' . ($i + 1) . " expected '{$expectedchar}' but found '{$actualchar}'."
+                );
+            }
+        }
+    }
+
+    /**
      * Creates a PlayerHUD item in the block already added to the given course.
      *
      * Direct $DB insert rather than going through the block's own management UI, matching

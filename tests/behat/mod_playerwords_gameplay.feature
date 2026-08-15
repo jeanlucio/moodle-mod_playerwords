@@ -51,6 +51,21 @@ Feature: PlayerWords core gameplay loop
     And I click on "[data-key=\"ENTER\"]" "css_element"
     Then I should see "Better luck next time."
 
+  Scenario: Arrow keys move focus between a guess row's own boxes without changing values
+    Given the following "activities" exist:
+      | activity    | course | name       | min_length | max_length | max_attempts |
+      | playerwords | C1     | Word Arrow | 5          | 5          | 6             |
+    And the following PlayerWords words exist in activity "Word Arrow":
+      | word  |
+      | codar |
+    And I log in as "student1"
+    And I am on the "Word Arrow" "playerwords activity" page
+    And I click on "Start round" "button"
+    When I fill the PlayerWords guess tiles with "c"
+    And I press the right key
+    And I press the v key
+    Then the PlayerWords guess tiles should read "c_v__"
+
   Scenario: Student forfeits an active round with a confirmation dialog
     Given the following "activities" exist:
       | activity    | course | name         | min_length | max_length | max_attempts |

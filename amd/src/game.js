@@ -797,10 +797,13 @@ const handleBoxInput = (box) => {
  * Wires the grid's delegated input handling: tracking which box last had focus,
  * filtering/advancing on physical typing landing directly in a focused box, moving
  * back a box on Backspace once the focused box is already empty (the 'input' listener
- * alone never fires for that, since the value does not change), and focusing the
- * active row's first box when a click lands elsewhere in that row (its padding, a gap)
- * rather than on one specific box. Wired once per grid element — the grid DOM node
- * persists across guesses within the same round, only its cells' element types change.
+ * alone never fires for that, since the value does not change), moving focus one box
+ * left/right on the physical arrow keys — the standard verification-code-input
+ * convention, harmless to take over from the browser's own default of moving the text
+ * caret inside a single-character box — and focusing the active row's first box when a
+ * click lands elsewhere in that row (its padding, a gap) rather than on one specific
+ * box. Wired once per grid element — the grid DOM node persists across guesses within
+ * the same round, only its cells' element types change.
  *
  * @param {HTMLElement} grid The .mod-playerwords-grid container.
  */
@@ -818,11 +821,16 @@ const wireGridInput = (grid) => {
         }
     });
     grid.addEventListener('keydown', (e) => {
-        if (e.key !== 'Backspace') {
+        const box = e.target.closest('.mod-playerwords-tile-input');
+        if (!box) {
             return;
         }
-        const box = e.target.closest('.mod-playerwords-tile-input');
-        if (!box || box.value !== '') {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            focusAdjacentBox(box, e.key === 'ArrowLeft' ? -1 : 1);
+            return;
+        }
+        if (e.key !== 'Backspace' || box.value !== '') {
             return;
         }
         e.preventDefault();
@@ -1212,10 +1220,11 @@ const isActivatableControl = (el) => {
  * across every round-panel re-render, so wiring it again per round would stack
  * duplicate listeners and type every letter multiple times.
  *
- * Letters and Backspace are only handled here when no letter box currently has native
- * focus — a focused box already handles its own typing natively (see wireGridInput's
- * delegated 'input'/'focusin'/'keydown' listeners on the grid), exactly like a normal
- * text field; this only steps in as a fallback so typing still reaches the active box
+ * Letters, Backspace and the Left/Right arrow keys are only handled here when no
+ * letter box currently has native focus — a focused box already handles its own typing
+ * and arrow-key navigation natively (see wireGridInput's delegated
+ * 'input'/'focusin'/'keydown' listeners on the grid), exactly like a normal text field;
+ * this only steps in as a fallback so typing and navigation still reach the active box
  * when nothing (or something inert) has focus. Enter is always handled here
  * unconditionally instead, since there is no visible submit button and no native
  * "press Enter in a box to submit" behaviour to fall back on — except when focus is on
@@ -1244,7 +1253,10 @@ const initPhysicalKeyboardCapture = () => {
         if (isOwnBox(active) || isOtherTextField(active) || !activeBox) {
             return;
         }
-        if (e.key === 'Backspace') {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            focusAdjacentBox(activeBox, e.key === 'ArrowLeft' ? -1 : 1);
+        } else if (e.key === 'Backspace') {
             e.preventDefault();
             backspaceActiveBox();
         } else if (e.key.length === 1 && /\p{L}/u.test(e.key)) {

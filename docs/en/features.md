@@ -1,6 +1,6 @@
 # ✨ Features
 
-* 🟩 **Word-Guessing Gameplay:** Colour-coded + symbol feedback per letter (correct position, wrong position, absent). Each attempt is a row of individual letter boxes — click any one to fix a specific letter without retyping the whole word — and typing works from a physical keyboard even before clicking into a box.
+* 🟩 **Word-Guessing Gameplay:** Colour-coded + symbol feedback per letter (correct position, wrong position, absent). Each attempt is a row of individual letter boxes — click any one to fix a specific letter without retyping the whole word, or move between boxes with the Left/Right arrow keys, the same verification-code-input convention as a bank 2FA field — and typing works from a physical keyboard even before clicking into a box.
 * 📖 **Glossary Integration:** Import concepts from one or all course glossaries as the word pool, with definitions used as hints.
 * 🚧 **Configurable Stopwords:** A per-activity, comma-separated list of words (e.g. "the, of, and") to ignore when splitting a multi-word glossary concept into candidates — so a concept like "Kingdom of the Netherlands" can still yield the meaningful term instead of also drawing "of" and "the" as separate one-off words.
 * 🤖 **AI Word Generation (Optional):** Generate candidate words and hints for a given topic via `local_aihub` (BYOK) or Moodle's `core_ai` fallback. Generated words are treated as untrusted input — only single-token, purely alphabetic terms within the configured length bounds are saved, and they enter the pool pending teacher approval.
