@@ -76,6 +76,25 @@ Feature: PlayerWords toolbar and modals
     And I click on "[data-key=\"ENTER\"]" "css_element"
     Then "#playerwords-forfeit-button" "css_element" should not be visible
 
+  Scenario: The hint button only appears when hints are enabled for the activity
+    Given the following "activities" exist:
+      | activity    | course | name           | min_length | max_length | hints_enabled |
+      | playerwords | C1     | Word HintOn    | 5          | 5          | 1             |
+      | playerwords | C1     | Word HintOff   | 5          | 5          | 0             |
+    And the following PlayerWords words exist in activity "Word HintOn":
+      | word  | hint       |
+      | rodar | girar algo |
+    And the following PlayerWords words exist in activity "Word HintOff":
+      | word  | hint       |
+      | rodar | girar algo |
+    And I log in as "student1"
+    And I am on the "Word HintOn" "playerwords activity" page
+    And I click on "Start round" "button"
+    Then "#playerwords-hint-button" "css_element" should exist
+    When I am on the "Word HintOff" "playerwords activity" page
+    And I click on "Start round" "button"
+    Then "#playerwords-hint-button" "css_element" should not exist
+
   Scenario: The help modal shows the optional paragraphs when they are all relevant
     Given the following "activities" exist:
       | activity    | course | name         | min_length | max_length | show_ranking | grade | hud_round_cost_item |

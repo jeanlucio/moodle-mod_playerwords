@@ -878,6 +878,23 @@ final class round_presenter_test extends \advanced_testcase {
     }
 
     /**
+     * Tests that hints_enabled=0 hides the hint button entirely, even though the
+     * picked word has a hint configured.
+     *
+     * @return void
+     */
+    public function test_build_round_panel_context_hints_disabled_hides_button(): void {
+        $instance = $this->make_instance(['hints_enabled' => 0]);
+        $cm = (object)['id' => 5];
+        $user = $this->getDataGenerator()->create_user();
+        $state = $this->make_state(['hint' => 'dica', 'hintrevealed' => false]);
+
+        $context = round_presenter::build_round_panel_context($instance, $cm, $state, 'boca', $user->id);
+
+        $this->assertFalse($context['canhint']);
+    }
+
+    /**
      * The round panel shows the PlayerHUD balance/cost line, and disables the hint
      * button, while the user's balance is short of the required quantity.
      *

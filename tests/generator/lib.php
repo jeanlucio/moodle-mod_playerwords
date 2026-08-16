@@ -47,6 +47,7 @@ class mod_playerwords_generator extends testing_module_generator {
             'show_ranking'       => 1,
             'wordmode'           => 1,
             'max_rounds'         => 0,
+            'hints_enabled'      => 1,
             'cooldown_seconds'   => 86400,
             'completionattempts' => 0,
             'grade'              => 100,

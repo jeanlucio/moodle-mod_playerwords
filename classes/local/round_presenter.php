@@ -576,7 +576,13 @@ class round_presenter {
         $hudhintcostlabel = '';
         $canaffordhint = true;
         $hintcostitem = (int)($instance->hud_hint_cost_item ?? 0);
-        if ($hintcostitem > 0 && !empty($state['hint']) && empty($state['hintrevealed']) && !isguestuser()) {
+        if (
+            $hintcostitem > 0
+            && !empty($instance->hints_enabled)
+            && !empty($state['hint'])
+            && empty($state['hintrevealed'])
+            && !isguestuser()
+        ) {
             $info = self::build_hud_cost_info(
                 hud_service::resolve_block_instance_id($instance),
                 $hintcostitem,
@@ -608,7 +614,10 @@ class round_presenter {
             'hintlabel' => get_string('hintlabel', 'mod_playerwords'),
             'hintvalue' => !empty($state['hintrevealed']) ? ($state['hint'] ?? '') : '',
             'showhint' => !empty($state['hintrevealed']) && !empty($state['hint']),
-            'canhint' => !empty($state['hint']) && empty($state['hintrevealed']) && empty($state['finished']),
+            'canhint' => !empty($instance->hints_enabled)
+                && !empty($state['hint'])
+                && empty($state['hintrevealed'])
+                && empty($state['finished']),
             'hintbuttonlabel' => get_string('hintbuttonlabel', 'mod_playerwords'),
             'hudhintcost' => $hudhintcost,
             'hudhintcostlabel' => $hudhintcostlabel,

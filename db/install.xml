@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/playerwords/db" VERSION="20260814" COMMENT="XMLDB file for mod_playerwords"
+<XMLDB PATH="mod/playerwords/db" VERSION="20260816" COMMENT="XMLDB file for mod_playerwords"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -33,6 +33,8 @@
             COMMENT="Word selection mode: 1=random per round, 2=word of the day"/>
         <FIELD NAME="max_rounds" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"
             COMMENT="Maximum rounds per user, 0 means unlimited"/>
+        <FIELD NAME="hints_enabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"
+            COMMENT="Whether the reveal-hint button is offered at all this activity"/>
         <FIELD NAME="cooldown_seconds" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="86400" SEQUENCE="false"
             COMMENT="Cooldown between rounds in seconds, 0 means disabled"/>
         <FIELD NAME="completionattempts" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"

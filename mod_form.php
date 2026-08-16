@@ -203,6 +203,11 @@ class mod_playerwords_mod_form extends moodleform_mod {
         $mform->setType('max_rounds', PARAM_INT);
         $mform->setDefault('max_rounds', 0);
 
+        $mform->addElement('advcheckbox', 'hints_enabled', get_string('hints_enabled', 'mod_playerwords'));
+        $mform->setType('hints_enabled', PARAM_INT);
+        $mform->setDefault('hints_enabled', 1);
+        $mform->addHelpButton('hints_enabled', 'hints_enabled', 'mod_playerwords');
+
         $cooldowngroup = [];
         $cooldowngroup[] = $mform->createElement('text', 'cooldown_amount', '', ['size' => 5]);
         $cooldowngroup[] = $mform->createElement(

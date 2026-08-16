@@ -50,6 +50,7 @@ class backup_playerwords_activity_structure_step extends backup_activity_structu
             'show_ranking',
             'wordmode',
             'max_rounds',
+            'hints_enabled',
             'cooldown_seconds',
             'completionattempts',
             'grade',

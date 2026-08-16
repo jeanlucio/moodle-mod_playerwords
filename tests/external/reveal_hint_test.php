@@ -178,6 +178,25 @@ final class reveal_hint_test extends \advanced_testcase {
     }
 
     /**
+     * Tests that hints_enabled=0 blocks revealing the hint for the whole activity,
+     * even though the picked word has one configured.
+     *
+     * @return void
+     */
+    public function test_rejects_when_hints_are_disabled_for_the_activity(): void {
+        $instance = $this->make_instance(['hints_enabled' => 0]);
+        $this->setUser($this->student);
+        $this->start_round($instance);
+
+        $result = $this->call_reveal_hint($instance->cmid);
+
+        $this->assertFalse($result['error']);
+        $this->assertFalse($result['data']['success']);
+        $this->assertSame('', $result['data']['hintvalue']);
+        $this->assertSame('warning', $result['data']['notificationtype']);
+    }
+
+    /**
      * Tests that a finished round rejects the hint request.
      *
      * @return void

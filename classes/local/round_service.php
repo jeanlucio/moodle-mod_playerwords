@@ -437,6 +437,10 @@ class round_service {
             return [$state, get_string('roundtimeout', 'mod_playerwords'), 'warning', true];
         }
 
+        if (empty($instance->hints_enabled)) {
+            return [$state, get_string('hintsdisabled', 'mod_playerwords'), 'warning', true];
+        }
+
         $hintcostitem = (int)($instance->hud_hint_cost_item ?? 0);
         if (!isguestuser() && $hintcostitem > 0) {
             $blockinstanceid = hud_service::resolve_block_instance_id($instance);
