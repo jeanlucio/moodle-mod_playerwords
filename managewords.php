@@ -17,9 +17,9 @@
 /**
  * Manage manual words for one PlayerWords activity.
  *
- * @package mod_playerwords
+ * @package    mod_playerwords
  * @copyright  2026 Jean Lúcio
- * @license https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 require(__DIR__ . '/../../config.php');
