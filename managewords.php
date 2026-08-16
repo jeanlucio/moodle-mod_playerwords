@@ -285,6 +285,7 @@ $templatecontext = [
     'aigeneratetopic'        => get_string('aigeneratetopic', 'mod_playerwords'),
     'aigeneratecount'        => get_string('aigeneratecount', 'mod_playerwords'),
     'aigeneratebutton'       => get_string('aigeneratebutton', 'mod_playerwords'),
+    'aigenerating'           => get_string('aigenerating', 'mod_playerwords'),
     'recentwordslabel'       => get_string('recentwordslabel', 'mod_playerwords'),
     'nowordsyet'             => get_string('nowordsyet', 'mod_playerwords'),
     'wordcolumnlabel'        => get_string('wordcolumnlabel', 'mod_playerwords'),
