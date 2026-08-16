@@ -24,7 +24,7 @@ The activity integrates with the course **Glossary** (words and definitions are 
 
 Designed around **retrieval practice** and **spaced repetition** — well-evidenced techniques for long-term retention — it turns vocabulary review into active recall instead of passive reading.
 
-📚 **[Full documentation](https://jeanlucio.github.io/moodle-mod_playerwords/)** — features, educational purpose, the PlayerGames ecosystem, usage guide, grading & ranking model, the full 390-case test suite, and security details.
+📚 **[Full documentation](https://jeanlucio.github.io/moodle-mod_playerwords/)** — features, educational purpose, the PlayerGames ecosystem, usage guide, grading & ranking model, the full 400-case PHPUnit suite (88% line coverage) plus a 30-scenario Behat suite, and security details.
 
 ### 🔒 Third-party Service Disclosure
 
@@ -48,7 +48,7 @@ Full disclosure:
 
 | Component | Version |
 |-----------|---------|
-| Moodle    | 4.5+    |
+| Moodle    | 4.5 – 5.2 |
 | PHP       | 8.1+    |
 
 ### 🛠️ Installation & Configuration
@@ -61,10 +61,12 @@ Full disclosure:
 4. Visit **Site administration > Notifications** to complete installation.
 5. Add a **PlayerWords** activity to any course.
 
-This plugin has no separate site-level settings to configure after installation — every
-setting is configured by the teacher when adding the activity to a course, as covered in the
+This plugin has no site-level settings for an admin to configure — every setting is
+configured by the teacher when adding the activity to a course, as covered in the
 [Usage](https://jeanlucio.github.io/moodle-mod_playerwords/#usage) section of the full
-documentation.
+documentation. If `block_playerhud` isn't installed on the site, the plugin's own settings
+page under *Site administration → Plugins → Activity modules → PlayerWords* shows an
+informational notice about it — there's nothing to configure there either way.
 
 ### 🆘 Support
 
@@ -93,7 +95,7 @@ A atividade integra-se com o **Glossário** do curso (palavras e definições s�
 
 Baseado na **prática de recuperação** e na **repetição espaçada** — técnicas com boa evidência de eficácia para retenção de longo prazo — transforma a revisão de vocabulário em recuperação ativa da memória em vez de leitura passiva.
 
-📚 **[Documentação completa](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html)** — funcionalidades, finalidade educacional, ecossistema PlayerGames, guia de uso, modelo de nota e ranking, a suíte completa de 390 testes, e detalhes de segurança.
+📚 **[Documentação completa](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html)** — funcionalidades, finalidade educacional, ecossistema PlayerGames, guia de uso, modelo de nota e ranking, a suíte completa de 400 testes PHPUnit (88% de cobertura de linhas) mais uma suíte Behat de 30 cenários, e detalhes de segurança.
 
 ### 🔒 Divulgação de Serviço de Terceiros
 
@@ -117,7 +119,7 @@ Divulgação completa:
 
 | Componente | Versão |
 |------------|--------|
-| Moodle     | 4.5+   |
+| Moodle     | 4.5 – 5.2 |
 | PHP        | 8.1+   |
 
 ### 🛠️ Instalação e Configuração
@@ -130,10 +132,12 @@ Divulgação completa:
 4. Acesse **Administração do site > Notificações** para concluir a instalação.
 5. Adicione uma atividade **PlayerWords** a qualquer curso.
 
-Este plugin não tem configurações separadas em nível de site após a instalação — toda
+Este plugin não tem configurações de nível de site para o administrador ajustar — toda
 configuração é feita pelo professor ao adicionar a atividade a um curso, conforme explicado na
 seção [Como Usar](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html#usage) da
-documentação completa.
+documentação completa. Se o `block_playerhud` não estiver instalado no site, a própria página
+de configurações do plugin em *Administração do site → Plugins → Módulos de atividade →
+PlayerWords* mostra um aviso informativo sobre isso — não há nada a configurar ali de qualquer forma.
 
 ### 🆘 Suporte
 

@@ -4,9 +4,10 @@
 2. Configure:
    * Word length range and maximum attempts
    * Cooldown between rounds and round limit
+   * Whether hints are allowed at all
    * Word mode (random or shared sequence)
    * Grading method and gradebook settings
-   * Word sources (manual, Glossary, AI), Glossary source, and a stopword list to skip when splitting multi-word glossary concepts (all optional)
+   * Word sources (manual, Glossary), Glossary source, and a stopword list to skip when splitting multi-word glossary concepts (all optional) — AI generation is always available on the Manage words page, independent of these source checkboxes
    * PlayerHUD item costs and win grant (optional, when PlayerHUD block is present)
 3. Open the **Manage words** page to add, generate with AI, approve, edit, or delete words.
 4. Students play directly from the activity page — guessing, revealing hints, and forfeiting rounds, with no page reload. The page's own toolbar gives access to the rules (help), attempt history, and the ranking.
