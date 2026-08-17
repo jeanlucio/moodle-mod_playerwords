@@ -119,6 +119,7 @@ $string['guesslabel'] = 'Your guess';
 $string['guesslengthmismatch'] = 'The guess must have exactly {$a} letters.';
 $string['guessnotinpool'] = 'Word not recognized for this activity. Try another.';
 $string['guessplaceholder'] = 'Type a word';
+$string['help_accents'] = 'On the game\'s on-screen keyboard, hold down a vowel key (A, E, I, O, U) to open its accented variants and drag to the one you want — accenting is optional, the game recognizes the word even without one.';
 $string['help_attempts'] = 'You have a limited number of attempts per round, shown at the top of the board.';
 $string['help_grading'] = 'Grading method for this activity: {$a}.';
 $string['help_hint'] = 'A hint may be available, depending on how the teacher configured the activity.';

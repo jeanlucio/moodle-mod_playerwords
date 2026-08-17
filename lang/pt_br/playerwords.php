@@ -119,6 +119,7 @@ $string['guesslabel'] = 'Seu palpite';
 $string['guesslengthmismatch'] = 'O palpite deve ter exatamente {$a} letras.';
 $string['guessnotinpool'] = 'Palavra não reconhecida nesta atividade. Tente outra.';
 $string['guessplaceholder'] = 'Digite uma palavra';
+$string['help_accents'] = 'No teclado virtual do jogo, segure uma tecla de vogal (A, E, I, O, U) para abrir as variantes acentuadas e arraste até a que você quiser — acentuar é opcional, o jogo reconhece a palavra mesmo sem acento.';
 $string['help_attempts'] = 'Você tem um número limitado de tentativas por rodada, mostrado no topo do tabuleiro.';
 $string['help_grading'] = 'Método de avaliação desta atividade: {$a}.';
 $string['help_hint'] = 'Uma dica pode estar disponível, dependendo de como o professor configurou a atividade.';

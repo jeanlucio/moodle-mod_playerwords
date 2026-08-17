@@ -155,6 +155,22 @@ const initForfeit = (cmid, timertotal) => {
 };
 
 /**
+ * Removes the accent long-press tip from the pre-rendered help content on devices
+ * without touch support, where initAccentLongPress never wires the gesture at all
+ * (its own listeners are touch-only) — showing the tip there would describe a feature
+ * that does not exist on that device.
+ *
+ * @param {HTMLElement} content Hidden container holding the pre-rendered help body.
+ */
+const pruneAccentTipForNonTouch = (content) => {
+    const supportsTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    if (supportsTouch) {
+        return;
+    }
+    content.querySelector('.mod-playerwords-help-accents')?.remove();
+};
+
+/**
  * Opens the how-to-play content (already server-rendered into #playerwords-help-content)
  * in a modal, keeping the current round visible instead of navigating away to a
  * separate page.
@@ -191,6 +207,7 @@ const initHelpModal = (autoshow) => {
     if (!button || !content) {
         return;
     }
+    pruneAccentTipForNonTouch(content);
     button.addEventListener('click', () => {
         openHelpModal(button, content);
     });
