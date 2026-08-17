@@ -402,6 +402,19 @@ const startCountdown = (until, cmid) => {
 };
 
 /**
+ * "Ç" and "C" are the same letter identity as far as the game itself is concerned —
+ * word_normalizer::normalize() strips the cedilla before comparing a guess to the
+ * target, server-side — but a grid cell always displays whichever spelling was
+ * actually typed or (on the winning row) the target's own true spelling. Folding both
+ * onto the same key here keeps the two keyboard buttons in sync instead of letting
+ * whichever one was never literally typed/shown stay stuck on an older or blank state.
+ *
+ * @param {string} letter A single uppercase letter, as read from a cell or a key.
+ * @return {string} The letter itself, or "C" if it was "Ç".
+ */
+const keyboardLetterIdentity = (letter) => (letter === 'Ç' ? 'C' : letter);
+
+/**
  * Rescans every rendered grid cell and recolors the on-screen keyboard keys, using the
  * highest-ranked state seen for each letter (correct > present > absent). Safe to call
  * repeatedly — e.g. once at page load and again after every guess.
@@ -429,13 +442,14 @@ const recolorKeyboard = () => {
                 bestState = s;
             }
         });
-        if (bestState && (!letterStates[letter] || stateRank[bestState] > stateRank[letterStates[letter]])) {
-            letterStates[letter] = bestState;
+        const identity = keyboardLetterIdentity(letter);
+        if (bestState && (!letterStates[identity] || stateRank[bestState] > stateRank[letterStates[identity]])) {
+            letterStates[identity] = bestState;
         }
     });
 
     keyboard.querySelectorAll('[data-key]').forEach((btn) => {
-        const state = letterStates[btn.dataset.key];
+        const state = letterStates[keyboardLetterIdentity(btn.dataset.key)];
         if (state) {
             btn.classList.add(`is-${state}`);
         }
