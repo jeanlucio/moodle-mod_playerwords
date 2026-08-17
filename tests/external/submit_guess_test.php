@@ -422,7 +422,13 @@ final class submit_guess_test extends \advanced_testcase {
      * @return void
      */
     public function test_fractional_ranking_points_survive_the_webservice_call(): void {
+        // Grade=0 (ungraded) deliberately: ranking points are scored against the fixed
+        // PLAYERWORDS_RANKING_BASE_POINTS, never the activity's own grade, so 83.33
+        // below can only have come from that fixed base — proof at the webservice
+        // layer, not just the gameplay_service unit tests, that grade=0 no longer
+        // means "ranking is always zero".
         $instance = $this->make_instance([
+            'grade'              => 0,
             'show_ranking'       => 1,
             'max_attempts'       => 7,
             'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR,

@@ -17,28 +17,32 @@ Turning one off never affects the other: an activity can be graded with no ranki
 no grade, both, or neither.
 
 **Per-round scoring** decides how much a single round is worth, chosen separately for the grade
-and for the ranking (`Grade scoring` / `Ranking scoring` settings, both default to **Binary**):
+and for the ranking (`Grade scoring` / `Ranking scoring` settings, both default to **Binary**).
+The grade is scored against the activity's **own configured maximum grade**; the **ranking always
+uses its own fixed 100-point base, completely independent of the grade** — even when the activity
+has no grade at all (`Grade` = *None*, the form's default), the ranking still works normally:
 
 | Mode | A won round is worth... | A lost, forfeited, or timed-out round |
 |---|---|---|
-| **Binary** (default) | The full activity grade | Zero |
-| **Linear** | Full credit on the first two attempts, then a share proportional to attempts spared: `grade × (max_attempts − attempts_used + 1) / (max_attempts − 1)` | Zero |
+| **Binary** (default) | The full base (the activity's grade, or a fixed 100 points for ranking) | Zero |
+| **Linear** | Full credit on the first two attempts, then a share proportional to attempts spared: `base × (max_attempts − attempts_used + 1) / (max_attempts − 1)` | Zero |
 
 Linear gives full credit on the first two attempts — a confident second guess is not treated as
 less deserving than a first-try one, since this is a non-punitive educational game rather than a
 luck-based guessing contest — then scales the remaining attempts down proportionally, never fully
 zeroing out a win: even winning on the very last allowed attempt still earns a positive share.
-Example with a 100-point grade and 6 maximum attempts:
+Example with 6 maximum attempts — the grade column assumes a 100-point maximum grade, but the
+ranking column is exactly this in **any** activity, even one with no grade configured at all:
 
-| Attempts used | Linear points |
-|---:|---:|
-| 1 | 100.00 |
-| 2 | 100.00 |
-| 3 | 80.00 |
-| 4 | 60.00 |
-| 5 | 40.00 |
-| 6 | 20.00 |
-| Not completed | 0.00 |
+| Attempts used | Grade (100-point base) | Ranking (100-point base, always) |
+|---:|---:|---:|
+| 1 | 100.00 | 100.00 |
+| 2 | 100.00 | 100.00 |
+| 3 | 80.00 | 80.00 |
+| 4 | 60.00 | 60.00 |
+| 5 | 40.00 | 40.00 |
+| 6 | 20.00 | 20.00 |
+| Not completed | 0.00 | 0.00 |
 
 With `Maximum attempts` set to 2 or fewer, Linear is numerically identical to Binary — every
 allowed attempt already falls within the full-credit plateau.
@@ -68,10 +72,21 @@ activity started, not just the points earned from that moment forward — nothin
 nothing needs to be "recovered" by switching it off and back on.
 
 **Locked once graded:** the moment the activity records a real grade for any student, `Maximum
-attempts`, `Grade scoring` and `Ranking scoring` all lock — the same way Moodle already locks a
-graded activity's own "Maximum grade" field once real grades exist. This guarantees every round
-ever recorded for that activity was scored under the exact same rules, so the grade and the
-ranking total both stay internally consistent for the activity's whole lifetime.
+attempts` and `Grade scoring` lock — the same way Moodle already locks a graded activity's own
+"Maximum grade" field once real grades exist. This guarantees every round ever recorded for that
+activity was scored under the exact same grade rules for the activity's whole lifetime.
+
+**`Ranking scoring` locks separately, the moment any finished attempt exists** — it doesn't wait
+for a real grade, because ranking points are already computed and stored for every finished round
+regardless of whether `Grade` or `Show ranking` are even on (see above). An entirely ungraded,
+ranking-only activity already accumulates real history from its very first round; locking the
+scoring mode once that history exists prevents the same scale inconsistency the lock above
+prevents for the grade.
+
+> **Known limitation:** before this fix, ranking points were computed as a fraction of the
+> activity's grade — the very bug that motivated making the ranking independent. Ranking totals
+> from rounds finished before the fix were **not recalculated** and may not be on the same scale
+> as rounds finished afterwards; that history was not migrated.
 
 **Attempt history:** each student can review their own past rounds — word, attempts used, time,
 grade score and (when ranking is enabled) ranking points — from the toolbar's attempt-history

@@ -18,31 +18,36 @@ dois, ou nenhum dos dois.
 
 **A pontuação por rodada** decide quanto vale uma única rodada, escolhida separadamente para a
 nota e para o ranking (configurações `Pontuação da nota` / `Pontuação do ranking`, ambas com
-padrão **Binária**):
+padrão **Binária**). A nota usa a **nota máxima configurada da atividade** como base; o
+**ranking sempre usa sua própria base fixa de 100 pontos, totalmente independente da nota** —
+mesmo numa atividade sem nota nenhuma (`Nota` = *Nenhuma*, o padrão do formulário), o ranking
+continua funcionando normalmente:
 
 | Modo | Uma rodada vencida vale... | Uma rodada perdida, desistida ou com tempo esgotado |
 |---|---|---|
-| **Binária** (padrão) | A nota cheia da atividade | Zero |
-| **Linear** | Nota cheia nas duas primeiras tentativas, depois uma fração proporcional às tentativas poupadas: `nota × (max_attempts − tentativas_usadas + 1) / (max_attempts − 1)` | Zero |
+| **Binária** (padrão) | A base cheia (nota da atividade, ou 100 pontos fixos no ranking) | Zero |
+| **Linear** | Base cheia nas duas primeiras tentativas, depois uma fração proporcional às tentativas poupadas: `base × (max_attempts − tentativas_usadas + 1) / (max_attempts − 1)` | Zero |
 
-O modo linear dá nota cheia nas duas primeiras tentativas — um segundo palpite certeiro não é
+O modo linear dá pontuação cheia nas duas primeiras tentativas — um segundo palpite certeiro não é
 tratado como menos merecedor que um acerto de primeira, já que este é um jogo educativo não
 punitivo, não uma disputa de sorte — e só a partir daí distribui as tentativas restantes
 proporcionalmente, nunca zerando totalmente uma vitória: até vencer na última tentativa permitida
-ainda rende uma fração positiva. Exemplo com nota máxima 100 e 6 tentativas:
+ainda rende uma fração positiva. Exemplo com 6 tentativas — a coluna de nota assume uma nota
+máxima 100, mas a coluna de ranking vale exatamente assim em **qualquer** atividade, mesmo sem
+nota nenhuma configurada:
 
-| Tentativas usadas | Pontos (linear) |
-|---:|---:|
-| 1 | 100,00 |
-| 2 | 100,00 |
-| 3 | 80,00 |
-| 4 | 60,00 |
-| 5 | 40,00 |
-| 6 | 20,00 |
-| Não completou | 0,00 |
+| Tentativas usadas | Nota (base 100) | Ranking (base 100, sempre) |
+|---:|---:|---:|
+| 1 | 100,00 | 100,00 |
+| 2 | 100,00 | 100,00 |
+| 3 | 80,00 | 80,00 |
+| 4 | 60,00 | 60,00 |
+| 5 | 40,00 | 40,00 |
+| 6 | 20,00 | 20,00 |
+| Não completou | 0,00 | 0,00 |
 
 Com `Máximo de tentativas` igual a 2 ou menos, o modo Linear fica numericamente idêntico ao
-Binário — toda tentativa permitida já cai dentro do platô de nota cheia.
+Binário — toda tentativa permitida já cai dentro do platô de pontuação cheia.
 
 **Combinar várias rodadas numa nota final** é uma configuração separada, `Método de avaliação`
 (maior nota, média, primeira tentativa, última tentativa ou média sobre todas as rodadas
@@ -69,11 +74,22 @@ atividade, não só os pontos ganhos a partir da mudança — nada se perde, e n
 "recuperar" nada ao desligar e ligar de novo.
 
 **Trava ao registrar a nota:** assim que a atividade registra uma nota real para qualquer
-estudante, `Máximo de tentativas`, `Pontuação da nota` e `Pontuação do ranking` travam — do mesmo
-jeito que o Moodle já trava o campo "Nota máxima" de uma atividade avaliada assim que existem
-notas reais. Isso garante que toda rodada já registrada para aquela atividade foi pontuada sob
-exatamente as mesmas regras, então a nota e o total do ranking permanecem consistentes durante
-toda a vida da atividade.
+estudante, `Máximo de tentativas` e `Pontuação da nota` travam — do mesmo jeito que o Moodle já
+trava o campo "Nota máxima" de uma atividade avaliada assim que existem notas reais. Isso garante
+que toda rodada já registrada para aquela atividade foi pontuada sob exatamente as mesmas regras
+de nota durante toda a vida da atividade.
+
+**`Pontuação do ranking` trava separadamente, assim que existe qualquer tentativa finalizada** —
+não espera uma nota real, porque os pontos de ranking já são calculados e gravados em toda rodada
+terminada independente de `Nota` ou `Mostrar ranking` estarem ligados (ver acima). Uma atividade
+sem nota nenhuma, só com ranking, já acumula histórico real desde a primeira rodada; travar o modo
+de pontuação assim que esse histórico existe evita a mesma inconsistência de escala que a trava
+acima evita para a nota.
+
+> **Limitação conhecida:** antes desta correção, os pontos de ranking eram calculados como uma
+> fração da nota da atividade — o mesmo bug que motivou tornar o ranking independente. Totais de
+> ranking de rodadas terminadas antes da correção **não foram recalculados** e podem não estar na
+> mesma escala das rodadas terminadas depois; não migramos esse histórico.
 
 **Registro de tentativas:** cada estudante pode conferir suas próprias rodadas passadas —
 palavra, tentativas usadas, tempo, nota da rodada e (quando o ranking está ligado) pontos no

@@ -187,12 +187,14 @@ final class gameplay_service_test extends \basic_testcase {
     }
 
     /**
-     * Tests that binary ranking points match the full grade on a win.
+     * Tests that binary ranking points match PLAYERWORDS_RANKING_BASE_POINTS on a win —
+     * grade is deliberately 0 ("No grade") here, since the whole point of the ranking
+     * base being fixed is that it works the same whether or not the activity is graded.
      *
      * @return void
      */
     public function test_calculate_ranking_points_binary(): void {
-        $instance = (object)['grade' => 100];
+        $instance = (object)['grade' => 0];
         $points = gameplay_service::calculate_ranking_points($instance, 3, true);
         $this->assertSame(100.0, $points);
     }
@@ -200,13 +202,14 @@ final class gameplay_service_test extends \basic_testcase {
     /**
      * Tests that linear ranking points give full credit on the first two attempts,
      * then scale down proportionally over the remaining ones, independently from
-     * whatever the grade scoring mode is set to.
+     * whatever the grade scoring mode is set to — and from the grade value itself
+     * (0 here, an ungraded activity).
      *
      * @return void
      */
     public function test_calculate_ranking_points_linear(): void {
         $instance = (object)[
-            'grade'              => 100,
+            'grade'              => 0,
             'max_attempts'       => 6,
             'gradescoringmode'   => PLAYERWORDS_SCORING_BINARY,
             'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR,
@@ -226,7 +229,7 @@ final class gameplay_service_test extends \basic_testcase {
      */
     public function test_calculate_ranking_points_linear_degenerates_at_low_max_attempts(): void {
         $instance = (object)[
-            'grade'              => 100,
+            'grade'              => 0,
             'max_attempts'       => 2,
             'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR,
         ];
@@ -243,5 +246,28 @@ final class gameplay_service_test extends \basic_testcase {
         $instance = (object)['grade' => 100, 'max_attempts' => 6, 'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR];
         $points = gameplay_service::calculate_ranking_points($instance, 6, false);
         $this->assertSame(0.0, $points);
+    }
+
+    /**
+     * The core regression test for the ranking/grade decoupling fix: ranking points
+     * never move regardless of the activity's own configured grade — proven here by
+     * comparing an ungraded activity against a graded one on the exact same round.
+     *
+     * @return void
+     */
+    public function test_calculate_ranking_points_ignores_grade_value(): void {
+        $rankingpointswithzerograde = gameplay_service::calculate_ranking_points(
+            (object)['grade' => 0, 'rankingscoringmode' => PLAYERWORDS_SCORING_BINARY],
+            3,
+            true
+        );
+        $rankingpointswithrealgrade = gameplay_service::calculate_ranking_points(
+            (object)['grade' => 250, 'rankingscoringmode' => PLAYERWORDS_SCORING_BINARY],
+            3,
+            true
+        );
+
+        $this->assertSame(100.0, $rankingpointswithzerograde);
+        $this->assertSame($rankingpointswithzerograde, $rankingpointswithrealgrade);
     }
 }

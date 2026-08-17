@@ -99,15 +99,18 @@ class gameplay_service {
         require_once($CFG->dirroot . '/mod/playerwords/lib.php');
 
         $mode = (int)($instance->gradescoringmode ?? PLAYERWORDS_SCORING_BINARY);
-        return self::compute_points($instance, $mode, $attemptsused, $completed);
+        return self::compute_points($instance, $mode, $attemptsused, $completed, (float)$instance->grade);
     }
 
     /**
      * Calculates the ranking-points contribution of one finished round.
      *
-     * Independent from calculate_round_score() — the grade and the ranking each have
-     * their own scoring mode setting, so the same round can be worth different amounts
-     * for the grade versus the ranking total.
+     * Independent from calculate_round_score() in two ways: the grade and the ranking
+     * each have their own scoring mode setting, and the ranking is always scored
+     * against the fixed PLAYERWORDS_RANKING_BASE_POINTS, never the activity's own
+     * grade — an ungraded activity ($instance->grade == 0, "No grade", the mod_form
+     * default) must still produce a meaningful ranking when show_ranking is enabled
+     * (also the default).
      *
      * @param \stdClass $instance Activity instance.
      * @param int $attemptsused Attempts used.
@@ -123,32 +126,38 @@ class gameplay_service {
         require_once($CFG->dirroot . '/mod/playerwords/lib.php');
 
         $mode = (int)($instance->rankingscoringmode ?? PLAYERWORDS_SCORING_BINARY);
-        return self::compute_points($instance, $mode, $attemptsused, $completed);
+        return self::compute_points($instance, $mode, $attemptsused, $completed, (float)PLAYERWORDS_RANKING_BASE_POINTS);
     }
 
     /**
      * Shared points formula for both the grade and the ranking.
      *
-     * Binary mode awards the full activity grade on a win, zero otherwise. Linear mode
-     * awards full credit on the first two attempts — a confident second guess is not
-     * meaningfully less deserving than a first-try one — then scales the remaining
-     * attempts down proportionally, so winning on the last allowed attempt still earns a
-     * positive (non-zero) share. Not completing the round always earns zero, regardless
-     * of mode. Degenerates to Binary when max_attempts is 1 or 2, since every allowed
+     * Binary mode awards full credit on a win, zero otherwise. Linear mode awards full
+     * credit on the first two attempts — a confident second guess is not meaningfully
+     * less deserving than a first-try one — then scales the remaining attempts down
+     * proportionally, so winning on the last allowed attempt still earns a positive
+     * (non-zero) share. Not completing the round always earns zero, regardless of
+     * mode. Degenerates to Binary when max_attempts is 1 or 2, since every allowed
      * attempt then falls within the full-credit plateau.
      *
      * @param \stdClass $instance Activity instance.
      * @param int $mode One of the PLAYERWORDS_SCORING_* constants.
      * @param int $attemptsused Attempts used.
      * @param bool $completed Whether completed.
+     * @param float $maxpoints The scoring base — the caller's own grade or ranking base.
      * @return float
      */
-    private static function compute_points(\stdClass $instance, int $mode, int $attemptsused, bool $completed): float {
+    private static function compute_points(
+        \stdClass $instance,
+        int $mode,
+        int $attemptsused,
+        bool $completed,
+        float $maxpoints
+    ): float {
         if (!$completed) {
             return 0.0;
         }
 
-        $maxpoints = (float)$instance->grade;
         if ($mode !== PLAYERWORDS_SCORING_LINEAR) {
             return $maxpoints;
         }

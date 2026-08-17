@@ -365,20 +365,24 @@ class mod_playerwords_mod_form extends moodleform_mod {
     }
 
     /**
-     * Freezes settings that feed the per-round scoring formula, plus other settings that
+     * Freezes settings that feed the per-round grade formula, plus other settings that
      * change round difficulty, once the activity has recorded a real grade for any student.
      *
-     * max_attempts and the two scoring-mode settings are baked into every already-scored
-     * round at the moment it finishes (see gameplay_service::compute_points()). Changing
-     * any of them afterwards would make past and future rounds count on different scales,
-     * both for the grade and for the ranking total. restrict_guess_pool does not feed that
-     * formula directly, but toggling it mid-activity would still make rounds recorded
-     * before and after the change unfairly easier or harder to compare against each other
-     * in the same ranking, so it is frozen alongside them for the same fairness reason.
-     * This mirrors the same condition core already uses to freeze the "Maximum grade"
-     * field itself — the modgrade element in lib/form/modgrade.php disables it once
-     * $gradeitem->has_grades() is true — so all of this is reusing that exact check
-     * rather than inventing a separate trigger.
+     * max_attempts and gradescoringmode are baked into every already-scored round at the
+     * moment it finishes (see gameplay_service::compute_points()). Changing either of
+     * them afterwards would make past and future rounds count on different scales for
+     * the grade. restrict_guess_pool does not feed that formula directly, but toggling
+     * it mid-activity would still make rounds recorded before and after the change
+     * unfairly easier or harder to compare against each other, so it is frozen alongside
+     * them for the same fairness reason. This mirrors the same condition core already
+     * uses to freeze the "Maximum grade" field itself — the modgrade element in
+     * lib/form/modgrade.php disables it once $gradeitem->has_grades() is true.
+     *
+     * rankingscoringmode is frozen separately, by freeze_ranking_scoring_mode() below —
+     * ranking points are computed and persisted for every finished round regardless of
+     * whether grading or show_ranking is even on (see gameplay_service::
+     * calculate_ranking_points(), always called once a round completes), so its own
+     * scale-consistency risk exists independently of $gradeitem->has_grades().
      *
      * @return void
      */
@@ -389,6 +393,8 @@ class mod_playerwords_mod_form extends moodleform_mod {
         if (empty($this->_instance)) {
             return;
         }
+
+        $this->freeze_ranking_scoring_mode();
 
         global $COURSE;
         $gradeitem = grade_item::fetch([
@@ -404,13 +410,42 @@ class mod_playerwords_mod_form extends moodleform_mod {
         }
 
         $mform = $this->_form;
-        $lockedfields = ['max_attempts', 'gradescoringmode', 'rankingscoringmode', 'restrict_guess_pool'];
+        $lockedfields = ['max_attempts', 'gradescoringmode', 'restrict_guess_pool'];
         $mform->freeze($lockedfields);
 
         $warninghtml = html_writer::div(get_string('scoringmode_locked', 'mod_playerwords'), 'alert alert-warning');
         $mform->insertElementBefore(
             $mform->createElement('static', 'scoringmodelockedmsg', '', $warninghtml),
             'max_attempts'
+        );
+    }
+
+    /**
+     * Freezes rankingscoringmode on its own, the moment the activity has any finished
+     * (completed=1) attempt — independent of gradescoringmode's own has_grades()-gated
+     * freeze above. Ranking points are computed and stored on every finished round
+     * regardless of the grade or show_ranking settings (they only gate display, never
+     * computation), so an ungraded, ranking-only activity can already have real ranking
+     * history even though $gradeitem never exists and has_grades() never fires.
+     * Restricted to completed=1 rows: start_round() inserts a reservation row before
+     * the round actually finishes, and that placeholder carries no real outcome yet.
+     *
+     * @return void
+     */
+    private function freeze_ranking_scoring_mode(): void {
+        global $DB;
+
+        if (!$DB->record_exists('playerwords_attempts', ['playerwordsid' => $this->_instance, 'completed' => 1])) {
+            return;
+        }
+
+        $mform = $this->_form;
+        $mform->freeze('rankingscoringmode');
+
+        $warninghtml = html_writer::div(get_string('rankingscoringmode_locked', 'mod_playerwords'), 'alert alert-warning');
+        $mform->insertElementBefore(
+            $mform->createElement('static', 'rankingscoringmodelockedmsg', '', $warninghtml),
+            'rankingscoringmode'
         );
     }
 

@@ -49,6 +49,13 @@ define('PLAYERWORDS_SCORING_BINARY', 1);
 /** Per-round scoring: proportional to attempts spared out of max_attempts. */
 define('PLAYERWORDS_SCORING_LINEAR', 2);
 
+/**
+ * Fixed points base the ranking total is scored against — deliberately independent of
+ * the activity's own configured grade (which may be 0, "No grade"), so ranking stays
+ * meaningful even for an ungraded activity. See gameplay_service::compute_points().
+ */
+define('PLAYERWORDS_RANKING_BASE_POINTS', 100);
+
 /** Word selection mode: a random word is picked each round. */
 define('PLAYERWORDS_WORDMODE_RANDOM', 1);
 
