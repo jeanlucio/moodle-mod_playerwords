@@ -88,8 +88,9 @@ acima evita para a nota.
 
 **Registro de tentativas:** cada estudante pode conferir suas próprias rodadas passadas —
 palavra, tentativas usadas, tempo, nota da rodada e (quando o ranking está ligado) pontos no
-ranking — pela página de registro de tentativas do toolbar. Quem pode gerenciar a atividade vê
-essa mesma página virar um relatório de todos os estudantes: uma tabela só, 30 linhas por página,
-ordenável clicando em qualquer cabeçalho de coluna, e filtrável para um único estudante. Assim
-como no ranking, nunca inclui as próprias tentativas de quem gerencia, mesmo que essa pessoa
-tenha jogado a atividade.
+ranking — numa página dedicada do toolbar. Quem pode gerenciar a atividade também vê essa mesma
+página, incluindo as próprias tentativas caso já tenha jogado a atividade. O relatório de todos
+os estudantes vive numa página separada, visível só para quem gerencia a atividade: uma tabela
+com as tentativas de todos os estudantes, 30 linhas por página, ordenável clicando em qualquer
+cabeçalho de coluna, e filtrável para um único estudante. Assim como no ranking, esse relatório
+nunca inclui as próprias tentativas de quem gerencia.
