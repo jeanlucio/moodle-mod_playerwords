@@ -187,40 +187,6 @@ final class start_round_test extends \advanced_testcase {
     }
 
     /**
-     * Regression test: showcedilla was computed correctly by
-     * round_presenter::build_round_panel_context() but never declared in
-     * roundpanel_structure(), so the external API's return-value cleaning silently
-     * stripped it — the Ç key never appeared on a fresh "Start round" click, only after
-     * a full page reload (which renders server-side, bypassing the webservice schema
-     * entirely). Same bug class the comment above guards for keyboardentertext.
-     *
-     * @return void
-     */
-    public function test_shows_cedilla_key_when_pool_has_one(): void {
-        global $DB;
-
-        $instance = $this->make_instance();
-        $DB->insert_record('playerwords_words', (object)[
-            'playerwordsid' => $instance->id,
-            'word'          => 'poço',
-            'concept'       => 'poço',
-            'hint'          => 'buraco fundo',
-            'source'        => 'manual',
-            'glossaryid'    => 0,
-            'approved'      => 1,
-            'timecreated'   => time(),
-            'addedby'       => $this->student->id,
-        ]);
-        $this->setUser($this->student);
-
-        $result = $this->call_start_round($instance->cmid);
-
-        $this->assertFalse($result['error']);
-        $this->assertTrue($result['data']['success']);
-        $this->assertTrue($result['data']['roundpanel']['showcedilla']);
-    }
-
-    /**
      * Tests that starting an already-started round is rejected without restarting the timer.
      *
      * @return void

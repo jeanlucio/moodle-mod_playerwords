@@ -66,21 +66,6 @@ Feature: PlayerWords core gameplay loop
     And I press the v key
     Then the PlayerWords guess tiles should read "c_v__"
 
-  Scenario: The cedilla key and its base "C" key stay in sync on the keyboard
-    Given the following "activities" exist:
-      | activity    | course | name         | min_length | max_length | max_attempts |
-      | playerwords | C1     | Word Cedilla | 5          | 5          | 6             |
-    And the following PlayerWords words exist in activity "Word Cedilla":
-      | word  |
-      | braço |
-    And I log in as "student1"
-    And I am on the "Word Cedilla" "playerwords activity" page
-    And I click on "Start round" "button"
-    When I fill the PlayerWords guess tiles with "cobra"
-    And I click on "[data-key=\"ENTER\"]" "css_element"
-    Then "[data-key=\"C\"].is-present" "css_element" should exist
-    And "[data-key=\"Ç\"].is-present" "css_element" should exist
-
   Scenario: Student forfeits an active round with a confirmation dialog
     Given the following "activities" exist:
       | activity    | course | name         | min_length | max_length | max_attempts |

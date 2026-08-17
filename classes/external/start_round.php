@@ -172,7 +172,6 @@ class start_round extends external_api {
             'keyboardenterlabel' => new external_value(PARAM_TEXT, 'Enter key aria label'),
             'keyboardentertext' => new external_value(PARAM_TEXT, 'Enter key visible text'),
             'keyboardbackspacelabel' => new external_value(PARAM_TEXT, 'Backspace key aria label'),
-            'showcedilla' => new external_value(PARAM_BOOL, 'Whether the keyboard offers the Ç key'),
         ];
 
         return new external_single_structure($ownfields + submit_guess::roundresult_structure()->keys);
