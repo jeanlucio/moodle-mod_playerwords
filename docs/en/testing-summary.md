@@ -16,7 +16,8 @@ matrix (Moodle 4.5 → 5.x, PostgreSQL & MariaDB).
 | `lib_supports_test.php` | 2 |
 | `completion/custom_completion_test.php` | 7 |
 | `privacy/provider_test.php` | 30 |
-| **Subtotal** | **59** |
+| `mod_form_test.php` | 3 |
+| **Subtotal** | **62** |
 
 ### Local Business-Logic Tests (`tests/local/`)
 
@@ -24,7 +25,7 @@ matrix (Moodle 4.5 → 5.x, PostgreSQL & MariaDB).
 |-----------|------:|
 | `ai_word_generator_test.php` | 17 |
 | `attempts_history_service_test.php` | 19 |
-| `gameplay_service_test.php` | 19 |
+| `gameplay_service_test.php` | 20 |
 | `hud_service_test.php` | 27 |
 | `intro_service_test.php` | 5 |
 | `ranking_service_test.php` | 9 |
@@ -33,7 +34,7 @@ matrix (Moodle 4.5 → 5.x, PostgreSQL & MariaDB).
 | `view_page_service_test.php` | 18 |
 | `word_normalizer_test.php` | 16 |
 | `words_repository_test.php` | 65 |
-| **Subtotal** | **295** |
+| **Subtotal** | **296** |
 
 ### Web Services Tests (`tests/external/`)
 
@@ -44,11 +45,11 @@ matrix (Moodle 4.5 → 5.x, PostgreSQL & MariaDB).
 | `end_round_test.php` | 6 |
 | `new_round_test.php` | 5 |
 | `reveal_hint_test.php` | 8 |
-| `start_round_test.php` | 7 |
+| `start_round_test.php` | 8 |
 | `submit_guess_test.php` | 10 |
-| **Subtotal** | **46** |
+| **Subtotal** | **47** |
 
-| **Grand Total** | **400** |
+| **Grand Total** | **405** |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords
