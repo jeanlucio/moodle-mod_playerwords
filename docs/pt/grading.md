@@ -86,11 +86,6 @@ sem nota nenhuma, só com ranking, já acumula histórico real desde a primeira 
 de pontuação assim que esse histórico existe evita a mesma inconsistência de escala que a trava
 acima evita para a nota.
 
-> **Limitação conhecida:** antes desta correção, os pontos de ranking eram calculados como uma
-> fração da nota da atividade — o mesmo bug que motivou tornar o ranking independente. Totais de
-> ranking de rodadas terminadas antes da correção **não foram recalculados** e podem não estar na
-> mesma escala das rodadas terminadas depois; não migramos esse histórico.
-
 **Registro de tentativas:** cada estudante pode conferir suas próprias rodadas passadas —
 palavra, tentativas usadas, tempo, nota da rodada e (quando o ranking está ligado) pontos no
 ranking — pela página de registro de tentativas do toolbar. Quem pode gerenciar a atividade vê
