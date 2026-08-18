@@ -946,6 +946,52 @@ final class words_repository_test extends \advanced_testcase {
     }
 
     /**
+     * Regression test for a security audit defense-in-depth finding (ported to
+     * mod_playercross too): the orphan cleanup at the end of sync_glossary_words()
+     * must scope its DELETE by playerwordsid, matching the sibling bulk-delete
+     * methods (delete_words_bulk(), delete_word()), instead of trusting that every id
+     * in the orphan list already belongs to this instance. Not exploitable today —
+     * the orphan ids are always sourced from a query already scoped to this instance
+     * — but this pins the cross-instance isolation as an explicit, checked property
+     * instead of an implicit one.
+     *
+     * @return void
+     */
+    public function test_sync_glossary_words_orphan_removal_never_touches_another_activity(): void {
+        global $DB;
+
+        [$glossary, $entry] = $this->make_glossary_entry('planeta', 'corpo celeste');
+        $instancea = $this->make_full_instance(['glossaryid' => $glossary->id]);
+        words_repository::sync_glossary_words($instancea);
+        $worda = $DB->get_record(
+            'playerwords_words',
+            ['playerwordsid' => $instancea->id, 'word' => 'planeta'],
+            '*',
+            MUST_EXIST
+        );
+
+        // A second activity, in the same course, that happens to have a word with the
+        // exact same text — added manually, so it is never touched by instance A's
+        // glossary sync regardless of scoping.
+        $instanceb = $this->make_full_instance();
+        words_repository::add_manual_word($instanceb->id, $this->user->id, 'planeta', 'corpo celeste');
+        $wordb = $DB->get_record(
+            'playerwords_words',
+            ['playerwordsid' => $instanceb->id, 'word' => 'planeta'],
+            '*',
+            MUST_EXIST
+        );
+
+        // The glossary entry disappears, orphaning instance A's "planeta" — triggering
+        // the DELETE this fix scopes.
+        $DB->delete_records('glossary_entries', ['id' => $entry->id]);
+        words_repository::sync_glossary_words($instancea);
+
+        $this->assertFalse($DB->record_exists('playerwords_words', ['id' => $worda->id]));
+        $this->assertTrue($DB->record_exists('playerwords_words', ['id' => $wordb->id]));
+    }
+
+    /**
      * glossaryid = 0 imports from every glossary in the course, not just one.
      *
      * @return void
