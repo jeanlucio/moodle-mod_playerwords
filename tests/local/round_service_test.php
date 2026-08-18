@@ -1051,6 +1051,38 @@ final class round_service_test extends \advanced_testcase {
     }
 
     /**
+     * The cooldown counterpart of test_abandoned_round_counts_towards_max_rounds(): a
+     * round that is started and then never finished (tab closed, session abandoned)
+     * must still start the cooldown clock. Before this fix, compute_cooldown_until()
+     * anchored on timefinished, so an abandoned reservation (timefinished still 0)
+     * never contributed to it — a student could discard the session holding the
+     * reservation (logout, private tab, cookie wipe) and start a fresh round
+     * immediately, bypassing cooldown_seconds entirely no matter how many rounds were
+     * abandoned this way.
+     *
+     * @return void
+     */
+    public function test_abandoned_round_counts_towards_cooldown(): void {
+        $instance = $this->make_instance([
+            'max_rounds' => 0,
+            'cooldown_amount' => 1,
+            'cooldown_unit' => 'days',
+        ]);
+
+        $this->start_ready_round($instance);
+
+        $this->assertGreaterThan(
+            time(),
+            round_service::compute_cooldown_until($instance, $this->user->id),
+            'an abandoned, never-finished round must still start the cooldown clock'
+        );
+        $this->assertNotNull(
+            round_service::get_round_restriction_notice($instance, $this->user->id),
+            'the restriction notice must report the cooldown as active, blocking a fresh round'
+        );
+    }
+
+    /**
      * When the reserved word is removed or unapproved mid-round (e.g. a teacher deletes
      * it from the pool), the stale reservation is discarded rather than silently
      * spending one of the student's max_rounds for a round they never got to play.
