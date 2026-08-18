@@ -1128,10 +1128,7 @@ final class round_service_test extends \advanced_testcase {
 
         round_service::submit_guess($state, $instance, $instance->cmid, $this->user->id, $roundwordid, 'boca', 'boca');
 
-        $this->assertSame(2, $DB->count_records('block_playerhud_inventory', [
-            'userid' => $this->user->id,
-            'itemid' => $itemid,
-        ]));
+        $this->assertSame(2, hud_service::get_available_quantity($biid, $this->user->id, $itemid));
         $currentxp = $DB->get_field('block_playerhud_user', 'currentxp', [
             'blockinstanceid' => $biid,
             'userid'          => $this->user->id,
@@ -1161,10 +1158,7 @@ final class round_service_test extends \advanced_testcase {
 
         round_service::submit_guess($state, $instance, $instance->cmid, $this->user->id, $roundwordid, 'boca', 'boca');
 
-        $this->assertSame(2, $DB->count_records('block_playerhud_inventory', [
-            'userid' => $this->user->id,
-            'itemid' => $itemid,
-        ]));
+        $this->assertSame(2, hud_service::get_available_quantity($biid, $this->user->id, $itemid));
         $currentxp = $DB->get_field('block_playerhud_user', 'currentxp', [
             'blockinstanceid' => $biid,
             'userid'          => $this->user->id,
