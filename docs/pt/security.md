@@ -7,6 +7,7 @@
 * Validação de charset do chute — apenas letras Unicode aceitas
 * Palavras geradas por IA são tratadas como entrada não confiável: só termos de um único token, alfabéticos e dentro do comprimento configurado são salvos, entrando pendentes de aprovação do professor
 * O estado de sessão da rodada é isolado por instância de atividade e por usuário — um id de palavra ou chave de sessão de uma atividade nunca é aceito por outra
+* Um palpite errado nunca vaza a palavra correta nem sua definição; a palavra só é revelada quando a rodada realmente termina
 * Compatível com a API externa do Moodle
 * Privacy API completamente implementada (LGPD/GDPR)
 
