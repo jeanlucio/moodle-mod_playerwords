@@ -190,7 +190,18 @@ class ai_word_generator {
         }
 
         if (!$anysuccess) {
+            diagnostics::increment('ai_generation_failed');
             throw new \moodle_exception('aigenerateerror', 'mod_playerwords');
+        }
+
+        if ($saved < $count) {
+            // The provider answered, but delivered fewer usable words than asked — a weaker
+            // model underdelivering, or every returned item failing the validity/duplicate
+            // filters above. generate_and_save() already returns whatever it got without
+            // raising an error, so without this counter the shortfall is invisible: the
+            // caller sees fewer words with no explanation, and there is no other signal
+            // that anything went wrong.
+            diagnostics::increment('ai_generation_partial');
         }
 
         return $saved;
