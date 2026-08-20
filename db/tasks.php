@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin administration settings.
+ * Scheduled task definitions.
  *
  * @package    mod_playerwords
  * @copyright  2026 Jean Lúcio
@@ -24,20 +24,14 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-if ($hassiteconfig) {
-    if (!\mod_playerwords\local\hud_service::is_installed()) {
-        $settings->add(new admin_setting_heading(
-            'mod_playerwords/hudnotinstalled',
-            get_string('hud_notinstalled_heading', 'mod_playerwords'),
-            get_string('hud_notinstalled_desc', 'mod_playerwords')
-        ));
-    }
-
-    // Usage Report.
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_playerwords/usagereport',
-        get_string('usagereport', 'mod_playerwords'),
-        get_string('usagereport_desc', 'mod_playerwords'),
-        '1'
-    ));
-}
+$tasks = [
+    [
+        'classname' => 'mod_playerwords\task\usage_report',
+        'blocking' => 0,
+        'minute' => 'R',
+        'hour' => 'R',
+        'day' => '*',
+        'dayofweek' => '*',
+        'month' => '*',
+    ],
+];
