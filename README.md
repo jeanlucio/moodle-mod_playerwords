@@ -68,12 +68,12 @@ Full disclosure:
 4. Visit **Site administration > Notifications** to complete installation.
 5. Add a **PlayerWords** activity to any course.
 
-This plugin has no site-level settings for an admin to configure — every setting is
-configured by the teacher when adding the activity to a course, as covered in the
-[Usage](https://jeanlucio.github.io/moodle-mod_playerwords/#usage) section of the full
-documentation. If `block_playerhud` isn't installed on the site, the plugin's own settings
-page under *Site administration → Plugins → Activity modules → PlayerWords* shows an
-informational notice about it — there's nothing to configure there either way.
+Most settings are configured by the teacher when adding the activity to a course, as covered
+in the [Usage](https://jeanlucio.github.io/moodle-mod_playerwords/#usage) section of the full
+documentation. The plugin's own site-level settings page, under *Site administration >
+Plugins > Activity modules > PlayerWords*, only has the anonymous usage report toggle
+described above — plus, if `block_playerhud` isn't installed, an informational notice about
+it.
 
 ### 🆘 Support
 
@@ -147,12 +147,13 @@ Divulgação completa:
 4. Acesse **Administração do site > Notificações** para concluir a instalação.
 5. Adicione uma atividade **PlayerWords** a qualquer curso.
 
-Este plugin não tem configurações de nível de site para o administrador ajustar — toda
-configuração é feita pelo professor ao adicionar a atividade a um curso, conforme explicado na
-seção [Como Usar](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html#usage) da
-documentação completa. Se o `block_playerhud` não estiver instalado no site, a própria página
-de configurações do plugin em *Administração do site → Plugins → Módulos de atividade →
-PlayerWords* mostra um aviso informativo sobre isso — não há nada a configurar ali de qualquer forma.
+A maior parte das configurações é feita pelo professor ao adicionar a atividade a um curso,
+conforme explicado na seção [Como
+Usar](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html#usage) da documentação
+completa. A própria página de configurações de nível de site do plugin, em *Administração do
+site > Plugins > Módulos de atividade > PlayerWords*, só tem a opção de relatório de uso
+anônimo descrita acima — além de, se o `block_playerhud` não estiver instalado, um aviso
+informativo sobre isso.
 
 ### 🆘 Suporte
 
