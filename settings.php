@@ -31,13 +31,9 @@ if ($hassiteconfig) {
             get_string('hud_notinstalled_heading', 'mod_playerwords'),
             get_string('hud_notinstalled_desc', 'mod_playerwords')
         ));
+    } else {
+        // Nothing left to configure site-wide once PlayerHUD is installed — skip the
+        // otherwise-empty settings page instead of leaving a dead link in the admin tree.
+        $settings = null;
     }
-
-    // Usage Report.
-    $settings->add(new admin_setting_configcheckbox(
-        'mod_playerwords/usagereport',
-        get_string('usagereport', 'mod_playerwords'),
-        get_string('usagereport_desc', 'mod_playerwords'),
-        '1'
-    ));
 }
