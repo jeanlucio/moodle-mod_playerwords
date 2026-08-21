@@ -316,7 +316,17 @@
     color: rgba(0, 0, 0, 0.55);
 }
 
+/*
+ * .mod-playerwords-game sizes itself with width: fit-content, and a plain block child
+ * with no width of its own contributes its unwrapped text width to that calculation —
+ * so a long hint (or word-reveal) sentence stretched the whole card out to page width
+ * before wrapping, instead of wrapping within a compact card. Matches the guess form's
+ * own 20rem cap (.mod-playerwords-form below) so every piece of card content settles
+ * on the same readable width.
+ */
 .path-mod-playerwords .mod-playerwords-game .alert {
+    max-width: 20rem;
+    margin-inline: auto;
     padding: 0.5rem 0.75rem;
     margin-bottom: 0.5rem;
 }
