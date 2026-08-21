@@ -26,6 +26,7 @@
 require(__DIR__ . '/../../config.php');
 
 use mod_playerwords\local\ranking_service;
+use mod_playerwords\local\round_presenter;
 
 $id = required_param('id', PARAM_INT);
 $cm = get_coursemodule_from_id('playerwords', $id, 0, false, MUST_EXIST);
@@ -62,6 +63,7 @@ $templatecontext = [
     'rankingempty'          => $ranking['isempty'],
     'rankingemptylabel'     => get_string('ranking_empty', 'mod_playerwords'),
     'rankingtiebreaktext'   => get_string('ranking_tiebreak', 'mod_playerwords'),
+    'rankingscoringexplanation' => round_presenter::ranking_scoring_explanation($instance),
 ];
 
 echo $OUTPUT->header();

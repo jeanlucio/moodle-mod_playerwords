@@ -522,6 +522,34 @@ final class round_presenter_test extends \advanced_testcase {
     }
 
     /**
+     * Tests that the ranking scoring explanation embeds the matching Binary/Linear
+     * detail string for each configured mode.
+     *
+     * @return void
+     */
+    public function test_ranking_scoring_explanation(): void {
+        $binary = $this->make_instance(['rankingscoringmode' => PLAYERWORDS_SCORING_BINARY]);
+        $linear = $this->make_instance(['rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR]);
+
+        $this->assertSame(
+            get_string(
+                'ranking_scoringexplanation',
+                'mod_playerwords',
+                get_string('ranking_scoringexplanation_binary', 'mod_playerwords')
+            ),
+            round_presenter::ranking_scoring_explanation($binary)
+        );
+        $this->assertSame(
+            get_string(
+                'ranking_scoringexplanation',
+                'mod_playerwords',
+                get_string('ranking_scoringexplanation_linear', 'mod_playerwords')
+            ),
+            round_presenter::ranking_scoring_explanation($linear)
+        );
+    }
+
+    /**
      * Tests that the inline ranking summary is hidden when the activity has ranking
      * turned off, without ever touching ranking_service (no real cm needed).
      *
