@@ -44,9 +44,13 @@ class words_repository {
     /**
      * Splits a glossary concept into individual candidate words, ignoring given stopwords.
      *
-     * Single-word concepts are returned as-is. For multi-word concepts each
-     * non-stopword token becomes a separate candidate. If all tokens are stopwords,
-     * or if no stopwords are given, every token is returned.
+     * Single-word concepts are returned as-is. For multi-word concepts, when
+     * $splitconcepts is true, each non-stopword token becomes a separate candidate — if
+     * all tokens are stopwords, or if no stopwords are given, every token is returned.
+     * When $splitconcepts is false, a multi-word concept is skipped entirely: a word
+     * candidate is always a single letters-only token (see
+     * word_normalizer::is_valid_charset()), so the only alternative to splitting is not
+     * offering that concept as a candidate at all.
      *
      * Public so it can be reused to preview a glossary's candidate words before an
      * activity even exists (see classes/external/count_glossary_candidates.php),
@@ -54,9 +58,15 @@ class words_repository {
      *
      * @param string $concept Raw concept string from a glossary entry.
      * @param string $stopwordsraw Comma-separated words to ignore, as configured on the activity.
+     * @param bool $splitconcepts Whether a multi-word concept may be split into separate
+     *     single-word candidates. False skips multi-word concepts entirely instead.
      * @return string[]
      */
-    public static function extract_candidate_words(string $concept, string $stopwordsraw = ''): array {
+    public static function extract_candidate_words(
+        string $concept,
+        string $stopwordsraw = '',
+        bool $splitconcepts = true
+    ): array {
         $tokens = preg_split('/\s+/u', $concept, -1, PREG_SPLIT_NO_EMPTY);
         $tokens = array_values(array_filter($tokens, fn($t) => word_normalizer::is_valid_charset($t)));
         if ($tokens === []) {
@@ -64,6 +74,9 @@ class words_repository {
         }
         if (count($tokens) === 1) {
             return $tokens;
+        }
+        if (!$splitconcepts) {
+            return [];
         }
         $stopwords = [];
         if ($stopwordsraw !== '') {
@@ -432,7 +445,11 @@ class words_repository {
                 ENT_QUOTES | ENT_HTML5,
                 'UTF-8'
             )));
-            $words = self::extract_candidate_words($concept, (string)($instance->stopwords ?? ''));
+            $words = self::extract_candidate_words(
+                $concept,
+                (string)($instance->stopwords ?? ''),
+                (bool)($instance->glossary_split_concepts ?? false)
+            );
 
             foreach ($words as $word) {
                 // Glossary content is never bounded by a form maxlength the way the
@@ -781,6 +798,8 @@ class words_repository {
      * @param int $minlength Candidate minimum word length.
      * @param int $maxlength Candidate maximum word length.
      * @param string $stopwordsraw Comma-separated words to ignore, as typed on the settings form.
+     * @param bool $splitconcepts Whether a multi-word concept may be split into separate
+     *     single-word candidates, as currently checked on the settings form.
      * @return int
      */
     public static function count_glossary_candidates(
@@ -788,7 +807,8 @@ class words_repository {
         int $glossaryid,
         int $minlength,
         int $maxlength,
-        string $stopwordsraw = ''
+        string $stopwordsraw = '',
+        bool $splitconcepts = true
     ): int {
         global $DB;
 
@@ -822,7 +842,7 @@ class words_repository {
 
         $candidates = [];
         foreach ($concepts as $concept) {
-            foreach (self::extract_candidate_words(trim($concept), $stopwordsraw) as $word) {
+            foreach (self::extract_candidate_words(trim($concept), $stopwordsraw, $splitconcepts) as $word) {
                 $wordlength = core_text::strlen($word);
                 if ($wordlength < $minlength || $wordlength > $maxlength) {
                     continue;
