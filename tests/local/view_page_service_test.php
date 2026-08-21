@@ -354,6 +354,38 @@ final class view_page_service_test extends \advanced_testcase {
     }
 
     /**
+     * The restriction branch (round limit/cooldown reached before a word is even
+     * picked) must report the round as finished so the header timer badge stays
+     * hidden, even though no round was actually finished in this session — a
+     * regression guard for the badge showing a stray "0" whenever a timer is
+     * configured and the player is blocked from starting a new round.
+     *
+     * @return void
+     */
+    public function test_build_page_data_restriction_notice_hides_timer_badge(): void {
+        global $DB;
+
+        [$instance, $cm, $context] = $this->make_instance(['max_rounds' => 1, 'timer_seconds' => 60]);
+
+        $DB->insert_record('playerwords_attempts', (object)[
+            'playerwordsid' => $instance->id,
+            'userid'        => $this->user->id,
+            'wordid'        => 1,
+            'attempts_used' => 1,
+            'time_used'     => 5,
+            'completed'     => 1,
+            'score'         => 100,
+            'timecreated'   => time(),
+            'timefinished'  => time(),
+        ]);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $ctx = $pagedata['templatecontext'];
+
+        $this->assertTrue($ctx['roundfinished']);
+    }
+
+    /**
      * A user's very first page load of any PlayerWords activity is flagged to
      * auto-show the how-to-play intro, and that first load immediately marks the
      * site-wide preference so it is never repeated — including on the very same

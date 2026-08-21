@@ -95,6 +95,10 @@ class view_page_service {
                     $userid
                 );
                 $templatectx['nogamewords'] = $restrictionnotice;
+                // No round is actually finished here (this is the max_rounds/cooldown
+                // restriction branch), but the timer wrapper must stay hidden the same
+                // way it does once a round genuinely finishes.
+                $templatectx['roundfinished'] = true;
                 return [
                     'templatecontext'      => $templatectx,
                     'cooldownuntil'        => 0,
