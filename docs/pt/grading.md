@@ -94,3 +94,12 @@ os estudantes vive numa página separada, visível só para quem gerencia a ativ
 com as tentativas de todos os estudantes, 30 linhas por página, ordenável clicando em qualquer
 cabeçalho de coluna, e filtrável para um único estudante. Assim como no ranking, esse relatório
 nunca inclui as próprias tentativas de quem gerencia.
+
+**Excluir tentativas reverte essas travas quando elas deixam de se aplicar.** No relatório com
+todos os estudantes, quem gerencia a atividade pode excluir tentativas de um estudante
+individualmente ou em lote. A exclusão realmente limpa a nota daquele estudante em vez de deixar
+um valor obsoleto para trás, então se todas as tentativas de todos os estudantes forem removidas,
+`Máximo de tentativas` e `Pontuação da nota` destravam de novo exatamente como
+`grade_item::has_grades()` espera — do mesmo jeito que aconteceria numa atividade nunca jogada.
+`Pontuação do ranking` segue a mesma lógica direto contra a tabela de tentativas, independente de
+a nota estar ligada.

@@ -90,3 +90,11 @@ played the activity. The all-students report lives on a separate page, visible o
 can manage the activity: one table with every student's attempts, 30 rows per page, sortable by
 clicking any column header, and filterable to a single student. Like the ranking, that report
 never includes a manager's own attempts.
+
+**Deleting attempts reverses these locks when they no longer apply.** From the all-students
+report, whoever can manage the activity can delete a student's attempts individually or in bulk.
+Deleting genuinely clears that student's grade rather than leaving a stale value behind, so if
+every attempt for every student is removed, `Maximum attempts` and `Grade scoring` unlock again
+exactly as `grade_item::has_grades()` expects — the same way they would on an activity that was
+never played at all. `Ranking scoring` follows the same logic against the attempts table
+directly, independent of whether grading is even on.
