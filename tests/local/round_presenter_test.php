@@ -391,128 +391,133 @@ final class round_presenter_test extends \advanced_testcase {
     }
 
     /**
-     * Tests that the grade-so-far summary is absent before the round finishes.
+     * Tests that the achieved-score line is absent before the round finishes.
      *
      * @return void
      */
-    public function test_build_round_result_context_no_grade_so_far_when_not_finished(): void {
+    public function test_build_round_result_context_no_score_achieved_when_not_finished(): void {
         $instance = $this->make_instance();
         $cm = (object)['id' => 5];
         $state = $this->make_state();
 
         $context = round_presenter::build_round_result_context($instance, $cm, $state, 1, false);
 
-        $this->assertFalse($context['showgradesofar']);
-        $this->assertSame('', $context['gradesofarmessage']);
+        $this->assertFalse($context['showscoreachieved']);
+        $this->assertSame('', $context['scoreachieved']);
     }
 
     /**
-     * Tests that the grade-so-far summary stays hidden for an ungraded instance, even
-     * once a round has finished — there is no gradebook item to read a value from.
+     * Tests that the achieved-score line stays hidden for an ungraded instance — the
+     * score is always computed against instance->grade as its ceiling, so an ungraded
+     * activity would otherwise always show a misleading 0.00 regardless of the outcome.
      *
      * @return void
      */
-    public function test_build_round_result_context_no_grade_so_far_when_ungraded(): void {
+    public function test_build_round_result_context_hides_score_achieved_when_ungraded(): void {
         $instance = $this->make_instance(['grade' => 0]);
         $user = $this->getDataGenerator()->create_user();
         $cm = (object)['id' => 5];
-        $state = $this->make_state(['finished' => true, 'won' => true]);
+        $state = $this->make_state(['finished' => true, 'won' => true, 'score' => 0.0]);
 
         $context = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
 
-        $this->assertFalse($context['showgradesofar']);
+        $this->assertFalse($context['showscoreachieved']);
     }
 
     /**
-     * Tests that the round-result context surfaces the student's current computed grade
-     * once a round has finished, matching the value round_service::finish_round() writes
-     * to the gradebook via playerwords_update_grades().
+     * Tests that the round result surfaces the score round_service::finish_round()
+     * writes into session state for this round.
      *
      * @return void
      */
-    public function test_build_round_result_context_shows_grade_so_far(): void {
-        global $DB, $CFG;
-        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
-
-        $instance = $this->make_instance([
-            'grade'       => 100,
-            'max_rounds'  => 0,
-            'grademethod' => PLAYERWORDS_GRADE_HIGHEST,
-        ]);
+    public function test_build_round_result_context_shows_score_achieved(): void {
+        $instance = $this->make_instance(['grade' => 100]);
         $user = $this->getDataGenerator()->create_user();
         $cm = (object)['id' => 5];
-        $state = $this->make_state(['finished' => true, 'won' => true]);
-
-        $DB->insert_record('playerwords_attempts', (object)[
-            'playerwordsid' => $instance->id,
-            'userid'        => $user->id,
-            'wordid'        => 1,
-            'attempts_used' => 1,
-            'time_used'     => 5,
-            'completed'     => 1,
-            'score'         => 80,
-            'timecreated'   => time(),
-            'timefinished'  => time(),
-        ]);
-        playerwords_update_grades($instance, $user->id);
+        $state = $this->make_state(['finished' => true, 'won' => true, 'score' => 80.0]);
 
         $context = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
 
-        $this->assertTrue($context['showgradesofar']);
-        $this->assertStringContainsString('Highest grade', $context['gradesofarmessage']);
-        $this->assertStringContainsString('80', $context['gradesofarmessage']);
+        $this->assertTrue($context['showscoreachieved']);
+        $this->assertSame(format_float(80.0, 2), $context['scoreachieved']);
     }
 
     /**
-     * A still-pending reservation (round in progress, or abandoned without ever
-     * finishing) must not drag the average grade down towards its placeholder 0 score —
-     * playerwords_update_grades() only considers finished rounds.
+     * Unlike the grading-method line, the points/scoring-mode summary is meaningful
+     * even when only a single round is possible, so it must stay visible there — the
+     * only thing that hides it is the activity being ungraded.
      *
      * @return void
      */
-    public function test_build_round_result_context_grade_so_far_ignores_pending_attempt(): void {
-        global $DB, $CFG;
-        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+    public function test_build_grade_summary_info_relevance(): void {
+        $graded = $this->make_instance(['grade' => 100, 'max_rounds' => 0]);
+        $ungraded = $this->make_instance(['grade' => 0]);
+        $singleround = $this->make_instance(['grade' => 100, 'max_rounds' => 1]);
 
-        $instance = $this->make_instance([
-            'grade'       => 100,
-            'max_rounds'  => 0,
-            'grademethod' => PLAYERWORDS_GRADE_AVERAGE,
+        $this->assertTrue(round_presenter::build_grade_summary_info($graded)['showgradesummary']);
+        $this->assertFalse(round_presenter::build_grade_summary_info($ungraded)['showgradesummary']);
+        $this->assertSame('', round_presenter::build_grade_summary_info($ungraded)['gradesummary']);
+        $this->assertTrue(round_presenter::build_grade_summary_info($singleround)['showgradesummary']);
+    }
+
+    /**
+     * The summary text names both the point value and the configured scoring mode.
+     *
+     * @return void
+     */
+    public function test_build_grade_summary_info_text(): void {
+        $binary = $this->make_instance(['grade' => 100, 'gradescoringmode' => PLAYERWORDS_SCORING_BINARY]);
+        $linear = $this->make_instance(['grade' => 50, 'gradescoringmode' => PLAYERWORDS_SCORING_LINEAR]);
+
+        $this->assertSame(
+            get_string('lobby_gradesummary', 'mod_playerwords', (object)[
+                'points' => format_float(100.0, 2),
+                'scoringmode' => get_string('scoringmode_binary', 'mod_playerwords'),
+            ]),
+            round_presenter::build_grade_summary_info($binary)['gradesummary']
+        );
+        $this->assertSame(
+            get_string('lobby_gradesummary', 'mod_playerwords', (object)[
+                'points' => format_float(50.0, 2),
+                'scoringmode' => get_string('scoringmode_linear', 'mod_playerwords'),
+            ]),
+            round_presenter::build_grade_summary_info($linear)['gradesummary']
+        );
+    }
+
+    /**
+     * Tests that the grade and ranking scoring mode names resolve both configured
+     * options — the two settings are independent, so each is tested with its own
+     * instance rather than assuming they always match.
+     *
+     * @return void
+     */
+    public function test_scoring_mode_names(): void {
+        $binary = $this->make_instance([
+            'gradescoringmode' => PLAYERWORDS_SCORING_BINARY,
+            'rankingscoringmode' => PLAYERWORDS_SCORING_BINARY,
         ]);
-        $user = $this->getDataGenerator()->create_user();
-        $cm = (object)['id' => 5];
-        $state = $this->make_state(['finished' => true, 'won' => true]);
-
-        $DB->insert_record('playerwords_attempts', (object)[
-            'playerwordsid' => $instance->id,
-            'userid'        => $user->id,
-            'wordid'        => 1,
-            'attempts_used' => 1,
-            'time_used'     => 5,
-            'completed'     => 1,
-            'score'         => 80,
-            'timecreated'   => time(),
-            'timefinished'  => time(),
+        $linear = $this->make_instance([
+            'gradescoringmode' => PLAYERWORDS_SCORING_LINEAR,
+            'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR,
         ]);
-        // A reservation for a second round, still in progress — not a real outcome yet.
-        $DB->insert_record('playerwords_attempts', (object)[
-            'playerwordsid' => $instance->id,
-            'userid'        => $user->id,
-            'wordid'        => 2,
-            'attempts_used' => 0,
-            'time_used'     => 0,
-            'completed'     => 0,
-            'score'         => 0,
-            'timecreated'   => time(),
-            'timefinished'  => 0,
-        ]);
-        playerwords_update_grades($instance, $user->id);
 
-        $context = round_presenter::build_round_result_context($instance, $cm, $state, $user->id, true);
-
-        // If the pending row were wrongly included the average would be 40 (80+0)/2.
-        $this->assertStringContainsString('80', $context['gradesofarmessage']);
-        $this->assertStringNotContainsString('40', $context['gradesofarmessage']);
+        $this->assertSame(
+            get_string('scoringmode_binary', 'mod_playerwords'),
+            round_presenter::grade_scoring_mode_name($binary)
+        );
+        $this->assertSame(
+            get_string('scoringmode_binary', 'mod_playerwords'),
+            round_presenter::ranking_scoring_mode_name($binary)
+        );
+        $this->assertSame(
+            get_string('scoringmode_linear', 'mod_playerwords'),
+            round_presenter::grade_scoring_mode_name($linear)
+        );
+        $this->assertSame(
+            get_string('scoringmode_linear', 'mod_playerwords'),
+            round_presenter::ranking_scoring_mode_name($linear)
+        );
     }
 
     /**

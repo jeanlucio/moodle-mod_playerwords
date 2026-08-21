@@ -214,11 +214,9 @@ class submit_guess extends external_api {
                 'iscurrentuser' => new external_value(PARAM_BOOL, 'Whether this row is the current user'),
             ], 'Current user row when outside the top ranking'),
             'rankingempty' => new external_value(PARAM_BOOL, 'Whether the ranking has no rows at all'),
-            'showgradesofar' => new external_value(PARAM_BOOL, 'Whether the grade-so-far summary is shown'),
-            'gradesofarmessage' => new external_value(
-                PARAM_TEXT,
-                'Grading method and current computed grade, empty when not applicable'
-            ),
+            'showscoreachieved' => new external_value(PARAM_BOOL, 'Whether the achieved-score line is shown'),
+            'scoreachieved' => new external_value(PARAM_TEXT, 'Score achieved, formatted to 2 decimals'),
+            'scoreachievedlabel' => new external_value(PARAM_TEXT, 'Label for the achieved score'),
             'roundsplayedlabel' => new external_value(
                 PARAM_TEXT,
                 'Rounds played counter, e.g. "3 / 10", empty until finished'

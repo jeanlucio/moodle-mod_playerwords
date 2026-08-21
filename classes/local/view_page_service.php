@@ -262,8 +262,24 @@ class view_page_service {
             'gradingtext' => $showgrading
                 ? get_string('help_grading', 'mod_playerwords', round_presenter::grademethod_name($instance))
                 : '',
+            'showgradescoringmode' => $showgrading,
+            'gradescoringmodetext' => $showgrading
+                ? get_string(
+                    'help_gradescoringmode',
+                    'mod_playerwords',
+                    round_presenter::grade_scoring_mode_name($instance)
+                )
+                : '',
             'showranking' => $showranking,
             'rankingtext' => $showranking ? get_string('help_ranking', 'mod_playerwords') : '',
+            'showrankingscoringmode' => $showranking,
+            'rankingscoringmodetext' => $showranking
+                ? get_string(
+                    'help_rankingscoringmode',
+                    'mod_playerwords',
+                    round_presenter::ranking_scoring_mode_name($instance)
+                )
+                : '',
             'reviewhint' => get_string('help_reviewhint', 'mod_playerwords'),
         ];
     }

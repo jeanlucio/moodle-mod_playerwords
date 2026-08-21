@@ -238,49 +238,55 @@ class round_presenter {
     }
 
     /**
-     * Builds the "grade so far" summary shown after a round finishes, mirroring mod_quiz's
-     * gradesofar message: the grading method name alongside the student's current computed
-     * grade, read straight from the gradebook item so it always matches what the teacher sees.
+     * Resolves the localized name of the instance's configured grade scoring mode.
      *
      * @param \stdClass $instance Activity instance.
-     * @param int $userid Current user id.
+     * @return string
+     */
+    public static function grade_scoring_mode_name(\stdClass $instance): string {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        $options = playerwords_get_scoring_mode_options();
+        $mode = (int)($instance->gradescoringmode ?? PLAYERWORDS_SCORING_BINARY);
+        return $options[$mode] ?? $options[PLAYERWORDS_SCORING_BINARY];
+    }
+
+    /**
+     * Resolves the localized name of the instance's configured ranking scoring mode.
+     *
+     * @param \stdClass $instance Activity instance.
+     * @return string
+     */
+    public static function ranking_scoring_mode_name(\stdClass $instance): string {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        $options = playerwords_get_scoring_mode_options();
+        $mode = (int)($instance->rankingscoringmode ?? PLAYERWORDS_SCORING_BINARY);
+        return $options[$mode] ?? $options[PLAYERWORDS_SCORING_BINARY];
+    }
+
+    /**
+     * Builds the "worth up to N points — scoring mode" summary shown in the lobby
+     * before a round starts. Unlike build_grading_method_info(), this is not gated on
+     * more than one round being possible: the point value and scoring mode are
+     * meaningful even when the activity only ever allows a single round.
+     *
+     * @param \stdClass $instance Activity instance.
      * @return array
      */
-    public static function build_grade_so_far(\stdClass $instance, int $userid): array {
-        $blank = ['showgradesofar' => false, 'gradesofarmessage' => ''];
-
-        if (!self::grading_info_relevant($instance)) {
-            return $blank;
+    public static function build_grade_summary_info(\stdClass $instance): array {
+        if ((float)$instance->grade <= 0) {
+            return ['showgradesummary' => false, 'gradesummary' => ''];
         }
-
-        global $CFG;
-        require_once($CFG->libdir . '/gradelib.php');
-
-        $gradeitem = \grade_item::fetch([
-            'itemtype'     => 'mod',
-            'itemmodule'   => 'playerwords',
-            'iteminstance' => $instance->id,
-            'itemnumber'   => 0,
-            'courseid'     => $instance->course,
-        ]);
-        if (!$gradeitem) {
-            return $blank;
-        }
-
-        $grade = $gradeitem->get_grade($userid, false);
-        if ($grade === null || $grade->finalgrade === null) {
-            return $blank;
-        }
-
-        $a = (object)[
-            'method'   => self::grademethod_name($instance),
-            'mygrade'  => format_float((float)$grade->finalgrade, 2),
-            'maxgrade' => format_float((float)$instance->grade, 2),
-        ];
 
         return [
-            'showgradesofar' => true,
-            'gradesofarmessage' => get_string('gradesofar', 'mod_playerwords', $a),
+            'showgradesummary' => true,
+            'gradesummary' => get_string('lobby_gradesummary', 'mod_playerwords', (object)[
+                'points' => format_float((float)$instance->grade, 2),
+                'scoringmode' => self::grade_scoring_mode_name($instance),
+            ]),
         ];
     }
 
@@ -374,8 +380,9 @@ class round_presenter {
             'cooldowncountdownlabel' => get_string('cooldowncountdownlabel', 'mod_playerwords'),
             'cooldownactive'        => false,
             'newroundlabel'         => get_string('newroundlabel', 'mod_playerwords'),
-            'showgradesofar'        => false,
-            'gradesofarmessage'     => '',
+            'showscoreachieved'     => false,
+            'scoreachieved'         => '',
+            'scoreachievedlabel'    => get_string('scoreachievedlabel', 'mod_playerwords'),
             'roundsplayedlabel'     => '',
             'huditemgrantedlabel'   => '',
         ] + self::build_ranking_context($instance, $cm, $userid, false);
@@ -412,10 +419,12 @@ class round_presenter {
             // cooldown, or the round limit having been reached.
             'cooldownactive'        => $restricted,
             'newroundlabel'         => $blank['newroundlabel'],
+            'showscoreachieved'     => (float)$instance->grade > 0,
+            'scoreachieved'         => format_float((float)($state['score'] ?? 0.0), 2),
+            'scoreachievedlabel'    => $blank['scoreachievedlabel'],
             'roundsplayedlabel'     => self::build_rounds_played_label($instance, $userid),
             'huditemgrantedlabel'   => self::build_hud_grant_label($instance, $state),
-        ] + self::build_grade_so_far($instance, $userid)
-          + self::build_ranking_context($instance, $cm, $userid, true);
+        ] + self::build_ranking_context($instance, $cm, $userid, true);
     }
 
     /**
@@ -545,7 +554,7 @@ class round_presenter {
             'canstart' => $canstart,
             'startlabel' => get_string('startround', 'mod_playerwords'),
             'roundsplayedlabel' => self::build_rounds_played_label($instance, $userid),
-        ] + self::build_grading_method_info($instance);
+        ] + self::build_grade_summary_info($instance) + self::build_grading_method_info($instance);
     }
 
     /**

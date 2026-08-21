@@ -226,6 +226,84 @@ final class view_page_service_test extends \advanced_testcase {
 
         $this->assertFalse($ctx['showranking']);
         $this->assertSame('', $ctx['rankingtext']);
+        $this->assertFalse($ctx['showrankingscoringmode']);
+        $this->assertSame('', $ctx['rankingscoringmodetext']);
+    }
+
+    /**
+     * The help modal always explains the grade's own scoring mode when grading is
+     * enabled, regardless of whether it is Binary or Linear — the student needs the
+     * comparison to understand what the mode they were not given would have meant.
+     *
+     * @return void
+     */
+    public function test_build_page_data_explains_grade_scoring_mode(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        [$instance, $cm, $context] = $this->make_instance([
+            'grade' => 100,
+            'gradescoringmode' => PLAYERWORDS_SCORING_LINEAR,
+        ]);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $ctx = $pagedata['templatecontext'];
+
+        $this->assertTrue($ctx['showgradescoringmode']);
+        $this->assertSame(
+            get_string(
+                'help_gradescoringmode',
+                'mod_playerwords',
+                get_string('scoringmode_linear', 'mod_playerwords')
+            ),
+            $ctx['gradescoringmodetext']
+        );
+    }
+
+    /**
+     * An ungraded activity has no grade scoring mode worth explaining.
+     *
+     * @return void
+     */
+    public function test_build_page_data_hides_grade_scoring_mode_when_ungraded(): void {
+        [$instance, $cm, $context] = $this->make_instance(['grade' => 0]);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $ctx = $pagedata['templatecontext'];
+
+        $this->assertFalse($ctx['showgradescoringmode']);
+        $this->assertSame('', $ctx['gradescoringmodetext']);
+    }
+
+    /**
+     * The help modal always explains the ranking's own scoring mode when ranking is
+     * shown — independent of grading being enabled at all, since ranking uses its own
+     * fixed-base formula.
+     *
+     * @return void
+     */
+    public function test_build_page_data_explains_ranking_scoring_mode(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/playerwords/lib.php');
+
+        [$instance, $cm, $context] = $this->make_instance([
+            'grade' => 0,
+            'rankingscoringmode' => PLAYERWORDS_SCORING_LINEAR,
+            'show_ranking' => 1,
+        ]);
+
+        $pagedata = view_page_service::build_page_data($cm, $instance, $context, $this->user->id);
+        $ctx = $pagedata['templatecontext'];
+
+        $this->assertTrue($ctx['showrankingscoringmode']);
+        $this->assertSame(
+            get_string(
+                'help_rankingscoringmode',
+                'mod_playerwords',
+                get_string('scoringmode_linear', 'mod_playerwords')
+            ),
+            $ctx['rankingscoringmodetext']
+        );
     }
 
     /**

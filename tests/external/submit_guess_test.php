@@ -236,6 +236,11 @@ final class submit_guess_test extends \advanced_testcase {
         $this->assertTrue($data['roundresult']['showdefinition']);
         $this->assertSame('dica secreta', $data['roundresult']['revealdefinition']);
         $this->assertGreaterThan(0, $data['roundresult']['cooldownuntil']);
+        // Regression guard: build_round_result_context() must keep returning exactly
+        // the keys roundresult_structure() declares, or the external API silently
+        // strips them on this dispatch path.
+        $this->assertArrayHasKey('showscoreachieved', $data['roundresult']);
+        $this->assertArrayHasKey('showranking', $data['roundresult']);
     }
 
     /**

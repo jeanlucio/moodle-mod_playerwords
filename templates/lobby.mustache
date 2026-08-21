@@ -29,22 +29,32 @@
         "startlabel": "Start round",
         "showgradingmethodinfo": true,
         "gradingmethodinfo": "Grading method: Average grade",
-        "roundsplayedlabel": "Rounds played: 0 / 10."
+        "roundsplayedlabel": "Rounds played: 0 / 10.",
+        "showgradesummary": true,
+        "gradesummary": "Worth up to 100.00 points — Binary (all or nothing)."
     }
 }}
 <div id="playerwords-lobby-body" class="mod-playerwords-lobby text-center my-3">
     {{#timerenabled}}
-        <p class="text-muted">{{lobbytimerinfo}}</p>
+        <p>{{lobbytimerinfo}}</p>
     {{/timerenabled}}
     {{#roundsplayedlabel}}
-        <p class="text-muted small">{{roundsplayedlabel}}</p>
+        <p class="small">{{roundsplayedlabel}}</p>
     {{/roundsplayedlabel}}
-    {{#hudstartcost}}
-        <p class="mb-2">{{hudstartcostlabel}}</p>
-    {{/hudstartcost}}
+    {{#showgradesummary}}
+        <p class="small">{{gradesummary}}</p>
+    {{/showgradesummary}}
     {{#showgradingmethodinfo}}
-        <p class="text-muted small">{{gradingmethodinfo}}</p>
+        <p class="small">{{gradingmethodinfo}}</p>
     {{/showgradingmethodinfo}}
+    {{#hudstartcost}}
+        {{#canstart}}
+            <p class="pw-lobby-cost mb-2">{{hudstartcostlabel}}</p>
+        {{/canstart}}
+        {{^canstart}}
+            <p class="pw-lobby-cost pw-lobby-cost-warn mb-2">{{hudstartcostlabel}}</p>
+        {{/canstart}}
+    {{/hudstartcost}}
     <button type="button"
             id="playerwords-start-round-button"
             class="btn btn-primary btn-lg"

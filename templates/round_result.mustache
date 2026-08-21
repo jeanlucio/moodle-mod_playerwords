@@ -47,8 +47,9 @@
         ],
         "rankinghasoutsider": false,
         "rankingoutsiderrow": {"position": 0, "fullname": "", "totalscore": 0, "iscurrentuser": false},
-        "showgradesofar": true,
-        "gradesofarmessage": "Average grade: 6.50 / 10.00.",
+        "showscoreachieved": true,
+        "scoreachievedlabel": "Score achieved:",
+        "scoreachieved": "85.00",
         "roundsplayedlabel": "Rounds played: 3 / 10.",
         "huditemgrantedlabel": "You received 1× Gold Key!"
     }
@@ -57,14 +58,16 @@
     {{#feedbackmessage}}
         <p class="mod-playerwords-feedback fw-bold mt-3 text-center">{{feedbackmessage}}</p>
     {{/feedbackmessage}}
-    {{#showgradesofar}}
-        <p class="mt-2 text-center">{{gradesofarmessage}}</p>
-    {{/showgradesofar}}
+    {{#showscoreachieved}}
+        <div class="mod-playerwords-reveal alert alert-secondary mt-3 text-center">
+            <p class="mb-0">{{scoreachievedlabel}} {{scoreachieved}}</p>
+        </div>
+    {{/showscoreachieved}}
     {{#huditemgrantedlabel}}
         <p class="mt-2 text-center">{{huditemgrantedlabel}}</p>
     {{/huditemgrantedlabel}}
     {{#roundsplayedlabel}}
-        <p class="text-muted small mt-1 text-center">{{roundsplayedlabel}}</p>
+        <p class="small mt-1 text-center">{{roundsplayedlabel}}</p>
     {{/roundsplayedlabel}}
     {{#showreveal}}
         <div class="mod-playerwords-reveal alert alert-secondary mt-3">
@@ -82,7 +85,7 @@
         </div>
     {{/showreveal}}
     {{#cooldowntext}}
-        <p class="text-muted mt-2">
+        <p class="mt-2">
             {{cooldowncountdownlabel}}
             <strong>
                 <span id="playerwords-cooldown-countdown">{{cooldowntext}}</span>

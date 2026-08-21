@@ -35,8 +35,12 @@
         "hudtext": "This activity may require PlayerHUD items to start a round or reveal a hint, and can reward you with an item for winning a round.",
         "showgrading": true,
         "gradingtext": "Grading method: Highest grade.",
+        "showgradescoringmode": true,
+        "gradescoringmodetext": "Grade scoring mode: Binary. In Binary mode, you get full credit for winning the round no matter how many attempts you use. In Linear mode, the first two attempts both earn full credit, and each attempt after that lowers your credit.",
         "showranking": true,
         "rankingtext": "The ranking adds up your points from every finished round. Ties are broken by fewer attempts used on average, then less time spent on average.",
+        "showrankingscoringmode": true,
+        "rankingscoringmodetext": "Ranking scoring mode: Binary. In Binary mode, you earn full points for winning the round no matter how many attempts you use. In Linear mode, the first two attempts both earn full points, and each attempt after that lowers your points.",
         "reviewhint": "You can review these instructions anytime by clicking the help icon at the top of the game."
     }
 }}
@@ -58,8 +62,14 @@
     {{#showgrading}}
         <p>{{gradingtext}}</p>
     {{/showgrading}}
+    {{#showgradescoringmode}}
+        <p>{{gradescoringmodetext}}</p>
+    {{/showgradescoringmode}}
     {{#showranking}}
         <p>{{rankingtext}}</p>
     {{/showranking}}
+    {{#showrankingscoringmode}}
+        <p>{{rankingscoringmodetext}}</p>
+    {{/showrankingscoringmode}}
     <p>{{reviewhint}}</p>
 </div>

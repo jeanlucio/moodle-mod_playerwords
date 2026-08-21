@@ -32,6 +32,26 @@
 }
 
 /*
+ * The pre-round cost line is the one lobby text that can gate the start button, so it
+ * is styled apart from the surrounding metadata lines instead of inheriting their
+ * default weight. The warn variant only applies when the student cannot afford the
+ * round, keeping the colour tied to an actual blocking condition rather than being
+ * decorative.
+ *
+ * --bs-danger (Bootstrap 5 / Moodle 5.x) and --danger (Bootstrap 4 / Moodle 4.5) are
+ * never both defined on the same site — each Bootstrap major only exposes its own
+ * naming. Chaining both as nested fallbacks, with the static hex last, keeps this
+ * theme-aware on every supported Moodle version instead of only one of them.
+ */
+.path-mod-playerwords .pw-lobby-cost {
+    font-weight: 600;
+}
+
+.path-mod-playerwords .pw-lobby-cost-warn {
+    color: var(--bs-danger, var(--danger, #dc3545));
+}
+
+/*
  * Bootstrap 4 (Moodle 4.5) does not define ".visually-hidden" at all, and Bootstrap 5's own
  * ".sr-only" bridge class is flagged deprecated by theme_boost (MDL-84465, removal planned
  * for Moodle 6.0) — using it trips the "Deprecated style in use" warning in both Behat CI

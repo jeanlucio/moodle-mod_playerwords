@@ -720,6 +720,7 @@ class round_service {
             (int)$state['attemptsused'],
             $completed
         );
+        $state['score'] = $score;
 
         // The round reservation made by start_round() is completed here instead of
         // inserting a second row. A missing reservation only happens for session state
