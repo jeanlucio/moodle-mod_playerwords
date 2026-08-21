@@ -16,46 +16,47 @@ matrix (Moodle 4.5 → 5.x, PostgreSQL & MariaDB).
 | `lib_supports_test.php` | 2 |
 | `completion/custom_completion_test.php` | 7 |
 | `privacy/provider_test.php` | 30 |
+| `lib_update_grades_test.php` | 2 |
 | `mod_form_test.php` | 3 |
-| **Subtotal** | **62** |
+| **Subtotal** | **64** |
 
 ### Local Business-Logic Tests (`tests/local/`)
 
 | Test file | Cases |
 |-----------|------:|
 | `ai_word_generator_test.php` | 17 |
-| `attempts_history_service_test.php` | 19 |
+| `attempts_history_service_test.php` | 23 |
 | `gameplay_service_test.php` | 20 |
 | `hud_service_test.php` | 27 |
 | `intro_service_test.php` | 5 |
 | `ranking_service_test.php` | 9 |
-| `round_presenter_test.php` | 42 |
-| `round_service_test.php` | 58 |
-| `view_page_service_test.php` | 18 |
+| `round_presenter_test.php` | 46 |
+| `round_service_test.php` | 61 |
+| `view_page_service_test.php` | 21 |
 | `word_normalizer_test.php` | 16 |
 | `words_repository_test.php` | 65 |
-| **Subtotal** | **296** |
+| **Subtotal** | **310** |
 
 ### Web Services Tests (`tests/external/`)
 
 | Test file | Cases |
 |-----------|------:|
 | `count_eligible_words_test.php` | 6 |
-| `count_glossary_candidates_test.php` | 4 |
+| `count_glossary_candidates_test.php` | 5 |
 | `end_round_test.php` | 6 |
 | `new_round_test.php` | 5 |
 | `reveal_hint_test.php` | 8 |
-| `start_round_test.php` | 8 |
+| `start_round_test.php` | 7 |
 | `submit_guess_test.php` | 10 |
 | **Subtotal** | **47** |
 
-| **Grand Total** | **405** |
+| **Grand Total** | **421** |
 
 ```bash
 vendor/bin/phpunit --testsuite mod_playerwords
 ```
 
-**Overall line coverage** (`moodle-coverage`, PHPUnit + Xdebug): **88%**.
+**Overall line coverage** (`moodle-coverage`, PHPUnit + Xdebug): **89%**.
 
 ### Behat — End-to-End Tests
 
