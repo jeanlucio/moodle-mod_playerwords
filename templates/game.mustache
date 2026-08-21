@@ -145,7 +145,7 @@
         {{> mod_playerwords/inactive_words}}
     {{/hasinactivewords}}
     {{^hasinactivewords}}
-        <p class="mod-playerwords-words-status text-muted small mb-2">{{activewordscount}}</p>
+        {{> mod_playerwords/words_status_ok}}
     {{/hasinactivewords}}
 {{/showwordsstatus}}
 

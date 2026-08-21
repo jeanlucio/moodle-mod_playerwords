@@ -180,19 +180,6 @@
     text-align: center;
 }
 
-/*
- * No longer nested inside mod-playerwords-game (a width: fit-content card) — moved
- * out to its own block above the card so a long inactive-words list wraps at the
- * page's own content width instead of either being squeezed into the card's narrow
- * width or forcing the card itself wide. As a plain block-level element outside
- * that fit-content ancestor, it already defaults to filling the available content
- * width on its own; this rule only needs to center the words-status fallback text,
- * which used to inherit centering from mod-playerwords-game > p as a direct child.
- */
-.path-mod-playerwords .mod-playerwords-words-status {
-    text-align: center;
-}
-
 .path-mod-playerwords .mod-playerwords-game .mod-playerwords-hint-form {
     text-align: center;
 }
