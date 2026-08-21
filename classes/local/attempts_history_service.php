@@ -25,6 +25,7 @@
 namespace mod_playerwords\local;
 
 use context_course;
+use mod_playerwords\event\attempt_deleted;
 
 /**
  * Builds one student's own finished-round history, plus their currently computed
@@ -109,6 +110,7 @@ class attempts_history_service {
         $seconds = (int)$attempt->time_used % 60;
 
         $row = [
+            'id'            => (int)$attempt->id,
             'word'          => $attempt->concept ?: ($attempt->word ?: ''),
             'attemptsused'  => (int)$attempt->attempts_used,
             'timeused'      => sprintf('%d:%02d', $minutes, $seconds),
@@ -282,6 +284,84 @@ class attempts_history_service {
             'total'       => (int)$total,
             'showranking' => $showranking,
         ];
+    }
+
+    /**
+     * Deletes the given attempts from the teacher/manager-facing report, scoped to
+     * exactly what get_all_history() would let this viewer see: this instance's own
+     * attempts, honouring the same manager-exclusion and SEPARATEGROUPS filtering — an
+     * attemptid for another instance, a manager's own row, or a student outside the
+     * viewer's group is silently skipped rather than deleted.
+     *
+     * Never touches the gradebook or ranking directly: the caller is responsible for
+     * recomputing the grade of every returned userid (ranking needs no recompute at
+     * all — it is always a live SUM() over whatever attempt rows remain).
+     *
+     * @param int[] $attemptids Attempt ids to delete.
+     * @param \stdClass $cm Course module record.
+     * @param \stdClass $instance Activity instance.
+     * @param \context $context Module context.
+     * @param int $viewerid Current viewer's user id, for SEPARATEGROUPS scoping.
+     * @return int[] Distinct userids whose attempts were actually deleted.
+     */
+    public static function delete_attempts(
+        array $attemptids,
+        \stdClass $cm,
+        \stdClass $instance,
+        \context $context,
+        int $viewerid
+    ): array {
+        global $DB;
+
+        $attemptids = array_values(array_unique(array_filter(array_map('intval', $attemptids))));
+        if (empty($attemptids)) {
+            return [];
+        }
+
+        [$idinsql, $idinparams] = $DB->get_in_or_equal($attemptids, SQL_PARAMS_NAMED, 'delid');
+        $params = ['instanceid' => (int)$instance->id] + $idinparams;
+
+        [$managerwhere, $managerparams] = self::manager_exclusion($context);
+        $params = array_merge($params, $managerparams);
+
+        $groupwhere = '';
+        $groupfilter = self::resolve_group_filter($cm, $context, $viewerid);
+        if ($groupfilter !== null) {
+            [$groupinsql, $groupinparams] = $DB->get_in_or_equal($groupfilter, SQL_PARAMS_NAMED, 'delgrp');
+            $groupwhere = "AND pa.userid $groupinsql";
+            $params = array_merge($params, $groupinparams);
+        }
+
+        $attempts = $DB->get_records_sql(
+            "SELECT pa.id, pa.userid
+               FROM {playerwords_attempts} pa
+              WHERE pa.playerwordsid = :instanceid
+                    AND pa.id $idinsql
+                    $managerwhere
+                    $groupwhere",
+            $params
+        );
+
+        if (empty($attempts)) {
+            return [];
+        }
+
+        $DB->delete_records_list('playerwords_attempts', 'id', array_keys($attempts));
+
+        $affecteduserids = [];
+        foreach ($attempts as $attempt) {
+            $affecteduserids[(int)$attempt->userid] = true;
+
+            $event = attempt_deleted::create([
+                'objectid'      => (int)$attempt->id,
+                'context'       => $context,
+                'relateduserid' => (int)$attempt->userid,
+                'other'         => ['playerwordsid' => (int)$instance->id],
+            ]);
+            $event->trigger();
+        }
+
+        return array_keys($affecteduserids);
     }
 
     /**

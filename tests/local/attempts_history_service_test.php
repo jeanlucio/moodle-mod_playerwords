@@ -25,10 +25,13 @@
 
 namespace mod_playerwords\local;
 
+use mod_playerwords\event\attempt_deleted;
+
 /**
  * Tests for attempts_history_service — requires database.
  *
  * @covers \mod_playerwords\local\attempts_history_service
+ * @covers \mod_playerwords\event\attempt_deleted
  */
 final class attempts_history_service_test extends \advanced_testcase {
     /** @var \stdClass Course used by the tests. */
@@ -75,7 +78,7 @@ final class attempts_history_service_test extends \advanced_testcase {
      * @param bool $finished Whether the round is finished.
      * @param int $timeoffset Seconds to add to time(), used to control ordering.
      * @param ?float $rankingpoints Ranking points for the attempt; defaults to $score.
-     * @return void
+     * @return \stdClass Inserted playerwords_attempts record, including its new id.
      */
     private function add_attempt(
         \stdClass $instance,
@@ -85,10 +88,10 @@ final class attempts_history_service_test extends \advanced_testcase {
         bool $finished = true,
         int $timeoffset = 0,
         ?float $rankingpoints = null
-    ): void {
+    ): \stdClass {
         global $DB;
 
-        $DB->insert_record('playerwords_attempts', (object)[
+        $record = (object)[
             'playerwordsid' => $instance->id,
             'userid'        => $user->id,
             'wordid'        => $wordid,
@@ -99,7 +102,10 @@ final class attempts_history_service_test extends \advanced_testcase {
             'rankingpoints' => $rankingpoints ?? $score,
             'timecreated'   => time() + $timeoffset,
             'timefinished'  => $finished ? (time() + $timeoffset) : 0,
-        ]);
+        ];
+        $record->id = $DB->insert_record('playerwords_attempts', $record);
+
+        return $record;
     }
 
     /**
@@ -676,5 +682,138 @@ final class attempts_history_service_test extends \advanced_testcase {
         $this->assertSame('Ana', $history['rows'][0]['student']);
         $this->assertCount(1, $players);
         $this->assertSame('Ana', $players[0]->fullname);
+    }
+
+    /**
+     * The ordinary case: a valid attemptid belonging to this instance is deleted, the
+     * owning userid is returned so the caller knows whose grade to recompute, and an
+     * attempt_deleted event fires with the right data.
+     *
+     * @return void
+     */
+    public function test_delete_attempts_removes_the_row_and_fires_event(): void {
+        global $DB;
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = get_coursemodule_from_instance('playerwords', $instance->id, 0, false, MUST_EXIST);
+        $context = \context_module::instance($cm->id);
+        $student = $this->getDataGenerator()->create_user();
+        $attempt = $this->add_attempt($instance, $student, 80);
+
+        $sink = $this->redirectEvents();
+        $affected = attempts_history_service::delete_attempts(
+            [$attempt->id],
+            $cm,
+            $instance,
+            $context,
+            $this->user->id
+        );
+
+        $this->assertSame([(int)$student->id], $affected);
+        $this->assertFalse($DB->record_exists('playerwords_attempts', ['id' => $attempt->id]));
+
+        $events = array_values(array_filter($sink->get_events(), fn($e) => $e instanceof attempt_deleted));
+        $this->assertCount(1, $events);
+        $this->assertSame((int)$attempt->id, $events[0]->objectid);
+        $this->assertSame((int)$student->id, $events[0]->relateduserid);
+        $this->assertSame((int)$instance->id, $events[0]->other['playerwordsid']);
+    }
+
+    /**
+     * An attemptid belonging to a different instance is never deleted, no matter how
+     * it is passed in — the instance-isolation invariant every other query in this
+     * class already upholds.
+     *
+     * @return void
+     */
+    public function test_delete_attempts_ignores_attempt_from_another_instance(): void {
+        global $DB;
+        $instancea = $this->make_instance(['grade' => 100]);
+        $instanceb = $this->make_instance(['grade' => 100]);
+        $cma = get_coursemodule_from_instance('playerwords', $instancea->id, 0, false, MUST_EXIST);
+        $context = \context_module::instance($cma->id);
+        $student = $this->getDataGenerator()->create_user();
+        $attemptb = $this->add_attempt($instanceb, $student, 80);
+
+        // Attacking instance A's report with instance B's attemptid.
+        $affected = attempts_history_service::delete_attempts(
+            [$attemptb->id],
+            $cma,
+            $instancea,
+            $context,
+            $this->user->id
+        );
+
+        $this->assertSame([], $affected);
+        $this->assertTrue($DB->record_exists('playerwords_attempts', ['id' => $attemptb->id]));
+    }
+
+    /**
+     * With SEPARATEGROUPS active, a viewer restricted to one group cannot delete an
+     * attempt belonging to a student in a different group — the same restriction
+     * get_all_history() already enforces, now also enforced on the write path.
+     *
+     * @return void
+     */
+    public function test_delete_attempts_separategroups_cannot_delete_outside_group(): void {
+        global $DB;
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = $this->enable_separategroups($instance);
+        $context = \context_module::instance($cm->id);
+
+        $teacher = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($teacher->id, $this->course->id, 'teacher');
+        $outsider = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($outsider->id, $this->course->id, 'student');
+
+        $groupa = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $groupa->id, 'userid' => $teacher->id]);
+        // The outsider deliberately joins no group the teacher shares.
+
+        $attempt = $this->add_attempt($instance, $outsider, 80);
+
+        $affected = attempts_history_service::delete_attempts(
+            [$attempt->id],
+            $cm,
+            $instance,
+            $context,
+            $teacher->id
+        );
+
+        $this->assertSame([], $affected);
+        $this->assertTrue($DB->record_exists('playerwords_attempts', ['id' => $attempt->id]));
+    }
+
+    /**
+     * Deleting several attempts across two students in one call returns both their
+     * userids, deduplicated even when a student has more than one attempt deleted at
+     * once.
+     *
+     * @return void
+     */
+    public function test_delete_attempts_bulk_returns_distinct_affected_userids(): void {
+        global $DB;
+        $instance = $this->make_instance(['grade' => 100]);
+        $cm = get_coursemodule_from_instance('playerwords', $instance->id, 0, false, MUST_EXIST);
+        $context = \context_module::instance($cm->id);
+        $studenta = $this->getDataGenerator()->create_user();
+        $studentb = $this->getDataGenerator()->create_user();
+
+        $attempta1 = $this->add_attempt($instance, $studenta, 40);
+        $attempta2 = $this->add_attempt($instance, $studenta, 90);
+        $attemptb = $this->add_attempt($instance, $studentb, 60);
+
+        $affected = attempts_history_service::delete_attempts(
+            [$attempta1->id, $attempta2->id, $attemptb->id],
+            $cm,
+            $instance,
+            $context,
+            $this->user->id
+        );
+
+        sort($affected);
+        $expected = [(int)$studenta->id, (int)$studentb->id];
+        sort($expected);
+        $this->assertSame($expected, $affected);
+        $this->assertSame(0, $DB->count_records('playerwords_attempts', ['playerwordsid' => $instance->id]));
     }
 }
