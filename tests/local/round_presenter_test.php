@@ -33,6 +33,7 @@ namespace mod_playerwords\local;
  * on session state (so a cooldown_seconds change always applies immediately).
  *
  * @covers \mod_playerwords\local\round_presenter
+ * @covers \mod_playerwords\local\ranking_service
  */
 final class round_presenter_test extends \advanced_testcase {
     /** @var \stdClass Course used by the DB-dependent tests. */
@@ -518,6 +519,47 @@ final class round_presenter_test extends \advanced_testcase {
             get_string('scoringmode_linear', 'mod_playerwords'),
             round_presenter::ranking_scoring_mode_name($linear)
         );
+    }
+
+    /**
+     * Tests that the inline ranking summary is hidden when the activity has ranking
+     * turned off, without ever touching ranking_service (no real cm needed).
+     *
+     * @return void
+     */
+    public function test_build_ranking_context_hidden_when_ranking_off(): void {
+        $instance = $this->make_instance(['show_ranking' => 0]);
+        $cm = (object)['id' => 5];
+        $user = $this->getDataGenerator()->create_user();
+
+        $context = round_presenter::build_ranking_context($instance, $cm, $user->id, true);
+
+        $this->assertFalse($context['showranking']);
+        $this->assertSame([], $context['rankingrows']);
+    }
+
+    /**
+     * Tests that the inline ranking summary surfaces the same rows ranking.php's own
+     * page would show, once a round has actually been completed — the real-data branch
+     * of build_ranking_context() that only ever runs once show_ranking is on and the
+     * round is finished.
+     *
+     * @return void
+     */
+    public function test_build_ranking_context_shows_rows_when_ranking_on(): void {
+        $instance = $this->make_instance(['show_ranking' => 1]);
+        $cm = get_coursemodule_from_instance('playerwords', $instance->id, $this->course->id, false, MUST_EXIST);
+        $user = $this->getDataGenerator()->create_user();
+        $modgenerator = $this->getDataGenerator()->get_plugin_generator('mod_playerwords');
+        $word = $modgenerator->create_word($instance->id, 'boca');
+        $modgenerator->create_attempt($instance->id, $user->id, $word->id, ['rankingpoints' => 80]);
+
+        $context = round_presenter::build_ranking_context($instance, $cm, $user->id, true);
+
+        $this->assertTrue($context['showranking']);
+        $this->assertFalse($context['rankingempty']);
+        $this->assertCount(1, $context['rankingrows']);
+        $this->assertSame(format_float(80.0, 2), $context['rankingrows'][0]['totalscore']);
     }
 
     /**
