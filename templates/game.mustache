@@ -127,6 +127,28 @@
         "rankingemptylabel": "No rounds completed yet."
     }
 }}
+{{!
+    Rendered outside and above the game card, not inside it: mod-playerwords-game is
+    width: fit-content, sized to the card's own content (toolbar, word grid). This
+    status block is teacher-only meta-information, not part of the game itself, and
+    a long inactive-words list has no natural width limit — nesting it inside the
+    card would either force the whole card wide (the original bug here) or squeeze
+    a long list into the card's narrow width. Kept above the card rather than below
+    it for the same reason as before: the on-screen keyboard inside #playerwords-stage
+    is position: fixed to the viewport's bottom edge on mobile, with no reserved
+    space of its own for content that comes after it in the document — anything
+    placed below the stage risks sitting behind the keyboard, mostly hidden (see
+    mod_playercross's identical layout).
+}}
+{{#showwordsstatus}}
+    {{#hasinactivewords}}
+        {{> mod_playerwords/inactive_words}}
+    {{/hasinactivewords}}
+    {{^hasinactivewords}}
+        <p class="mod-playerwords-words-status text-muted small mb-2">{{activewordscount}}</p>
+    {{/hasinactivewords}}
+{{/showwordsstatus}}
+
 <div class="mod-playerwords-game">
     <div class="pw-header">
         {{> mod_playerwords/toolbar}}
@@ -139,25 +161,6 @@
             </span>
         {{/timerenabled}}
     </div>
-
-    {{!
-        Rendered above the game area, not below it: the on-screen keyboard inside
-        #playerwords-stage is position: fixed to the viewport's bottom edge on mobile,
-        with no reserved space of its own for content that comes after it in the
-        document — anything placed below the stage risks sitting behind the keyboard,
-        mostly hidden (see mod_playercross's identical fix, which hit this in
-        production; not currently reachable here, since the grid's own height keeps
-        this content clear, but there is no guarantee that stays true as the UI
-        evolves).
-    }}
-    {{#showwordsstatus}}
-        {{#hasinactivewords}}
-            {{> mod_playerwords/inactive_words}}
-        {{/hasinactivewords}}
-        {{^hasinactivewords}}
-            <p class="mod-playerwords-words-status text-muted small mb-2">{{activewordscount}}</p>
-        {{/hasinactivewords}}
-    {{/showwordsstatus}}
 
     {{^hastargetword}}
         <div class="alert alert-warning">{{nogamewords}}</div>

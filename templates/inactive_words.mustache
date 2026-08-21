@@ -19,12 +19,15 @@
 
     Teacher-only warning listing approved pool words that will never actually be
     drawn into a round (outside the current length range, or containing a character
-    the game cannot use), shown on view.php above the game area — not below, so it
-    can never end up hidden behind the mobile virtual keyboard, which is
-    position: fixed to the viewport's bottom edge and therefore has no reserved
-    space of its own for content that would otherwise render after it (see
-    mod_playercross's identical fix, which hit exactly that in production). Never
-    rendered for a student — gated by canmanagewords in view_page_service.php.
+    the game cannot use), shown on view.php outside and above the game card — not
+    below it, so it can never end up hidden behind the mobile virtual keyboard,
+    which is position: fixed to the viewport's bottom edge and therefore has no
+    reserved space of its own for content that would otherwise render after it; and
+    not nested inside the card, since the card is width: fit-content and a long
+    word list here has no line-break opportunity in that calculation, which used to
+    force the whole card wide (see mod_playercross's identical layout, which hit
+    exactly that in production). Never rendered for a student — gated by
+    canmanagewords in view_page_service.php.
 
     Example context (json):
     {
@@ -36,7 +39,7 @@
         "charsetissuestext": "Contains a character the game cannot use (1): café-com-leite."
     }
 }}
-<div class="mod-playerwords-inactive-words alert alert-warning mt-3">
+<div class="mod-playerwords-inactive-words alert alert-warning mb-3">
     <p class="mb-1"><strong>{{activewordscount}}</strong></p>
     <p class="mb-1"><strong>{{inactivewordstitle}}</strong></p>
     <ul class="mb-0">
