@@ -42,7 +42,10 @@ class round_service {
     private const TIMEOUT_TOLERANCE_SECONDS = 5;
 
     /**
-     * Gets session state, creating defaults when missing.
+     * Gets session state, creating defaults when missing. Also discards a finished
+     * round whose attempt row a teacher has since deleted from the attempts report —
+     * see state_is_valid() — so the student sees a fresh lobby instead of a stale
+     * result screen that no longer corresponds to anything in the database.
      *
      * @param int $cmid Course module id.
      * @param int $userid User id.
@@ -55,26 +58,65 @@ class round_service {
         if (!isset($SESSION->mod_playerwords)) {
             $SESSION->mod_playerwords = [];
         }
-        if (!isset($SESSION->mod_playerwords[$sessionkey])) {
-            $SESSION->mod_playerwords[$sessionkey] = [
-                'wordid'       => 0,
-                'wordtext'     => '',
-                'concept'      => '',
-                'attemptsused' => 0,
-                'starttime'    => 0,
-                'hint'         => '',
-                'hintrevealed' => false,
-                'rows'         => [],
-                'finished'      => false,
-                'won'           => false,
-                'forfeited'     => false,
-                'timedout'      => false,
-                'roundstarted'  => false,
-                'attemptid'     => 0,
-            ];
+        if (
+            !isset($SESSION->mod_playerwords[$sessionkey])
+            || !self::state_is_valid($SESSION->mod_playerwords[$sessionkey])
+        ) {
+            $SESSION->mod_playerwords[$sessionkey] = self::default_state();
         }
 
         return $SESSION->mod_playerwords[$sessionkey];
+    }
+
+    /**
+     * Returns the default (empty) round state shape.
+     *
+     * @return array
+     */
+    private static function default_state(): array {
+        return [
+            'wordid'       => 0,
+            'wordtext'     => '',
+            'concept'      => '',
+            'attemptsused' => 0,
+            'starttime'    => 0,
+            'hint'         => '',
+            'hintrevealed' => false,
+            'rows'         => [],
+            'finished'      => false,
+            'won'           => false,
+            'forfeited'     => false,
+            'timedout'      => false,
+            'roundstarted'  => false,
+            'attemptid'     => 0,
+            'finishedattemptid' => 0,
+        ];
+    }
+
+    /**
+     * Checks that a *finished* round's backing attempt row still exists.
+     *
+     * The result screen is rendered entirely from this session state, never
+     * re-queried from the database, so if a teacher deletes the attempt via the
+     * attempts report (running in their own session, with no way to reach into this
+     * student's session), this state would otherwise keep showing that stale result
+     * forever — new_round() is the only other thing that clears it, and nothing
+     * prompts the student to click it. Treating the state as invalid here makes
+     * load_state() reset it to defaults, so the next ensure_round_state() picks a
+     * fresh word exactly as if the student had never played, instead of leaving a
+     * phantom result on screen for an attempt that no longer exists.
+     *
+     * @param array $state Session state.
+     * @return bool
+     */
+    private static function state_is_valid(array $state): bool {
+        if (!empty($state['finished']) && (int)($state['finishedattemptid'] ?? 0) > 0) {
+            global $DB;
+            if (!$DB->record_exists('playerwords_attempts', ['id' => (int)$state['finishedattemptid']])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -753,6 +795,7 @@ class round_service {
             ]);
         }
         $state['attemptid'] = 0;
+        $state['finishedattemptid'] = $attemptid;
 
         $event = \mod_playerwords\event\round_completed::create([
             'objectid' => $attemptid,
