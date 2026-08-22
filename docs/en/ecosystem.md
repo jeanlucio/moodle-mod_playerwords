@@ -2,7 +2,7 @@
 
 PlayerWords is part of the **PlayerGames** gamification ecosystem for Moodle. Its main direct integration is with the PlayerHUD block:
 
-* **PlayerHUD Block (Optional):** Configure item costs for starting a round or revealing a hint, and an item grant for each round won.
+* **PlayerHUD Block (Optional, v1.7.1+):** Configure item costs for starting a round or revealing a hint, and an item grant for each round won.
 
   👉 <https://github.com/jeanlucio/moodle-block_playerhud>
 
