@@ -25,7 +25,13 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-    if (!\mod_playerwords\local\hud_service::is_installed()) {
+    if (\mod_playerwords\local\hud_service::is_outdated()) {
+        $settings->add(new admin_setting_heading(
+            'mod_playerwords/hudoutdated',
+            get_string('hud_outdated_heading', 'mod_playerwords'),
+            get_string('hud_outdated_desc', 'mod_playerwords')
+        ));
+    } else if (!\mod_playerwords\local\hud_service::is_installed()) {
         $settings->add(new admin_setting_heading(
             'mod_playerwords/hudnotinstalled',
             get_string('hud_notinstalled_heading', 'mod_playerwords'),
