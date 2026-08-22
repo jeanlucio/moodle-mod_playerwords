@@ -72,6 +72,7 @@ informational notice about it — there's nothing to configure there either way.
 
 Found a bug or have a question? Open an issue on the
 [issue tracker](https://github.com/jeanlucio/moodle-mod_playerwords/issues).
+For general questions or ideas, use [GitHub Discussions](https://github.com/jeanlucio/moodle-mod_playerwords/discussions).
 
 ### 📄 License
 
@@ -143,6 +144,7 @@ PlayerWords* mostra um aviso informativo sobre isso — não há nada a configur
 
 Encontrou um bug ou tem alguma dúvida? Abra uma issue no
 [rastreador de issues](https://github.com/jeanlucio/moodle-mod_playerwords/issues).
+Para perguntas gerais ou ideias, use as [Discussions do GitHub](https://github.com/jeanlucio/moodle-mod_playerwords/discussions).
 
 ### 📄 Licença
 
