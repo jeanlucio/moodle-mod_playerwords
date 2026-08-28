@@ -73,7 +73,7 @@ vendor/bin/phpunit --testsuite mod_playerwords
 | `local\ai_word_generator` | 36% |
 | `local\attempts_history_service` | 98% |
 | `local\gameplay_service` | 95% |
-| `local\hud_service` | 89% |
+| `local\hud_service` | 91% |
 | `local\intro_service` | 100% |
 | `local\ranking_service` | 98% |
 | `local\round_presenter` | 98% |
@@ -82,7 +82,7 @@ vendor/bin/phpunit --testsuite mod_playerwords
 | `local\word_normalizer` | 100% |
 | `local\words_repository` | 99% |
 | `privacy\provider` | 100% |
-| **Overall** | **89%** |
+| **Overall** | **90%** |
 
 Most of the other `event/*.php` classes aren't listed — Moodle only loads them lazily when the
 corresponding event actually fires, so the instrumentation never sees them. `attempt_deleted`

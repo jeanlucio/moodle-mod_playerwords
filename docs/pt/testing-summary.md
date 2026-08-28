@@ -57,7 +57,7 @@ matriz completa (Moodle 4.5 → 5.x, PostgreSQL e MariaDB).
 vendor/bin/phpunit --testsuite mod_playerwords
 ```
 
-**Cobertura de linhas geral** (`moodle-coverage`, PHPUnit + Xdebug): **89%**.
+**Cobertura de linhas geral** (`moodle-coverage`, PHPUnit + Xdebug): **90%**.
 
 ### Behat — Testes de Ponta a Ponta
 
