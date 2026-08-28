@@ -24,7 +24,7 @@ The activity integrates with the course **Glossary** (words and definitions are 
 
 Designed around **retrieval practice** and **spaced repetition** — well-evidenced techniques for long-term retention — it turns vocabulary review into active recall instead of passive reading.
 
-📚 **[Full documentation](https://jeanlucio.github.io/moodle-mod_playerwords/)** — features, educational purpose, the PlayerGames ecosystem, usage guide, grading & ranking model, the full 422-case PHPUnit suite (89% line coverage) plus a 30-scenario Behat suite, and security details.
+📚 **[Full documentation](https://jeanlucio.github.io/moodle-mod_playerwords/)** — features, educational purpose, the PlayerGames ecosystem, usage guide, grading & ranking model, the full 425-case PHPUnit suite (89% line coverage) plus a 30-scenario Behat suite, and security details.
 
 ### 🔒 Third-party Service Disclosure
 
@@ -97,7 +97,7 @@ A atividade integra-se com o **Glossário** do curso (palavras e definições s�
 
 Baseado na **prática de recuperação** e na **repetição espaçada** — técnicas com boa evidência de eficácia para retenção de longo prazo — transforma a revisão de vocabulário em recuperação ativa da memória em vez de leitura passiva.
 
-📚 **[Documentação completa](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html)** — funcionalidades, finalidade educacional, ecossistema PlayerGames, guia de uso, modelo de nota e ranking, a suíte completa de 422 testes PHPUnit (89% de cobertura de linhas) mais uma suíte Behat de 30 cenários, e detalhes de segurança.
+📚 **[Documentação completa](https://jeanlucio.github.io/moodle-mod_playerwords/pt.html)** — funcionalidades, finalidade educacional, ecossistema PlayerGames, guia de uso, modelo de nota e ranking, a suíte completa de 425 testes PHPUnit (89% de cobertura de linhas) mais uma suíte Behat de 30 cenários, e detalhes de segurança.
 
 ### 🔒 Divulgação de Serviço de Terceiros
 
