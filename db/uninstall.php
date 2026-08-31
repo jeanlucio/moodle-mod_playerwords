@@ -34,7 +34,7 @@
  *
  * @return bool
  */
-function xmldb_mod_playerwords_uninstall(): bool {
+function xmldb_playerwords_uninstall(): bool {
     global $DB;
 
     $DB->delete_records_select(
