@@ -45,7 +45,6 @@ $PAGE->set_url('/mod/playerwords/attemptsreport.php', ['id' => $cm->id]);
 $PAGE->set_title(get_string('attemptsreport_title', 'mod_playerwords') . ' — ' . format_string($instance->name));
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagelayout('incourse');
-$PAGE->requires->css('/mod/playerwords/styles.css');
 
 if (optional_param('bulkaction', '', PARAM_ALPHA) === 'delete') {
     require_sesskey();

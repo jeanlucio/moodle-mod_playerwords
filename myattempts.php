@@ -39,7 +39,6 @@ require_capability('mod/playerwords:view', $context);
 $PAGE->set_url('/mod/playerwords/myattempts.php', ['id' => $cm->id]);
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagelayout('incourse');
-$PAGE->requires->css('/mod/playerwords/styles.css');
 
 // Always the logged-in user's own data — never a userid read from the request.
 $history = attempts_history_service::get_history($instance, (int)$USER->id);
