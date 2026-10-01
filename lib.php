@@ -224,6 +224,49 @@ function playerwords_calculate_user_grade(stdClass $instance, array $attempts): 
 }
 
 /**
+ * Returns when the student submitted the work behind their current grade.
+ *
+ * This is the finish time of the round that produces the grade under the instance's
+ * grading method. Average methods depend on every round, so they use the last one
+ * (the same rule mod_quiz applies to averaged attempts). A tie for the highest score
+ * resolves to the earliest round, so a later round with the same score never moves
+ * the submission date.
+ *
+ * @param stdClass $instance Activity instance.
+ * @param array $attempts Finished attempt records for this user, ordered by timefinished ASC.
+ * @return int|null Unix timestamp, or null when there are no attempts.
+ */
+function playerwords_get_grade_datesubmitted(stdClass $instance, array $attempts): ?int {
+    if (empty($attempts)) {
+        return null;
+    }
+
+    $attempts = array_values($attempts);
+    $grademethod = (int)($instance->grademethod ?? PLAYERWORDS_GRADE_HIGHEST);
+
+    switch ($grademethod) {
+        case PLAYERWORDS_GRADE_FIRST:
+            $source = $attempts[0];
+            break;
+        case PLAYERWORDS_GRADE_AVERAGE:
+        case PLAYERWORDS_GRADE_AVERAGE_ALL:
+        case PLAYERWORDS_GRADE_LAST:
+            $source = $attempts[count($attempts) - 1];
+            break;
+        case PLAYERWORDS_GRADE_HIGHEST:
+        default:
+            $source = $attempts[0];
+            foreach ($attempts as $attempt) {
+                if ((float)$attempt->score > (float)$source->score) {
+                    $source = $attempt;
+                }
+            }
+    }
+
+    return (int)$source->timefinished;
+}
+
+/**
  * Updates gradebook grades for one or all users of a playerwords instance.
  *
  * @param stdClass $instance Activity instance.
@@ -248,7 +291,9 @@ function playerwords_update_grades(stdClass $instance, int $userid = 0): void {
         $params['userid'] = $userid;
     }
 
-    $sql .= ' ORDER BY a.timefinished ASC';
+    // The id tiebreak keeps "first", "last" and the highest-score tie stable when two
+    // rounds finish within the same second.
+    $sql .= ' ORDER BY a.timefinished ASC, a.id ASC';
     $attempts = $DB->get_records_sql($sql, $params);
 
     if (empty($attempts)) {
@@ -280,6 +325,7 @@ function playerwords_update_grades(stdClass $instance, int $userid = 0): void {
         $grade = new stdClass();
         $grade->userid = $uid;
         $grade->rawgrade = playerwords_calculate_user_grade($instance, $userattemptlist);
+        $grade->datesubmitted = playerwords_get_grade_datesubmitted($instance, $userattemptlist);
         $grades[$uid] = $grade;
     }
 
@@ -346,8 +392,22 @@ function playerwords_update_instance(stdClass $data): bool {
     unset($data->timer_minutes);
     $data->id           = $data->instance;
     $data->timemodified = time();
+    $old = $DB->get_record('playerwords', ['id' => $data->id], 'grademethod, max_rounds', MUST_EXIST);
+    $data->grademethod = $data->grademethod ?? $old->grademethod;
+    $data->max_rounds = $data->max_rounds ?? $old->max_rounds;
     $result = $DB->update_record('playerwords', $data);
-    playerwords_grade_item_update($data);
+
+    // Grades already in the gradebook were computed with the old method (and, for the
+    // average over required rounds, the old max_rounds denominator). Recompute them now,
+    // as quiz_update_instance() does, instead of leaving them stale until each student
+    // plays another round.
+    $grademethodchanged = (int)$data->grademethod !== (int)$old->grademethod;
+    $maxroundschanged = (int)$data->max_rounds !== (int)$old->max_rounds;
+    if ($grademethodchanged || $maxroundschanged) {
+        playerwords_update_grades($data);
+    } else {
+        playerwords_grade_item_update($data);
+    }
     \mod_playerwords\local\words_repository::sync_glossary_words($data);
     return $result;
 }
