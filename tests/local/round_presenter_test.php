@@ -1099,4 +1099,60 @@ final class round_presenter_test extends \advanced_testcase {
 
         $this->assertSame(0, $context['timeleft']);
     }
+
+    /**
+     * Creates a PlayerHUD block in the course with one item named with an ampersand and quotes, and
+     * points the instance's round cost and win grant at it.
+     *
+     * @param \stdClass $instance Activity instance record.
+     * @return \stdClass The instance, reloaded.
+     */
+    private function make_instance_with_hud_item(\stdClass $instance): \stdClass {
+        global $DB;
+
+        if (!$DB->get_manager()->table_exists('block_playerhud_items')) {
+            $this->markTestSkipped('block_playerhud not installed.');
+        }
+        $blockid = $DB->insert_record('block_instances', (object) [
+            'blockname' => 'playerhud', 'parentcontextid' => \context_course::instance($this->course->id)->id,
+            'showinsubcontexts' => 0, 'pagetypepattern' => 'course-view-*', 'defaultregion' => 'side-pre',
+            'defaultweight' => 0, 'configdata' => base64_encode(serialize(new \stdClass())),
+            'timecreated' => time(), 'timemodified' => time(),
+        ]);
+        $itemid = $DB->insert_record('block_playerhud_items', (object) [
+            'blockinstanceid' => $blockid, 'name' => 'Cafe & "Co"', 'xp' => 0, 'image' => '', 'description' => '',
+            'enabled' => 1, 'secret' => 0, 'timecreated' => time(), 'timemodified' => time(),
+        ]);
+        $DB->update_record('playerwords', (object) [
+            'id' => $instance->id, 'hud_round_cost_item' => $itemid, 'hud_round_cost_qty' => 1,
+            'hud_win_grant_item' => $itemid, 'hud_win_grant_qty' => 1,
+        ]);
+
+        return $DB->get_record('playerwords', ['id' => $instance->id], '*', MUST_EXIST);
+    }
+
+    /**
+     * The lobby cost text and the "you received" text carry the item name as typed: their templates
+     * escape it, so an HTML-escaped name would show "&amp;" on screen.
+     *
+     * @return void
+     */
+    public function test_hud_labels_carry_the_item_name_as_plain_text(): void {
+        $instance = $this->make_instance_with_hud_item($this->make_instance());
+        $user = $this->getDataGenerator()->create_user();
+
+        $lobby = round_presenter::build_lobby_context($instance, [], (int) $user->id);
+        $result = round_presenter::build_round_result_context(
+            $instance,
+            (object) ['id' => 5],
+            $this->make_state(['finished' => true, 'won' => true]),
+            (int) $user->id,
+            true
+        );
+
+        $this->assertStringContainsString('Cafe & "Co"', $lobby['hudstartcostlabel']);
+        $this->assertStringNotContainsString('&amp;', $lobby['hudstartcostlabel']);
+        $this->assertStringContainsString('Cafe & "Co"', $result['huditemgrantedlabel']);
+        $this->assertStringNotContainsString('&amp;', $result['huditemgrantedlabel']);
+    }
 }
