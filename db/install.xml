@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/playerwords/db" VERSION="20260821" COMMENT="XMLDB file for mod_playerwords"
+<XMLDB PATH="mod/playerwords/db" VERSION="20261015" COMMENT="XMLDB file for mod_playerwords"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -70,9 +70,6 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="fk_course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
       </KEYS>
-      <INDEXES>
-        <INDEX NAME="course_ix" UNIQUE="false" FIELDS="course"/>
-      </INDEXES>
     </TABLE>
     <TABLE NAME="playerwords_words" COMMENT="Approved words available for rounds">
       <FIELDS>
@@ -97,7 +94,6 @@
         <KEY NAME="fk_user" TYPE="foreign" FIELDS="addedby" REFTABLE="user" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="playerwordsid_ix" UNIQUE="false" FIELDS="playerwordsid"/>
         <INDEX NAME="approved_ix" UNIQUE="false" FIELDS="approved"/>
       </INDEXES>
     </TABLE>
