@@ -541,11 +541,12 @@ class mod_playerwords_mod_form extends moodleform_mod {
             $errors['cooldowngroup'] = get_string('error_cooldown', 'mod_playerwords');
         }
 
+        $suffix = $this->get_suffix();
         if (
-            !empty($data['completionattemptsenabled']) &&
-            ((int)$data['completionattempts'] < 1)
+            !empty($data['completionattemptsenabled' . $suffix]) &&
+            ((int)$data['completionattempts' . $suffix] < 1)
         ) {
-            $errors['completionattemptsgroup'] = get_string('error_completionattempts', 'mod_playerwords');
+            $errors['completionattemptsgroup' . $suffix] = get_string('error_completionattempts', 'mod_playerwords');
         }
 
         // Irrelevant, and must not block saving, once grading is off: grademethod has no
@@ -567,27 +568,32 @@ class mod_playerwords_mod_form extends moodleform_mod {
     /**
      * Adds custom completion rules to Moodle completion section.
      *
+     * The element names carry the form's suffix. The core shows this form on the "Default activity
+     * completion" page with the suffix "_playerwords" and drops any custom rule whose name lacks it,
+     * which would also erase the rule from the defaults of every new activity.
+     *
      * @return array
      */
     public function add_completion_rules(): array {
         $mform = $this->_form;
+        $suffix = $this->get_suffix();
 
         $group = [];
-        $group[] = $mform->createElement('checkbox', 'completionattemptsenabled', '', '');
-        $group[] = $mform->createElement('text', 'completionattempts', '', ['size' => 3]);
+        $group[] = $mform->createElement('checkbox', 'completionattemptsenabled' . $suffix, '', '');
+        $group[] = $mform->createElement('text', 'completionattempts' . $suffix, '', ['size' => 3]);
         $mform->addGroup(
             $group,
-            'completionattemptsgroup',
+            'completionattemptsgroup' . $suffix,
             get_string('completionattemptsgroup', 'mod_playerwords'),
             [' '],
             false
         );
 
-        $mform->setType('completionattempts', PARAM_INT);
-        $mform->setDefault('completionattempts', 1);
-        $mform->disabledIf('completionattempts', 'completionattemptsenabled', 'notchecked');
+        $mform->setType('completionattempts' . $suffix, PARAM_INT);
+        $mform->setDefault('completionattempts' . $suffix, 1);
+        $mform->disabledIf('completionattempts' . $suffix, 'completionattemptsenabled' . $suffix, 'notchecked');
 
-        return ['completionattemptsgroup'];
+        return ['completionattemptsgroup' . $suffix];
     }
 
     /**
@@ -597,7 +603,9 @@ class mod_playerwords_mod_form extends moodleform_mod {
      * @return bool
      */
     public function completion_rule_enabled($data): bool {
-        return !empty($data['completionattemptsenabled']) && (int)$data['completionattempts'] > 0;
+        $suffix = $this->get_suffix();
+
+        return !empty($data['completionattemptsenabled' . $suffix]) && (int)$data['completionattempts' . $suffix] > 0;
     }
 
     /**
@@ -618,8 +626,9 @@ class mod_playerwords_mod_form extends moodleform_mod {
             $defaultvalues['source_glossary'] = (int)(($defaultvalues['sources'] & self::SOURCE_GLOSSARY) !== 0);
         }
 
-        if (!empty($defaultvalues['completionattempts'])) {
-            $defaultvalues['completionattemptsenabled'] = 1;
+        $suffix = $this->get_suffix();
+        if (!empty($defaultvalues['completionattempts' . $suffix])) {
+            $defaultvalues['completionattemptsenabled' . $suffix] = 1;
         }
 
         if (isset($defaultvalues['cooldown_seconds'])) {
