@@ -298,11 +298,29 @@ class ai_word_generator {
                 continue;
             }
             $items[] = [
-                'term' => (string)($entry['term'] ?? ''),
-                'hint' => (string)($entry['hint'] ?? ($entry['definition'] ?? '')),
+                'term' => self::scalar_text($entry['term'] ?? null),
+                'hint' => self::scalar_text($entry['hint'] ?? null, $entry['definition'] ?? null),
             ];
         }
         return $items;
+    }
+
+    /**
+     * Returns the first value that is a string, number or boolean as text, or '' when there is none.
+     *
+     * The model may answer with a list or an object where text was asked for, and a (string) cast would
+     * turn it into the word "Array", which is then a valid term.
+     *
+     * @param mixed ...$candidates Values to try, in order.
+     * @return string
+     */
+    private static function scalar_text(mixed ...$candidates): string {
+        foreach ($candidates as $candidate) {
+            if (is_scalar($candidate)) {
+                return (string) $candidate;
+            }
+        }
+        return '';
     }
 
     /**
